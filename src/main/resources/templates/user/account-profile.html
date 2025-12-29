@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+<head>
+    <title>Hồ sơ của tôi - ShopOMG</title>
+</head>
+<body>
+    <article class="container py-5">
+        <div class="row">
+            <div class="col-lg-3 mb-4">
+                <div th:replace="~{fragments/account-sidebar :: sidebar('profile')}"></div>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="card-box">
+                    <h5 class="fw-bold mb-4">Hồ sơ của tôi</h5>
+                    <p class="text-muted small mb-4">Quản lý thông tin hồ sơ để bảo mật tài khoản</p>
+                    
+                    <form action="/account/update" method="post" enctype="multipart/form-data">
+                        
+                        <div class="row">
+                            <div class="col-md-8 pe-md-5 order-2 order-md-1">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Tên đăng nhập</label>
+                                    <input type="text" class="form-control bg-light" value="nguyenvana" disabled>
+                                    <div class="form-text small">Tên đăng nhập không thể thay đổi.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Họ và tên</label>
+                                    <input type="text" class="form-control" name="fullName" value="Nguyễn Văn A">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Email</label>
+                                    <input type="email" class="form-control bg-light" value="email@example.com" disabled>
+                                    <div class="form-text small">Email dùng để đăng nhập và khôi phục mật khẩu.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Số điện thoại</label>
+                                    <input type="tel" class="form-control" name="phone" value="0909123456" placeholder="Nhập số điện thoại...">
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label small fw-bold text-muted">Ngày sinh</label>
+                                        <input type="date" class="form-control" name="birthDate" value="2000-01-01">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label small fw-bold text-muted">Giới tính</label>
+                                        <div class="d-flex align-items-center mt-2">
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input" type="radio" name="gender" id="g1" checked>
+                                                <label class="form-check-label" for="g1">Nam</label>
+                                            </div>
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input" type="radio" name="gender" id="g2">
+                                                <label class="form-check-label" for="g2">Nữ</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="gender" id="g3">
+                                                <label class="form-check-label" for="g3">Khác</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-dark fw-bold px-4 mt-3">Lưu thay đổi</button>
+                            </div>
+
+                            <div class="col-md-4 text-center ps-md-4 border-start order-1 order-md-2 mb-4 mb-md-0">
+                                <div class="profile-avatar-container">
+                                    <img id="avatarPreview" src="https://i.pravatar.cc/150?img=12" class="profile-avatar-img">
+                                    
+                                    <label for="avatarInput" class="avatar-upload-btn">
+                                        <i class="fas fa-camera small"></i>
+                                    </label>
+                                    
+                                    <input type="file" id="avatarInput" name="avatarFile" hidden accept="image/*" onchange="previewImage(this)">
+                                </div>
+                                <div class="small text-muted">
+                                    Dụng lượng file tối đa 1 MB<br>
+                                    Định dạng: .JPEG, .PNG
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('avatarPreview').src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+</body>
+</html>

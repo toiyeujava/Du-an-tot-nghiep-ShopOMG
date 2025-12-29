@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+<head>
+    <title>Đơn hàng - Admin</title>
+</head>
+<body>
+    <article>
+        <div class="mb-4">
+            <a href="#" class="btn btn-dark rounded-pill px-4 me-2">Tất cả</a>
+            <a href="#" class="btn btn-white border rounded-pill px-4 me-2">Chờ xử lý <span class="badge bg-danger ms-2">3</span></a>
+            <a href="#" class="btn btn-white border rounded-pill px-4 me-2">Đang giao</a>
+            <a href="#" class="btn btn-white border rounded-pill px-4">Hoàn thành</a>
+        </div>
+
+        <div class="card-box">
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Mã đơn</th>
+                            <th>Khách hàng</th>
+                            <th>Ngày đặt</th>
+                            <th>Tổng tiền</th>
+                            <th>Thanh toán</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="ps-4 fw-bold">#ORD-009</td>
+                            <td>
+                                <div class="fw-bold text-dark">Nguyễn Văn A</div>
+                                <div class="small text-muted">0909123456</div>
+                            </td>
+                            <td>12/12/2025 <br><small class="text-muted">10:30 AM</small></td>
+                            <td class="fw-bold text-primary">560.000 ₫</td>
+                            <td><span class="badge bg-light text-dark border">COD</span></td>
+                            <td><span class="badge-light-warning fw-bold">Chờ xác nhận</span></td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-dark btn-sm rounded-pill px-3">Xử lý</button>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td class="ps-4 fw-bold">#ORD-008</td>
+                            <td>
+                                <div class="fw-bold text-dark">Trần Thị B</div>
+                                <div class="small text-muted">0912345678</div>
+                            </td>
+                            <td>11/12/2025 <br><small class="text-muted">08:15 PM</small></td>
+                            <td class="fw-bold text-dark">1.200.000 ₫</td>
+                            <td><span class="badge bg-light text-dark border">VNPAY</span></td>
+                            <td><span class="badge-light-success fw-bold">Hoàn thành</span></td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-light btn-sm rounded-pill px-3 border">Chi tiết</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </article>
+</body>
+</html>

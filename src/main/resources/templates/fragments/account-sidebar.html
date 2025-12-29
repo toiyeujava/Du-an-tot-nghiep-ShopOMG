@@ -1,0 +1,19 @@
+<div th:fragment="sidebar(activePage)" class="account-sidebar" xmlns:th="http://www.thymeleaf.org">
+    <div class="user-info">
+        <img src="https://i.pravatar.cc/150?img=12" class="user-avatar">
+        <h6 class="fw-bold mb-0">Nguyễn Văn A</h6>
+        <small class="text-muted">Thành viên Bạc</small>
+    </div>
+    <div class="nav flex-column nav-account">
+        <a href="/account/profile" class="nav-link" th:classappend="${activePage == 'profile'} ? 'active'">
+            <i class="far fa-user"></i> Tài khoản của tôi
+        </a>
+        <a href="/account/orders" class="nav-link" th:classappend="${activePage == 'orders'} ? 'active'">
+            <i class="fas fa-box-open"></i> Đơn mua
+        </a>
+        <a href="/account/reviews" class="nav-link" th:classappend="${activePage == 'reviews'} ? 'active'">
+            <i class="fas fa-star"></i> Đánh giá sản phẩm
+        </a>
+        <a href="/logout" class="nav-link text-danger"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+    </div>
+</div>

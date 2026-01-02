@@ -1,6 +1,6 @@
-<header th:fragment="header" xmlns:th="http://www.thymeleaf.org">
+<header th:fragment="header" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
     <div class="top-bar py-2 text-center">
-        🎉 Nhập mã <span class="fw-bold text-warning">OPENING</span> giảm ngay 20% đơn đầu tiên!
+        Nhập mã <span class="fw-bold text-warning">OPENING</span> giảm ngay 20% đơn đầu tiên!
     </div>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
@@ -25,8 +25,33 @@
                     </a>
                     
                     <div class="d-flex align-items-center border-start ps-3 ms-2">
-                        <a href="/login" class="btn btn-sm btn-outline-dark rounded-pill px-3 me-2 fw-bold">Đăng nhập</a>
-                        <a href="/register" class="btn btn-sm btn-dark rounded-pill px-3 fw-bold">Đăng ký</a>
+                        <!-- Khi CHƯA đăng nhập -->
+                        <div sec:authorize="isAnonymous()" class="d-flex align-items-center">
+                            <a th:href="@{/login}" class="btn btn-sm btn-outline-dark rounded-pill px-3 me-2 fw-bold">Đăng nhập</a>
+                            <a th:href="@{/register}" class="btn btn-sm btn-dark rounded-pill px-3 fw-bold">Đăng ký</a>
+                        </div>
+
+                        <!-- Khi ĐÃ đăng nhập -->
+                        <div sec:authorize="isAuthenticated()" class="dropdown">
+                            <a class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img th:if="${currentUser != null && currentUser.avatar != null}" th:src="${currentUser.avatar}" class="rounded-circle me-2" style="width:28px; height:28px; object-fit:cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                                <i class="fas fa-user-circle me-2" th:if="${currentUser == null || currentUser.avatar == null}" style="display:none;"></i>
+                                <span class="small" th:text="${currentUser != null} ? ${currentUser.email} : ${#authentication.name}">Tài khoản</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="/account/profile">Tài khoản của tôi</a></li>
+                                <li><a class="dropdown-item" href="/account/orders">Đơn hàng của tôi</a></li>
+                                <li><a class="dropdown-item" href="/account/reviews">Đánh giá sản phẩm</a></li>
+                                <li sec:authorize="hasRole('ADMIN')"><hr class="dropdown-divider"></li>
+                                <li sec:authorize="hasRole('ADMIN')"><a class="dropdown-item" href="/admin/dashboard"><i class="fas fa-cog me-2"></i>Quản lý hệ thống</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form th:action="@{/logout}" method="post" class="px-3">
+                                        <button type="submit" class="btn btn-link p-0 text-danger small">Đăng xuất</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     
                     </div>

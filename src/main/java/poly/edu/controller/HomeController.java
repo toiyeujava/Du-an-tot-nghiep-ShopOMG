@@ -13,7 +13,7 @@ public class HomeController {
     @GetMapping({"/", "/home"})
     public String index(Model model) {
         model.addAttribute("pageTitle", "Trang chủ - ShopOMG");
-        return "user/home"; // Trỏ về file templates/user/home.html
+        return "user/home";
     }
 
     @GetMapping("/products")
@@ -28,7 +28,7 @@ public class HomeController {
         return "user/product-detail";
     }
 
-    // --- GIỎ HÀNG & THANH TOÁN (Đã bỏ prefix /user trong URL) ---
+    // --- GIỎ HÀNG & THANH TOÁN ---
 
     @GetMapping("/cart")
     public String cart(Model model) {
@@ -36,29 +36,31 @@ public class HomeController {
         return "user/cart";
     }
 
-    @GetMapping("/checkout") // URL là /checkout
+    @GetMapping("/checkout")
     public String checkout(Model model) {
         model.addAttribute("pageTitle", "Thanh toán");
-        return "user/checkout"; // File nằm ở user/checkout.html
+        return "user/checkout";
     }
 
-    // --- TÀI KHOẢN (ACCOUNT) ---
+    /* ❌ XÓA HOẶC COMMENT ĐOẠN DƯỚI ĐÂY ĐỂ TRÁNH XUNG ĐỘT VỚI AccountController
+       (Vì AccountController đã quản lý các đường dẫn /account/... này rồi)
+    */
+    
+    // @GetMapping("/account/profile")
+    // public String profile(Model model) {
+    //     model.addAttribute("activePage", "profile");
+    //     return "user/account-profile";
+    // }
 
-    @GetMapping("/account/profile")
-    public String profile(Model model) {
-        model.addAttribute("activePage", "profile");
-        return "user/account-profile";
-    }
+    // @GetMapping("/account/orders")
+    // public String orders(Model model) {
+    //     model.addAttribute("activePage", "orders");
+    //     return "user/account-orders";
+    // }
 
-    @GetMapping("/account/orders")
-    public String orders(Model model) {
-        model.addAttribute("activePage", "orders");
-        return "user/account-orders";
-    }
-
-    @GetMapping("/account/reviews")
-    public String reviews(Model model) {
-        model.addAttribute("activePage", "reviews");
-        return "user/account-reviews";
-    }
+    // @GetMapping("/account/reviews")
+    // public String reviews(Model model) {
+    //     model.addAttribute("activePage", "reviews");
+    //     return "user/account-reviews";
+    // }
 }

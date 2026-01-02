@@ -1,21 +1,21 @@
 package poly.edu.controller;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class AuthController {
 
+    // Chỉ giữ lại cái này để hiển thị form đăng nhập
     @GetMapping("/login")
-    public String login(Model model) {
-        model.addAttribute("pageTitle", "Đăng nhập - ShopOMG");
-        return "user/login";
+    public String loginForm() {
+        return "user/login"; 
     }
-
+    
     @GetMapping("/register")
-    public String register(Model model) {
-        model.addAttribute("pageTitle", "Đăng ký thành viên");
-        return "user/register";
+    public String redirectRegister() {
+        return "redirect:/account/sign-up";
     }
+    
+    // XÓA HẾT CÁC PHẦN ĐĂNG KÝ (REGISTER) Ở ĐÂY ĐỂ TRÁNH XUNG ĐỘT
 }

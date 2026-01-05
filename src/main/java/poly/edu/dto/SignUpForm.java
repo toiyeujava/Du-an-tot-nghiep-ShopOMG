@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import poly.edu.validation.StrongPassword;
 
 @Data
 public class SignUpForm {
@@ -18,7 +19,8 @@ public class SignUpForm {
     private String email;
 
     @NotBlank(message = "Vui lòng nhập Mật khẩu")
-    @Size(min = 6, message = "Mật khẩu phải từ 6 ký tự")
+    @Size(min = 8, message = "Mật khẩu phải từ 8 ký tự")
+    @StrongPassword
     private String password;
 
     @NotBlank(message = "Vui lòng nhập lại mật khẩu")

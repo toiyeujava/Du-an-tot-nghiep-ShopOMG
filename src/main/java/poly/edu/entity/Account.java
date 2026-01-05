@@ -29,8 +29,8 @@ public class Account {
     private String email;
 
     private String phone;
-    
-    private String avatar; 
+
+    private String avatar;
 
     @ManyToOne
     @JoinColumn(name = "role_id")
@@ -44,7 +44,20 @@ public class Account {
 
     // SỬA: SQL dùng is_active (BIT) -> Java dùng Boolean
     @Column(name = "is_active")
-    private Boolean isActive = true; 
+    private Boolean isActive = true;
+
+    @Column(name = "email_verified")
+    private Boolean emailVerified = false;
+
+    // Login attempt tracking (chống brute-force)
+    @Column(name = "failed_login_attempts")
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "account_locked_until")
+    private LocalDateTime accountLockedUntil;
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -58,7 +71,12 @@ public class Account {
     public void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if(isActive == null) isActive = true;
+        if (isActive == null)
+            isActive = true;
+        if (emailVerified == null)
+            emailVerified = false;
+        if (failedLoginAttempts == null)
+            failedLoginAttempts = 0;
     }
 
     @PreUpdate

@@ -1,5 +1,6 @@
 package poly.edu.security;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,20 +24,37 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
         // Cho phép đăng nhập bằng Email hoặc Username
         Account acc = accountRepository.findByEmail(identifier)
-            .orElseGet(() -> accountRepository.findByUsername(identifier)
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản: " + identifier)));
+                .orElseGet(() -> accountRepository.findByUsername(identifier)
+                        .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản: " + identifier)));
+
+        // Kiểm tra tài khoản có bị khóa không
+        boolean accountLocked = false;
+        if (acc.getAccountLockedUntil() != null) {
+            if (acc.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
+                // Còn trong thời gian khóa
+                accountLocked = true;
+            } else {
+                // Đã hết thời gian khóa - tự động unlock
+                acc.setAccountLockedUntil(null);
+                acc.setFailedLoginAttempts(0);
+                accountRepository.save(acc);
+            }
+        }
 
         String roleName = acc.getRole() != null ? acc.getRole().getName() : "USER";
         List<GrantedAuthority> auths = List.of(new SimpleGrantedAuthority("ROLE_" + roleName));
 
-        // SỬA: Dùng isActive (Boolean) thay vì status (String)
-        boolean enabled = acc.getIsActive() != null && acc.getIsActive();
+        // SỬA: Kiểm tra cả isActive và emailVerified
+        boolean enabled = acc.getIsActive() != null && acc.getIsActive()
+                && acc.getEmailVerified() != null && acc.getEmailVerified();
 
-        // Dùng email làm principal để đồng bộ với profile, nhưng login có thể nhập username
+        // Dùng email làm principal để đồng bộ với profile, nhưng login có thể nhập
+        // username
         return User.withUsername(acc.getEmail())
                 .password(acc.getPassword())
                 .authorities(auths)
-                .disabled(!enabled)
+                .disabled(!enabled) // Disable nếu chưa active hoặc chưa verify email
+                .accountLocked(accountLocked) // Set locked status
                 .build();
     }
 }

@@ -20,21 +20,26 @@ import poly.edu.dto.ProfileForm; // Import mới
 import poly.edu.dto.SignUpForm;
 import poly.edu.entity.Account;
 import poly.edu.service.AccountService;
+import poly.edu.service.EmailVerificationService;
 import poly.edu.service.FileService;
 
 @Controller
 @RequestMapping("/account")
 public class AccountController {
 
-    @Autowired AccountService accountService;
-    @Autowired FileService fileService;
+    @Autowired
+    AccountService accountService;
+    @Autowired
+    FileService fileService;
+    @Autowired
+    EmailVerificationService emailVerificationService;
 
     // --- 1. HIỂN THỊ TRANG PROFILE (GET) ---
     @GetMapping("/profile")
     public String profile(Model model, Principal principal) {
         String username = principal.getName();
         Account acc = accountService.findByEmail(username);
-        
+
         // Đổ dữ liệu từ Entity sang DTO (Form) để hiển thị lên giao diện
         ProfileForm form = new ProfileForm();
         form.setUsername(acc.getUsername());
@@ -47,7 +52,7 @@ public class AccountController {
 
         model.addAttribute("profileForm", form); // Đẩy form sang HTML
         model.addAttribute("activePage", "profile");
-        
+
         return "user/account-profile";
     }
 
@@ -59,24 +64,24 @@ public class AccountController {
             @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile,
             Principal principal,
             RedirectAttributes ra) {
-        
+
         // 1. Nếu validate lỗi -> Quay lại trang profile và báo lỗi
-        if(binding.hasErrors()) {
+        if (binding.hasErrors()) {
             // Cần set lại activePage để sidebar không bị mất active
-            return "user/account-profile"; 
+            return "user/account-profile";
         }
 
         // 2. Lấy tài khoản hiện tại từ DB
         Account acc = accountService.findByEmail(principal.getName());
-        
+
         // 3. Cập nhật thông tin từ Form vào Entity
         acc.setFullName(form.getFullName());
         acc.setPhone(form.getPhone());
         acc.setBirthDate(form.getBirthDate());
         acc.setGender(form.getGender());
-        
+
         // 4. Xử lý Avatar (nếu có upload ảnh mới)
-        if(avatarFile != null && !avatarFile.isEmpty()) {
+        if (avatarFile != null && !avatarFile.isEmpty()) {
             try {
                 String avatarPath = fileService.save(avatarFile);
                 acc.setAvatar(avatarPath);
@@ -87,11 +92,11 @@ public class AccountController {
 
         // 5. Lưu xuống DB
         accountService.save(acc);
-        
+
         ra.addFlashAttribute("success", "Cập nhật hồ sơ thành công!");
         return "redirect:/account/profile";
     }
-    
+
     // --- 2. CÁC TRANG KHÁC CỦA TÀI KHOẢN ---
 
     @GetMapping("/orders")
@@ -105,40 +110,40 @@ public class AccountController {
         model.addAttribute("activePage", "reviews");
         return "user/account-reviews";
     }
-    
+
     // --- 3. ĐĂNG KÝ TÀI KHOẢN ---
 
-    @GetMapping("/sign-up") 
-    public String signUpForm(Model model){
-        if(!model.containsAttribute("form")){
+    @GetMapping("/sign-up")
+    public String signUpForm(Model model) {
+        if (!model.containsAttribute("form")) {
             model.addAttribute("form", new SignUpForm());
         }
-        return "user/register"; 
+        return "user/register";
     }
 
     @PostMapping("/sign-up")
     public String doSignUp(@Valid @ModelAttribute("form") SignUpForm form,
-                           BindingResult binding,
-                           RedirectAttributes ra){
-        
+            BindingResult binding,
+            RedirectAttributes ra) {
+
         // 1. Kiểm tra mật khẩu nhập lại
-        if(!form.getPassword().equals(form.getConfirmPassword())){
+        if (!form.getPassword().equals(form.getConfirmPassword())) {
             binding.rejectValue("confirmPassword", "error.form", "Mật khẩu nhập lại không khớp!");
         }
 
         // 2. Kiểm tra trùng Email
-        if(accountService.emailExists(form.getEmail())){
+        if (accountService.emailExists(form.getEmail())) {
             binding.rejectValue("email", "error.form", "Email này đã được sử dụng!");
         }
 
         // 3. Kiểm tra trùng Username (nếu cần)
-        if(accountService.usernameExists(form.getUsername())){
+        if (accountService.usernameExists(form.getUsername())) {
             binding.rejectValue("username", "error.form", "Tên đăng nhập đã tồn tại!");
         }
 
         // 4. Nếu có lỗi -> Quay lại form
-        if(binding.hasErrors()){
-            return "user/register"; 
+        if (binding.hasErrors()) {
+            return "user/register";
         }
 
         // 5. Nếu ổn -> Lưu vào DB
@@ -148,11 +153,14 @@ public class AccountController {
         acc.setEmail(form.getEmail());
         acc.setPassword(form.getPassword());
         acc.setPhone(form.getPhone());
-        
-        accountService.register(acc);
-        
-        // Thông báo thành công
-        ra.addFlashAttribute("message", "Đăng ký thành công! Vui lòng đăng nhập.");
-        return "redirect:/login";
+
+        // Đăng ký tài khoản (emailVerified = false)
+        Account savedAccount = accountService.register(acc);
+
+        // Tạo token và gửi email xác thực
+        emailVerificationService.createVerificationToken(savedAccount);
+
+        // Redirect về trang thông báo kiểm tra email
+        return "redirect:/verify-email-sent";
     }
 }

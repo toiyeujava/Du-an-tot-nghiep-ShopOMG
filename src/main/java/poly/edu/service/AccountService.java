@@ -61,4 +61,15 @@ public class AccountService {
     public void save(Account account) {
         accountRepository.save(account);
     }
+    
+    /**
+     * Đổi mật khẩu cho tài khoản (dùng cho reset password)
+     * @param account Tài khoản cần đổi mật khẩu
+     * @param newPassword Mật khẩu mới (chưa mã hóa)
+     */
+    @Transactional
+    public void changePassword(Account account, String newPassword) {
+        account.setPassword(passwordEncoder.encode(newPassword));
+        accountRepository.save(account);
+    }
 }

@@ -19,6 +19,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import poly.edu.dto.ProfileForm; // Import mới
 import poly.edu.dto.SignUpForm;
 import poly.edu.entity.Account;
+import poly.edu.repository.AccountRepository;
 import poly.edu.service.AccountService;
 import poly.edu.service.EmailVerificationService;
 import poly.edu.service.FileService;
@@ -29,18 +30,44 @@ public class AccountController {
 
     @Autowired
     AccountService accountService;
+    
+    @Autowired
+    AccountRepository accountRepository; // Thêm dòng này để sửa lỗi "cannot be resolved"
+
     @Autowired
     FileService fileService;
+    
     @Autowired
     EmailVerificationService emailVerificationService;
+
+    // HÀM BỔ TRỢ: Tìm account dù là đăng nhập bằng Form hay mạng xã hội
+    private Account getAuthenticatedAccount(Principal principal) {
+        if (principal == null) return null;
+        
+        String identifier = "";
+        if (principal instanceof org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken token) {
+            // Lấy email từ Facebook/Google, nếu không có thì lấy ID (Name)
+            identifier = token.getPrincipal().getAttribute("email");
+            if (identifier == null) identifier = token.getPrincipal().getName();
+        } else {
+            identifier = principal.getName(); // Đăng nhập Form
+        }
+
+        // Tìm theo Email trước, nếu không thấy tìm theo Username (nơi lưu ID)
+        Account acc = accountService.findByEmail(identifier);
+        if (acc == null) {
+            acc = accountRepository.findByUsername(identifier).orElse(null);
+        }
+        return acc;
+    }
 
     // --- 1. HIỂN THỊ TRANG PROFILE (GET) ---
     @GetMapping("/profile")
     public String profile(Model model, Principal principal) {
-        String username = principal.getName();
-        Account acc = accountService.findByEmail(username);
+        Account acc = getAuthenticatedAccount(principal); // Dùng hàm bổ trợ
+        
+        if (acc == null) return "redirect:/login?error=true";
 
-        // Đổ dữ liệu từ Entity sang DTO (Form) để hiển thị lên giao diện
         ProfileForm form = new ProfileForm();
         form.setUsername(acc.getUsername());
         form.setFullName(acc.getFullName());
@@ -50,49 +77,40 @@ public class AccountController {
         form.setBirthDate(acc.getBirthDate());
         form.setGender(acc.getGender());
 
-        model.addAttribute("profileForm", form); // Đẩy form sang HTML
+        model.addAttribute("profileForm", form);
         model.addAttribute("activePage", "profile");
-
         return "user/account-profile";
     }
 
     // --- 2. XỬ LÝ CẬP NHẬT (POST) ---
     @PostMapping("/update")
     public String updateProfile(
-            @Valid @ModelAttribute("profileForm") ProfileForm form, // Hứng dữ liệu vào Form
+            @Valid @ModelAttribute("profileForm") ProfileForm form,
             BindingResult binding,
             @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile,
             Principal principal,
             RedirectAttributes ra) {
 
-        // 1. Nếu validate lỗi -> Quay lại trang profile và báo lỗi
-        if (binding.hasErrors()) {
-            // Cần set lại activePage để sidebar không bị mất active
-            return "user/account-profile";
-        }
+        if (binding.hasErrors()) return "user/account-profile";
 
-        // 2. Lấy tài khoản hiện tại từ DB
-        Account acc = accountService.findByEmail(principal.getName());
+        // SỬA TẠI ĐÂY: Dùng hàm bổ trợ thay vì principal.getName()
+        Account acc = getAuthenticatedAccount(principal); 
 
-        // 3. Cập nhật thông tin từ Form vào Entity
+        if (acc == null) return "redirect:/login?error=true";
+
         acc.setFullName(form.getFullName());
         acc.setPhone(form.getPhone());
         acc.setBirthDate(form.getBirthDate());
         acc.setGender(form.getGender());
 
-        // 4. Xử lý Avatar (nếu có upload ảnh mới)
         if (avatarFile != null && !avatarFile.isEmpty()) {
             try {
                 String avatarPath = fileService.save(avatarFile);
                 acc.setAvatar(avatarPath);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            } catch (IOException e) { e.printStackTrace(); }
         }
 
-        // 5. Lưu xuống DB
         accountService.save(acc);
-
         ra.addFlashAttribute("success", "Cập nhật hồ sơ thành công!");
         return "redirect:/account/profile";
     }

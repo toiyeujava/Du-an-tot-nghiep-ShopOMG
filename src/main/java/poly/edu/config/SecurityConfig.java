@@ -1,5 +1,6 @@
 package poly.edu.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,11 +10,16 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import poly.edu.security.CustomOAuth2UserService; // Đảm bảo bạn đã tạo class này
 
 @Configuration
 public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
+    
+    @Autowired
+    private CustomOAuth2UserService customOAuth2UserService; // 1. Tiêm service xử lý OAuth2
 
     public SecurityConfig(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
@@ -23,7 +29,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .userDetailsService(userDetailsService)
-                .csrf(csrf -> csrf.disable()) // Tắt CSRF để test cho dễ (Bật lại sau nếu cần)
+                .csrf(csrf -> csrf.disable()) 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/account/sign-up", "/register", "/login",
@@ -34,41 +40,31 @@ public class SecurityConfig {
                         .requestMatchers("/account/**", "/checkout/**").authenticated()
                         .anyRequest().permitAll())
                 .formLogin(login -> login
-                        .loginPage("/login") // URL controller trả về view login
-                        .loginProcessingUrl("/login") // URL form submit (POST)
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
                         .usernameParameter("email")
                         .passwordParameter("password")
-                        // Điều hướng theo vai trò sau khi đăng nhập thành công
-                        .successHandler((request, response, authentication) -> {
-                            boolean isAdmin = authentication.getAuthorities().stream()
-                                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-                            if (isAdmin) {
-                                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
-                            } else {
-                                response.sendRedirect(request.getContextPath() + "/home");
-                            }
-                        })
+                        .successHandler(commonSuccessHandler())
                         .failureHandler((request, response, exception) -> {
                             String email = request.getParameter("email");
                             String contextPath = request.getContextPath();
-
-                            // Kiểm tra nếu tài khoản bị disable (chưa verify email)
                             if (exception instanceof org.springframework.security.authentication.DisabledException) {
-                                response.sendRedirect(
-                                        contextPath + "/login?notVerified=true&email=" + (email != null ? email : ""));
-                            }
-                            // Kiểm tra nếu tài khoản bị khóa
-                            else if (exception instanceof org.springframework.security.authentication.LockedException) {
-                                response.sendRedirect(
-                                        contextPath + "/login?locked=true&email=" + (email != null ? email : ""));
-                            }
-                            // Đăng nhập sai - hiển thị số lần còn lại
-                            else {
-                                response.sendRedirect(
-                                        contextPath + "/login?error=true&email=" + (email != null ? email : ""));
+                                response.sendRedirect(contextPath + "/login?notVerified=true&email=" + (email != null ? email : ""));
+                            } else if (exception instanceof org.springframework.security.authentication.LockedException) {
+                                response.sendRedirect(contextPath + "/login?locked=true&email=" + (email != null ? email : ""));
+                            } else {
+                                response.sendRedirect(contextPath + "/login?error=true&email=" + (email != null ? email : ""));
                             }
                         })
                         .permitAll())
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        // 2. Cấu hình điểm cuối nhận diện UserInfo để lưu vào DB
+                        .userInfoEndpoint(userInfo -> userInfo
+                            .userService(customOAuth2UserService)
+                        )
+                        .successHandler(commonSuccessHandler()) 
+                )
                 .rememberMe(remember -> remember
                         .key("shopOMGRememberKey")
                         .userDetailsService(userDetailsService)
@@ -78,9 +74,24 @@ public class SecurityConfig {
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/home")
                         .permitAll())
-                .exceptionHandling(ex -> ex.accessDeniedPage("/403")); // Tạo trang 403 sau
+                .exceptionHandling(ex -> ex.accessDeniedPage("/403"));
 
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationSuccessHandler commonSuccessHandler() {
+        return (request, response, authentication) -> {
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            
+            String contextPath = request.getContextPath();
+            if (isAdmin) {
+                response.sendRedirect(contextPath + "/admin/dashboard");
+            } else {
+                response.sendRedirect(contextPath + "/home");
+            }
+        };
     }
 
     @Bean

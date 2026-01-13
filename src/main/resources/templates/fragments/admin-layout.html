@@ -29,7 +29,10 @@
             <a href="/admin/orders" th:classappend="${pageTitle == 'Quản lý đơn hàng'} ? 'active'">
                 <i class="fas fa-shopping-cart"></i> Đơn hàng <span class="badge bg-danger ms-auto">3</span>
             </a>
-            <a href="/admin/categories" th:classappend="${pageTitle == 'Quản lý danh mục'} ? 'active'">
+			<a href="/admin/categories" th:classappend="${pageTitle == 'Quản lý loại'} ? 'active'">
+			                <i class="fas fa-list"></i> Loại
+		    </a>
+            <a href="/admin/catalog" th:classappend="${pageTitle == 'Quản lý danh mục'} ? 'active'">
                 <i class="fas fa-list"></i> Danh mục
             </a>
 

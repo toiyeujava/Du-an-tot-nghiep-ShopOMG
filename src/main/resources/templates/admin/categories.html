@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+    th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+
 <head>
     <title>Quản lý Loại - Admin</title>
 </head>
+
 <body>
     <article>
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -29,7 +31,8 @@
                     <tbody>
                         <tr>
                             <td class="ps-4">#L-01</td>
-                            <td><img src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a" class="rounded" width="45"></td>
+                            <td><img src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a" class="rounded"
+                                    width="45"></td>
                             <td class="fw-bold">Giày</td>
                             <td><span class="badge bg-light text-dark">120 sản phẩm</span></td>
                             <td><span class="badge-light-success">Hoạt động</span></td>
@@ -40,7 +43,8 @@
                         </tr>
                         <tr>
                             <td class="ps-4">#L-02</td>
-                            <td><img src="https://images.unsplash.com/photo-1603487742131-4160ec999306" class="rounded" width="45"></td>
+                            <td><img src="https://images.unsplash.com/photo-1603487742131-4160ec999306" class="rounded"
+                                    width="45"></td>
                             <td class="fw-bold">Dép</td>
                             <td><span class="badge bg-light text-dark">45 sản phẩm</span></td>
                             <td><span class="badge-light-success">Hoạt động</span></td>
@@ -55,4 +59,5 @@
         </div>
     </article>
 </body>
+
 </html>

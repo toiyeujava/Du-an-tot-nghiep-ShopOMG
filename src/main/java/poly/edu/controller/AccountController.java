@@ -30,25 +30,27 @@ public class AccountController {
 
     @Autowired
     AccountService accountService;
-    
+
     @Autowired
     AccountRepository accountRepository; // Thêm dòng này để sửa lỗi "cannot be resolved"
 
     @Autowired
     FileService fileService;
-    
+
     @Autowired
     EmailVerificationService emailVerificationService;
 
     // HÀM BỔ TRỢ: Tìm account dù là đăng nhập bằng Form hay mạng xã hội
     private Account getAuthenticatedAccount(Principal principal) {
-        if (principal == null) return null;
-        
+        if (principal == null)
+            return null;
+
         String identifier = "";
         if (principal instanceof org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken token) {
             // Lấy email từ Facebook/Google, nếu không có thì lấy ID (Name)
             identifier = token.getPrincipal().getAttribute("email");
-            if (identifier == null) identifier = token.getPrincipal().getName();
+            if (identifier == null)
+                identifier = token.getPrincipal().getName();
         } else {
             identifier = principal.getName(); // Đăng nhập Form
         }
@@ -65,8 +67,9 @@ public class AccountController {
     @GetMapping("/profile")
     public String profile(Model model, Principal principal) {
         Account acc = getAuthenticatedAccount(principal); // Dùng hàm bổ trợ
-        
-        if (acc == null) return "redirect:/login?error=true";
+
+        if (acc == null)
+            return "redirect:/login?error=true";
 
         ProfileForm form = new ProfileForm();
         form.setUsername(acc.getUsername());
@@ -91,12 +94,14 @@ public class AccountController {
             Principal principal,
             RedirectAttributes ra) {
 
-        if (binding.hasErrors()) return "user/account-profile";
+        if (binding.hasErrors())
+            return "user/account-profile";
 
         // SỬA TẠI ĐÂY: Dùng hàm bổ trợ thay vì principal.getName()
-        Account acc = getAuthenticatedAccount(principal); 
+        Account acc = getAuthenticatedAccount(principal);
 
-        if (acc == null) return "redirect:/login?error=true";
+        if (acc == null)
+            return "redirect:/login?error=true";
 
         acc.setFullName(form.getFullName());
         acc.setPhone(form.getPhone());
@@ -127,6 +132,12 @@ public class AccountController {
     public String reviews(Model model) {
         model.addAttribute("activePage", "reviews");
         return "user/account-reviews";
+    }
+
+    @GetMapping("/addresses")
+    public String addresses(Model model) {
+        model.addAttribute("activePage", "addresses");
+        return "user/account-addresses";
     }
 
     // --- 3. ĐĂNG KÝ TÀI KHOẢN ---

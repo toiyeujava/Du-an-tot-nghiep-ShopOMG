@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+    th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+
 <head>
     <title>Danh mục - Admin</title>
 </head>
+
 <body>
     <article>
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -28,8 +30,8 @@
                         <tr th:each="i : ${#numbers.sequence(1, 5)}">
                             <td class="ps-4 fw-bold">#[[${i}]]</td>
                             <td>
-                                <img src="https://cf.shopee.vn/file/322a6d327458d60bb1b78eb2dfb63a59" 
-                                     class="rounded-3 border" width="40" height="40" style="object-fit: cover;">
+                                <img src="https://cf.shopee.vn/file/322a6d327458d60bb1b78eb2dfb63a59"
+                                    class="rounded-3 border" width="40" height="40" style="object-fit: cover;">
                             </td>
                             <td class="fw-bold">Áo thun</td>
                             <td class="text-muted">/ao-thun</td>
@@ -45,4 +47,5 @@
         </div>
     </article>
 </body>
+
 </html>

@@ -10,7 +10,7 @@ public class HomeController {
 
     // --- CÁC TRANG CÔNG KHAI ---
 
-    @GetMapping({"/", "/home"})
+    @GetMapping({ "/", "/home" })
     public String index(Model model) {
         model.addAttribute("pageTitle", "Trang chủ - ShopOMG");
         return "user/home";
@@ -42,25 +42,26 @@ public class HomeController {
         return "user/checkout";
     }
 
-    /* ❌ XÓA HOẶC COMMENT ĐOẠN DƯỚI ĐÂY ĐỂ TRÁNH XUNG ĐỘT VỚI AccountController
-       (Vì AccountController đã quản lý các đường dẫn /account/... này rồi)
-    */
-    
+    /*
+     * ❌ XÓA HOẶC COMMENT ĐOẠN DƯỚI ĐÂY ĐỂ TRÁNH XUNG ĐỘT VỚI AccountController
+     * (Vì AccountController đã quản lý các đường dẫn /account/... này rồi)
+     */
+
     // @GetMapping("/account/profile")
     // public String profile(Model model) {
-    //     model.addAttribute("activePage", "profile");
-    //     return "user/account-profile";
+    // model.addAttribute("activePage", "profile");
+    // return "user/account-profile";
     // }
 
     // @GetMapping("/account/orders")
     // public String orders(Model model) {
-    //     model.addAttribute("activePage", "orders");
-    //     return "user/account-orders";
+    // model.addAttribute("activePage", "orders");
+    // return "user/account-orders";
     // }
 
     // @GetMapping("/account/reviews")
     // public String reviews(Model model) {
-    //     model.addAttribute("activePage", "reviews");
-    //     return "user/account-reviews";
+    // model.addAttribute("activePage", "reviews");
+    // return "user/account-reviews";
     // }
 }

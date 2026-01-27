@@ -1,42 +1,56 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+    th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+
 <head>
-    <title>Danh mục - Admin</title>
+    <title>Quản lý Loại - Admin</title>
 </head>
+
 <body>
     <article>
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold m-0">Danh mục sản phẩm</h4>
-            <button class="btn btn-dark fw-bold"><i class="fas fa-plus"></i> Tạo danh mục</button>
+            <h4 class="fw-bold m-0">Quản lý Loại sản phẩm</h4>
+            <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#addTypeModal">
+                <i class="fas fa-plus me-2"></i> Thêm Loại mới
+            </button>
         </div>
 
-        <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-box">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
+                <table class="table table-custom align-middle">
+                    <thead>
                         <tr>
-                            <th class="ps-4">ID</th>
+                            <th class="ps-4">Mã loại</th>
                             <th>Hình ảnh</th>
-                            <th>Tên danh mục</th>
-                            <th>Slug (URL)</th>
+                            <th>Tên loại</th>
+                            <th>Số lượng sản phẩm</th>
                             <th>Trạng thái</th>
-                            <th class="text-end pe-4">Hành động</th>
+                            <th class="text-end pe-4">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="i : ${#numbers.sequence(1, 5)}">
-                            <td class="ps-4 fw-bold">#[[${i}]]</td>
-                            <td>
-                                <img src="https://cf.shopee.vn/file/322a6d327458d60bb1b78eb2dfb63a59" 
-                                     class="rounded-3 border" width="40" height="40" style="object-fit: cover;">
-                            </td>
-                            <td class="fw-bold">Áo thun</td>
-                            <td class="text-muted">/ao-thun</td>
-                            <td><span class="badge bg-success">Hiển thị</span></td>
+                        <tr>
+                            <td class="ps-4">#L-01</td>
+                            <td><img src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a" class="rounded"
+                                    width="45"></td>
+                            <td class="fw-bold">Giày</td>
+                            <td><span class="badge bg-light text-dark">120 sản phẩm</span></td>
+                            <td><span class="badge-light-success">Hoạt động</span></td>
                             <td class="text-end pe-4">
-                                <a href="#" class="text-muted me-2"><i class="fas fa-pen"></i></a>
-                                <a href="#" class="text-danger"><i class="fas fa-trash"></i></a>
+                                <button class="btn-icon btn-icon-edit"><i class="fas fa-pen"></i></button>
+                                <button class="btn-icon btn-icon-delete ms-1"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4">#L-02</td>
+                            <td><img src="https://images.unsplash.com/photo-1603487742131-4160ec999306" class="rounded"
+                                    width="45"></td>
+                            <td class="fw-bold">Dép</td>
+                            <td><span class="badge bg-light text-dark">45 sản phẩm</span></td>
+                            <td><span class="badge-light-success">Hoạt động</span></td>
+                            <td class="text-end pe-4">
+                                <button class="btn-icon btn-icon-edit"><i class="fas fa-pen"></i></button>
+                                <button class="btn-icon btn-icon-delete ms-1"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>
                     </tbody>
@@ -45,4 +59,5 @@
         </div>
     </article>
 </body>
+
 </html>

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+
+<head>
+    <title>Địa chỉ của tôi - ShopOMG</title>
+</head>
+
+<body>
+    <article class="container py-5">
+        <div class="row">
+            <div class="col-lg-3 mb-4">
+                <div th:replace="~{fragments/account-sidebar :: sidebar('addresses')}"></div>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="card-box">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h5 class="fw-bold mb-1">Địa chỉ của tôi</h5>
+                            <p class="text-muted small mb-0">Quản lý địa chỉ giao hàng</p>
+                        </div>
+                        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#addressModal"
+                            onclick="openAddModal()">
+                            <i class="fas fa-plus me-2"></i>Thêm địa chỉ mới
+                        </button>
+                    </div>
+
+                    <!-- Alert Messages -->
+                    <div id="alertContainer"></div>
+
+                    <!-- Address List -->
+                    <div id="addressList" class="row g-3">
+                        <!-- Addresses will be loaded here via AJAX -->
+                        <div class="col-12 text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Đang tải...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="emptyState" class="text-center py-5" style="display: none;">
+                        <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Bạn chưa có địa chỉ nào</p>
+                        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#addressModal"
+                            onclick="openAddModal()">
+                            Thêm địa chỉ đầu tiên
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Article tag continues to include modals and scripts -->
+
+        <!-- Address Modal -->
+        <div class="modal fade" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="addressModalLabel">Thêm địa chỉ mới</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addressForm">
+                            <input type="hidden" id="addressId">
+
+                            <div class="mb-3">
+                                <label for="recipientName" class="form-label small fw-bold">Họ và tên người nhận <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="recipientName" placeholder="Nhập họ tên...">
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="phone" class="form-label small fw-bold">Số điện thoại <span
+                                        class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phone" placeholder="Nhập số điện thoại...">
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="city" class="form-label small fw-bold">Tỉnh/Thành phố <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="city" placeholder="VD: Hà Nội">
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="district" class="form-label small fw-bold">Quận/Huyện <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="district" placeholder="VD: Cầu Giấy">
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="detailAddress" class="form-label small fw-bold">Địa chỉ chi tiết <span
+                                        class="text-danger">*</span></label>
+                                <textarea class="form-control" id="detailAddress" rows="2"
+                                    placeholder="Số nhà, tên đường..."></textarea>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isDefault">
+                                <label class="form-check-label" for="isDefault">
+                                    Đặt làm địa chỉ mặc định
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-dark" onclick="saveAddress()">
+                            <span id="saveButtonText">Lưu địa chỉ</span>
+                            <span id="saveButtonSpinner" class="spinner-border spinner-border-sm ms-2"
+                                style="display: none;"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="deleteModalLabel">Xác nhận xóa</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">Bạn có chắc chắn muốn xóa địa chỉ này?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete()">Xóa</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .address-card {
+                border: 2px solid #e9ecef;
+                border-radius: 8px;
+                padding: 20px;
+                transition: all 0.3s ease;
+                position: relative;
+            }
+
+            .address-card:hover {
+                border-color: #dee2e6;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            }
+
+            .address-card.default {
+                border-color: #198754;
+                background: linear-gradient(135deg, #f8fff9 0%, #ffffff 100%);
+            }
+
+            .default-badge {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: #198754;
+                color: white;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+
+            .address-actions {
+                margin-top: 15px;
+                padding-top: 15px;
+                border-top: 1px solid #e9ecef;
+            }
+
+            .address-actions .btn {
+                font-size: 13px;
+                padding: 6px 12px;
+            }
+
+            .card-box {
+                background: white;
+                border-radius: 12px;
+                padding: 30px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            }
+        </style>
+
+        <script>
+            let deleteAddressId = null;
+
+            // Load addresses on page load
+            document.addEventListener('DOMContentLoaded', function () {
+                loadAddresses();
+            });
+
+            // Load all addresses
+            function loadAddresses() {
+                fetch('/api/addresses', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success && result.data && result.data.length > 0) {
+                            displayAddresses(result.data);
+                        } else {
+                            showEmptyState();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('Không thể tải danh sách địa chỉ', 'danger');
+                        showEmptyState();
+                    });
+            }
+
+            // Display addresses
+            function displayAddresses(addresses) {
+                const container = document.getElementById('addressList');
+                const emptyState = document.getElementById('emptyState');
+
+                emptyState.style.display = 'none';
+
+                container.innerHTML = addresses.map(addr => `
+                <div class="col-md-6">
+                    <div class="address-card ${addr.isDefault ? 'default' : ''}">
+                        ${addr.isDefault ? '<span class="default-badge">Mặc định</span>' : ''}
+                        
+                        <div class="mb-2">
+                            <strong class="d-block mb-1">${escapeHtml(addr.recipientName)}</strong>
+                            <span class="text-muted small">${escapeHtml(addr.phone)}</span>
+                        </div>
+                        
+                        <p class="text-muted small mb-0">
+                            ${escapeHtml(addr.detailAddress)}<br>
+                            ${escapeHtml(addr.district)}, ${escapeHtml(addr.city)}
+                        </p>
+
+                        <div class="address-actions">
+                            ${!addr.isDefault ? `
+                                <button class="btn btn-sm btn-outline-success me-2" onclick="setDefault(${addr.id})">
+                                    <i class="fas fa-check me-1"></i>Đặt mặc định
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-sm btn-outline-primary me-2" onclick="editAddress(${addr.id})">
+                                <i class="fas fa-edit me-1"></i>Sửa
+                            </button>
+                            ${!addr.isDefault ? `
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAddress(${addr.id})">
+                                    <i class="fas fa-trash me-1"></i>Xóa
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            }
+
+            // Show empty state
+            function showEmptyState() {
+                document.getElementById('addressList').innerHTML = '';
+                document.getElementById('emptyState').style.display = 'block';
+            }
+
+            // Open add modal
+            function openAddModal() {
+                document.getElementById('addressModalLabel').textContent = 'Thêm địa chỉ mới';
+                document.getElementById('addressForm').reset();
+                document.getElementById('addressId').value = '';
+                clearValidation();
+            }
+
+            // Edit address
+            function editAddress(id) {
+                fetch(`/api/addresses/${id}`)
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            const addr = result.data;
+                            document.getElementById('addressModalLabel').textContent = 'Chỉnh sửa địa chỉ';
+                            document.getElementById('addressId').value = addr.id;
+                            document.getElementById('recipientName').value = addr.recipientName;
+                            document.getElementById('phone').value = addr.phone;
+                            document.getElementById('city').value = addr.city;
+                            document.getElementById('district').value = addr.district;
+                            document.getElementById('detailAddress').value = addr.detailAddress;
+                            document.getElementById('isDefault').checked = addr.isDefault;
+
+                            clearValidation();
+                            const modal = new bootstrap.Modal(document.getElementById('addressModal'));
+                            modal.show();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('Không thể tải thông tin địa chỉ', 'danger');
+                    });
+            }
+
+            // Save address
+            function saveAddress() {
+                const id = document.getElementById('addressId').value;
+                const data = {
+                    recipientName: document.getElementById('recipientName').value.trim(),
+                    phone: document.getElementById('phone').value.trim(),
+                    city: document.getElementById('city').value.trim(),
+                    district: document.getElementById('district').value.trim(),
+                    detailAddress: document.getElementById('detailAddress').value.trim(),
+                    isDefault: document.getElementById('isDefault').checked
+                };
+
+                clearValidation();
+                setLoading(true);
+
+                const url = id ? `/api/addresses/${id}` : '/api/addresses';
+                const method = id ? 'PUT' : 'POST';
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        setLoading(false);
+                        if (result.success) {
+                            bootstrap.Modal.getInstance(document.getElementById('addressModal')).hide();
+                            showAlert(result.message, 'success');
+                            loadAddresses();
+                        } else {
+                            if (result.data && typeof result.data === 'object') {
+                                showValidationErrors(result.data);
+                            } else {
+                                showAlert(result.message, 'danger');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        setLoading(false);
+                        console.error('Error:', error);
+                        showAlert('Đã xảy ra lỗi khi lưu địa chỉ', 'danger');
+                    });
+            }
+
+            // Set default address
+            function setDefault(id) {
+                fetch(`/api/addresses/${id}/set-default`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            showAlert(result.message, 'success');
+                            loadAddresses();
+                        } else {
+                            showAlert(result.message, 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('Không thể đặt địa chỉ mặc định', 'danger');
+                    });
+            }
+
+            // Delete address
+            function deleteAddress(id) {
+                deleteAddressId = id;
+                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            }
+
+            // Confirm delete
+            function confirmDelete() {
+                if (!deleteAddressId) return;
+
+                fetch(`/api/addresses/${deleteAddressId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+                        if (result.success) {
+                            showAlert(result.message, 'success');
+                            loadAddresses();
+                        } else {
+                            showAlert(result.message, 'danger');
+                        }
+                        deleteAddressId = null;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('Không thể xóa địa chỉ', 'danger');
+                        deleteAddressId = null;
+                    });
+            }
+
+            // Show alert
+            function showAlert(message, type) {
+                const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+                document.getElementById('alertContainer').innerHTML = alertHtml;
+
+                setTimeout(() => {
+                    const alert = document.querySelector('.alert');
+                    if (alert) {
+                        alert.classList.remove('show');
+                        setTimeout(() => alert.remove(), 150);
+                    }
+                }, 5000);
+            }
+
+            // Show validation errors
+            function showValidationErrors(errors) {
+                Object.keys(errors).forEach(field => {
+                    const input = document.getElementById(field);
+                    if (input) {
+                        input.classList.add('is-invalid');
+                        const feedback = input.nextElementSibling;
+                        if (feedback && feedback.classList.contains('invalid-feedback')) {
+                            feedback.textContent = errors[field];
+                        }
+                    }
+                });
+            }
+
+            // Clear validation
+            function clearValidation() {
+                document.querySelectorAll('.is-invalid').forEach(el => {
+                    el.classList.remove('is-invalid');
+                });
+                document.querySelectorAll('.invalid-feedback').forEach(el => {
+                    el.textContent = '';
+                });
+            }
+
+            // Set loading state
+            function setLoading(loading) {
+                document.getElementById('saveButtonText').style.display = loading ? 'none' : 'inline';
+                document.getElementById('saveButtonSpinner').style.display = loading ? 'inline-block' : 'none';
+            }
+
+            // Escape HTML
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        </script>
+    </article>
+</body>
+
+</html>

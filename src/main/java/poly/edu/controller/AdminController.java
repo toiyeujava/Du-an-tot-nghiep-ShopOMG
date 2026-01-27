@@ -1,4 +1,5 @@
 package poly.edu.controller;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +22,7 @@ public class AdminController {
         model.addAttribute("pageTitle", "Quản lý sản phẩm");
         return "admin/products";
     }
-    
+
     // Form thêm/sửa sản phẩm
     @GetMapping("/products/create")
     public String createProduct(Model model) {
@@ -35,11 +36,18 @@ public class AdminController {
         return "admin/orders";
     }
 
-    // 4. Quản lý Danh mục
+    // 4. Quản lý Loại
     @GetMapping("/categories")
     public String categories(Model model) {
-        model.addAttribute("pageTitle", "Quản lý danh mục");
+        model.addAttribute("pageTitle", "Quản lý loại");
         return "admin/categories";
+    }
+
+    // 5. Quản lý Loại
+    @GetMapping("/catalog")
+    public String catalog(Model model) {
+        model.addAttribute("pageTitle", "Quản lý danh mục");
+        return "admin/catalog";
     }
 
     // 5. Quản lý Tài khoản

@@ -34,41 +34,32 @@ PRINT '--- PHẦN 1: Cập nhật bảng Accounts ---';
 GO
 
 -- 1.1. Thêm field email_verified (Email Verification)
-IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Accounts') AND name = 'email_verified')
+IF NOT EXISTS (
+    SELECT * FROM sys.columns 
+    WHERE object_id = OBJECT_ID('dbo.Accounts') 
+      AND name = 'email_verified'
+)
 BEGIN
-    ALTER TABLE Accounts ADD email_verified BIT DEFAULT 0;
-    PRINT '✅ [1/6] Đã thêm field email_verified vào bảng Accounts';
-    
-    -- Cập nhật tất cả account hiện tại đã được verify (tránh ảnh hưởng user cũ)
-    EXEC('UPDATE Accounts SET email_verified = 1');
-    PRINT '   ℹ️  Đã cập nhật email_verified = 1 cho tất cả account hiện tại';
+    ALTER TABLE dbo.Accounts ADD email_verified BIT DEFAULT 0;
+    UPDATE dbo.Accounts SET email_verified = 1;
 END
-ELSE
-BEGIN
-    PRINT '⚠️  [1/6] Field email_verified đã tồn tại, bỏ qua';
-END
-GO
+
 
 -- 1.2. Thêm field failed_login_attempts (Login Attempt Limiting)
-IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Accounts') AND name = 'failed_login_attempts')
+IF NOT EXISTS (
+    SELECT * FROM sys.columns 
+    WHERE object_id = OBJECT_ID('dbo.Accounts') 
+      AND name = 'failed_login_attempts'
+)
 BEGIN
-    ALTER TABLE Accounts ADD failed_login_attempts INT DEFAULT 0;
-    PRINT '✅ [2/6] Đã thêm field failed_login_attempts vào bảng Accounts';
-    
-    -- Cập nhật tất cả account hiện tại về 0
-    UPDATE Accounts SET failed_login_attempts = 0 WHERE failed_login_attempts IS NULL;
-    PRINT '   ℹ️  Đã cập nhật failed_login_attempts = 0 cho tất cả account';
+    ALTER TABLE dbo.Accounts ADD failed_login_attempts INT NOT NULL DEFAULT 0;
 END
-ELSE
-BEGIN
-    PRINT '⚠️  [2/6] Field failed_login_attempts đã tồn tại, bỏ qua';
-END
-GO
+
 
 -- 1.3. Thêm field account_locked_until (Login Attempt Limiting)
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Accounts') AND name = 'account_locked_until')
 BEGIN
-    ALTER TABLE Accounts ADD account_locked_until DATETIME NULL;
+    ALTER TABLE dbo.Accounts ADD account_locked_until DATETIME NULL;
     PRINT '✅ [3/6] Đã thêm field account_locked_until vào bảng Accounts';
 END
 ELSE
@@ -80,7 +71,8 @@ GO
 -- 1.4. Thêm field last_login (Login Tracking)
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Accounts') AND name = 'last_login')
 BEGIN
-    ALTER TABLE Accounts ADD last_login DATETIME NULL;
+    ALTER TABLE dbo.Accounts ADD last_login DATETIME NULL;
+
     PRINT '✅ [4/6] Đã thêm field last_login vào bảng Accounts';
 END
 ELSE

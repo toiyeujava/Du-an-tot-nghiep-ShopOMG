@@ -112,7 +112,9 @@ public class AccountController {
             try {
                 String avatarPath = fileService.save(avatarFile);
                 acc.setAvatar(avatarPath);
-            } catch (IOException e) { e.printStackTrace(); }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         accountService.save(acc);

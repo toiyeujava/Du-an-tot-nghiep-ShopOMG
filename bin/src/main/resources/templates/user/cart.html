@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+<head>
+<title>Giỏ hàng - ShopOMG</title>
+</head>
+<body>
+	<article class="container py-5">
+		<div class="steps">
+			<div class="step-item active">
+				<div class="step-circle">1</div>
+				Giỏ hàng
+			</div>
+			<div class="step-line"></div>
+			<div class="step-item">
+				<div class="step-circle">2</div>
+				Thanh toán
+			</div>
+			<div class="step-line"></div>
+			<div class="step-item">
+				<div class="step-circle">3</div>
+				Hoàn tất
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-lg-8">
+				<div class="card-box">
+					<h5 class="fw-bold mb-3">Giỏ hàng (2 sản phẩm)</h5>
+					<div class="d-flex align-items-center border-bottom pb-3 mb-3">
+						<img
+							src="https://n7media.coolmate.me/uploads/September2025/ao-the-thao-nam-promax-recycle-basics1-copy-navy-logo-moi-1.jpg?aio=w-1100"
+							width="80" class="rounded">
+						<div class="ms-3 flex-grow-1">
+							<h6 class="fw-bold mb-1">Áo Thun Nam Basic</h6>
+							<small class="text-muted">Màu: Xanh Navy, Size: M</small>
+							<div class="fw-bold mt-1">200.000đ</div>
+						</div>
+						<div class="d-flex align-items-center">
+							<input type="number" class="form-control text-center" value="1"
+								style="width: 60px;">
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-lg-4">
+				<div class="card-box">
+					<h5 class="fw-bold mb-3">Tổng cộng</h5>
+					<div class="d-flex justify-content-between mb-2">
+						<span>Tạm tính:</span> <span class="fw-bold">200.000đ</span>
+					</div>
+					<div class="d-grid mt-4">
+						<a href="/checkout" class="btn btn-dark fw-bold py-2">THANH TOÁN</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</article>
+</body>
+</html>

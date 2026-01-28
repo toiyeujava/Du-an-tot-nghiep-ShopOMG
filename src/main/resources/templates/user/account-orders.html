@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+
 <head>
     <title>Đơn mua - ShopOMG</title>
 </head>
+
 <body>
     <article class="container py-5">
         <div class="row">
@@ -24,7 +25,8 @@
                     </div>
                     <div class="p-4">
                         <div class="d-flex align-items-center">
-                            <img src="https://n7media.coolmate.me/uploads/September2025/ao-the-thao-nam-promax-recycle-basics1-copy-navy-logo-moi-1.jpg?aio=w-1100" class="order-img">
+                            <img src="https://n7media.coolmate.me/uploads/September2025/ao-the-thao-nam-promax-recycle-basics1-copy-navy-logo-moi-1.jpg?aio=w-1100"
+                                class="order-img">
                             <div class="ms-3 flex-grow-1">
                                 <h6 class="mb-1 fw-bold">Áo Thun Nam Basic</h6>
                                 <small class="text-muted">Xanh / M | x1</small>
@@ -33,7 +35,8 @@
                         </div>
                     </div>
                     <div class="px-4 py-3 border-top text-end bg-light">
-                        <span class="text-muted me-2">Tổng tiền:</span> <span class="fw-bold text-danger fs-5">200.000đ</span>
+                        <span class="text-muted me-2">Tổng tiền:</span> <span
+                            class="fw-bold text-danger fs-5">200.000đ</span>
                         <div class="mt-2">
                             <button class="btn btn-dark btn-sm">Mua lại</button>
                         </div>
@@ -43,4 +46,5 @@
         </div>
     </article>
 </body>
+
 </html>

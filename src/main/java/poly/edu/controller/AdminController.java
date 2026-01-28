@@ -1,4 +1,5 @@
 package poly.edu.controller;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +22,7 @@ public class AdminController {
         model.addAttribute("pageTitle", "Quản lý sản phẩm");
         return "admin/products";
     }
-    
+
     // Form thêm/sửa sản phẩm
     @GetMapping("/products/create")
     public String createProduct(Model model) {

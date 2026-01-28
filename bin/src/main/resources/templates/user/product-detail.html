@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+<head>
+    <title>Chi tiết sản phẩm - ShopOMG</title>
+</head>
+<body>
+    <article class="container py-5">
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="mb-3">
+                    <img id="mainImg" src="https://n7media.coolmate.me/uploads/September2025/ao-the-thao-nam-promax-recycle-basics1-copy-navy-logo-moi-1.jpg?aio=w-1100" class="img-fluid rounded w-100">
+                </div>
+                <div class="d-flex gap-2">
+                    <img src="https://n7media.coolmate.me/uploads/September2025/ao-the-thao-nam-promax-recycle-basics1-copy-navy-logo-moi-1.jpg?aio=w-1100" class="thumbnail-img rounded" width="80">
+                    <img src="https://image.hm.com/assets/hm/7c/61/7c61fbed34a24cb2aa9bb509f0debcccc7f04b8b.jpg?imwidth=2160" class="thumbnail-img rounded" width="80">
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <h2 class="fw-bold mb-2">Áo Thun Nam Basic Premium</h2>
+                <div class="text-warning mb-3 small">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                    <span class="text-muted ms-2">(128 đánh giá)</span>
+                </div>
+                <h3 class="fw-bold text-danger mb-4">200.000đ <span class="text-muted text-decoration-line-through fs-5 fw-normal">250.000đ</span></h3>
+                
+                <p class="text-muted">Chất liệu 100% Cotton thoáng mát, thấm hút mồ hôi. Form dáng hiện đại, trẻ trung.</p>
+
+                <form action="/cart/add" method="post">
+                    <div class="mb-3">
+                        <label class="fw-bold d-block mb-2">Màu sắc:</label>
+                        <input type="radio" name="color" id="c1" class="variant-input" hidden checked>
+                        <label for="c1" class="variant-btn">Xanh</label>
+                        <input type="radio" name="color" id="c2" class="variant-input" hidden>
+                        <label for="c2" class="variant-btn">Đen</label>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="fw-bold d-block mb-2">Kích thước:</label>
+                        <input type="radio" name="size" id="s1" class="variant-input" hidden>
+                        <label for="s1" class="variant-btn">S</label>
+                        <input type="radio" name="size" id="s2" class="variant-input" hidden checked>
+                        <label for="s2" class="variant-btn">M</label>
+                        <input type="radio" name="size" id="s3" class="variant-input" hidden>
+                        <label for="s3" class="variant-btn">L</label>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <input type="number" class="form-control text-center" value="1" style="width: 80px;">
+                        <button class="btn btn-dark flex-grow-1 fw-bold">THÊM VÀO GIỎ</button>
+                    </div>
+                </form>
+
+                <div class="mt-4 pt-4 border-top">
+                    <div class="small text-muted mb-2"><i class="fas fa-truck me-2"></i>Freeship đơn từ 500k</div>
+                    <div class="small text-muted"><i class="fas fa-sync-alt me-2"></i>Đổi trả trong 30 ngày</div>
+                </div>
+            </div>
+        </div>
+    </article>
+</body>
+</html>

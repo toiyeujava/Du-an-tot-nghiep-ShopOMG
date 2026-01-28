@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+
+<head>
+	<title>Đăng ký - ShopOMG</title>
+	<style>
+		/* Override ảnh riêng cho trang đăng ký */
+		.auth-image-register {
+			background-image:
+				url('https://pos.nvncdn.com/312d68-57499/art/artCT/20210113_yshSULHZWwO4JtJRgvt762bn.jpg');
+			background-size: cover;
+			background-position: center;
+			height: 100%;
+			min-height: 600px;
+			/* Cao hơn chút vì form dài */
+		}
+	</style>
+</head>
+
+<body>
+	<article class="py-5" style="background-color: #f8f9fa;">
+		<div class="container">
+			<div class="row justify-content-center">
+				<div class="col-lg-10">
+					<div class="auth-container row g-0">
+
+						<div class="col-lg-6 auth-form-wrapper order-2 order-lg-1">
+							<div class="text-center mb-4">
+								<h3 class="fw-bold">Tạo tài khoản mới</h3>
+								<p class="text-muted small">Trở thành thành viên để nhận ưu
+									đãi riêng</p>
+							</div>
+
+							<form th:action="@{/account/sign-up}" th:object="${form}" method="post">
+
+								<div class="form-floating mb-3">
+									<input type="text" class="form-control" id="fullName" th:field="*{fullName}"
+										placeholder="Họ tên"> <label for="fullName">Họ và tên</label> <small
+										th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"
+										class="text-danger"></small>
+								</div>
+
+								<div class="form-floating mb-3">
+									<input type="text" class="form-control" id="username" th:field="*{username}"
+										placeholder="Tên đăng nhập"> <label for="username">Tên đăng nhập</label> <small
+										th:if="${#fields.hasErrors('username')}" th:errors="*{username}"
+										class="text-danger"></small>
+								</div>
+
+								<div class="form-floating mb-3">
+									<input type="email" class="form-control" id="email" th:field="*{email}"
+										placeholder="name@example.com"> <label for="email">Địa chỉ Email</label> <small
+										th:if="${#fields.hasErrors('email')}" th:errors="*{email}"
+										class="text-danger"></small>
+								</div>
+
+								<div class="form-floating mb-3">
+									<input type="password" class="form-control" id="password" th:field="*{password}"
+										placeholder="Password" oninput="checkPasswordStrength()">
+									<label for="password">Mật khẩu *</label>
+
+									<!-- Password Strength Bar -->
+									<div class="password-strength-bar mt-2">
+										<div id="strengthBar" class="strength-bar-fill"></div>
+									</div>
+									<small id="strengthText" class="text-muted"></small>
+
+									<!-- Password Requirements Checklist -->
+									<div class="password-requirements mt-2">
+										<small>
+											<div id="req-length" class="requirement">
+												<i class="bi bi-x-circle text-danger"></i>
+												Tối thiểu 8 ký tự
+											</div>
+											<div id="req-uppercase" class="requirement">
+												<i class="bi bi-x-circle text-danger"></i>
+												Ít nhất 1 chữ hoa (A-Z)
+											</div>
+											<div id="req-lowercase" class="requirement">
+												<i class="bi bi-x-circle text-danger"></i>
+												Ít nhất 1 chữ thường (a-z)
+											</div>
+											<div id="req-number" class="requirement">
+												<i class="bi bi-x-circle text-danger"></i>
+												Ít nhất 1 số (0-9)
+											</div>
+											<div id="req-special" class="requirement">
+												<i class="bi bi-x-circle text-danger"></i>
+												Ít nhất 1 ký tự đặc biệt (@#$%^&+=!)
+											</div>
+										</small>
+									</div>
+
+									<small th:if="${#fields.hasErrors('password')}" th:errors="*{password}"
+										class="text-danger"></small>
+								</div>
+
+								<div class="form-floating mb-3">
+									<input type="password" class="form-control" id="confirmPassword"
+										th:field="*{confirmPassword}" placeholder="Confirm Password"> <label
+										for="confirmPassword">Nhập lại mật khẩu</label> <small
+										th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"
+										class="text-danger"></small>
+								</div>
+
+								<div class="d-grid mb-4">
+									<button type="submit" class="btn btn-dark py-3 fw-bold rounded-3">ĐĂNG KÝ
+										NGAY</button>
+								</div>
+
+								<div class="text-center">
+									<p class="small text-muted">
+										Đã có tài khoản? <a href="/login"
+											class="text-dark fw-bold text-decoration-none">Đăng nhập
+											tại đây</a>
+									</p>
+								</div>
+							</form>
+						</div>
+
+						<div class="col-lg-6 d-none d-lg-block order-1 order-lg-2">
+							<div class="auth-image-register"></div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</article>
+
+	<style>
+		/* Password Strength Indicator Styles */
+		.password-strength-bar {
+			height: 5px;
+			background-color: #e0e0e0;
+			border-radius: 3px;
+			overflow: hidden;
+			margin-top: 8px;
+		}
+
+		.strength-bar-fill {
+			height: 100%;
+			width: 0%;
+			transition: width 0.3s ease, background-color 0.3s ease;
+		}
+
+		.strength-weak {
+			background-color: #dc3545;
+		}
+
+		.strength-medium {
+			background-color: #ffc107;
+		}
+
+		.strength-strong {
+			background-color: #28a745;
+		}
+
+		.password-requirements {
+			font-size: 0.875rem;
+			margin-top: 8px;
+		}
+
+		.requirement {
+			margin: 4px 0;
+			transition: color 0.3s ease;
+		}
+
+		.requirement i {
+			margin-right: 5px;
+			font-size: 0.9rem;
+			transition: color 0.3s ease;
+		}
+	</style>
+
+	<script>
+		function checkPasswordStrength() {
+			const password = document.getElementById('password').value;
+
+			// Check requirements
+			const hasLength = password.length >= 8;
+			const hasUppercase = /[A-Z]/.test(password);
+			const hasLowercase = /[a-z]/.test(password);
+			const hasNumber = /[0-9]/.test(password);
+			const hasSpecial = /[@#$%^&+=!]/.test(password);
+
+			// Update UI for each requirement
+			updateRequirement('req-length', hasLength);
+			updateRequirement('req-uppercase', hasUppercase);
+			updateRequirement('req-lowercase', hasLowercase);
+			updateRequirement('req-number', hasNumber);
+			updateRequirement('req-special', hasSpecial);
+
+			// Calculate strength
+			let strength = 0;
+			if (hasLength) strength++;
+			if (hasUppercase) strength++;
+			if (hasLowercase) strength++;
+			if (hasNumber) strength++;
+			if (hasSpecial) strength++;
+
+			// Update strength bar
+			updateStrengthBar(strength);
+		}
+
+		function updateRequirement(id, passed) {
+			const element = document.getElementById(id);
+			const icon = element.querySelector('i');
+
+			if (passed) {
+				icon.className = 'bi bi-check-circle text-success';
+				element.classList.add('text-success');
+				element.classList.remove('text-danger');
+			} else {
+				icon.className = 'bi bi-x-circle text-danger';
+				element.classList.add('text-danger');
+				element.classList.remove('text-success');
+			}
+		}
+
+		function updateStrengthBar(strength) {
+			const bar = document.getElementById('strengthBar');
+			const text = document.getElementById('strengthText');
+
+			if (strength === 0) {
+				bar.style.width = '0%';
+				text.textContent = '';
+				return;
+			}
+
+			const percentage = (strength / 5) * 100;
+			bar.style.width = percentage + '%';
+
+			if (strength <= 2) {
+				bar.className = 'strength-bar-fill strength-weak';
+				text.textContent = 'Yếu';
+				text.className = 'text-danger fw-bold';
+			} else if (strength <= 4) {
+				bar.className = 'strength-bar-fill strength-medium';
+				text.textContent = 'Trung bình';
+				text.className = 'text-warning fw-bold';
+			} else {
+				bar.className = 'strength-bar-fill strength-strong';
+				text.textContent = 'Mạnh';
+				text.className = 'text-success fw-bold';
+			}
+		}
+	</script>
+</body>
+
+</html>

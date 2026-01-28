@@ -1,0 +1,61 @@
+<header th:fragment="header" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <div class="top-bar py-2 text-center">
+        Nhập mã <span class="fw-bold text-warning">OPENING</span> giảm ngay 20% đơn đầu tiên!
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/home">SHOP OMG!</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item"><a class="nav-link" href="/home">Trang chủ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/products?gender=Nam">Nam</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/products?gender=Nu">Nữ</a></li>
+                    <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/products?sale=true">Sale</a></li>
+                </ul>
+                
+                <div class="d-flex gap-3 align-items-center">
+                    <a href="#"><i class="fas fa-search text-dark"></i></a>
+                    <a href="/cart" class="position-relative text-dark">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">2</span>
+                    </a>
+                    
+                    <div class="d-flex align-items-center border-start ps-3 ms-2">
+                        <!-- Khi CHƯA đăng nhập -->
+                        <div sec:authorize="isAnonymous()" class="d-flex align-items-center">
+                            <a th:href="@{/login}" class="btn btn-sm btn-outline-dark rounded-pill px-3 me-2 fw-bold">Đăng nhập</a>
+                            <a th:href="@{/register}" class="btn btn-sm btn-dark rounded-pill px-3 fw-bold">Đăng ký</a>
+                        </div>
+
+                        <!-- Khi ĐÃ đăng nhập -->
+                        <div sec:authorize="isAuthenticated()" class="dropdown">
+                            <a class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img th:if="${currentUser != null && currentUser.avatar != null}" th:src="${currentUser.avatar}" class="rounded-circle me-2" style="width:28px; height:28px; object-fit:cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                                <i class="fas fa-user-circle me-2" th:if="${currentUser == null || currentUser.avatar == null}" style="display:none;"></i>
+                                <span class="small" th:text="${currentUser != null} ? ${currentUser.email} : ${#authentication.name}">Tài khoản</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="/account/profile">Tài khoản của tôi</a></li>
+                                <li><a class="dropdown-item" href="/account/orders">Đơn hàng của tôi</a></li>
+                                <li><a class="dropdown-item" href="/account/reviews">Đánh giá sản phẩm</a></li>
+                                <li sec:authorize="hasRole('ADMIN')"><hr class="dropdown-divider"></li>
+                                <li sec:authorize="hasRole('ADMIN')"><a class="dropdown-item" href="/admin/dashboard"><i class="fas fa-cog me-2"></i>Quản lý hệ thống</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form th:action="@{/logout}" method="post" class="px-3">
+                                        <button type="submit" class="btn btn-link p-0 text-danger small">Đăng xuất</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    </div>
+            </div>
+        </div>
+    </nav>
+</header>

@@ -50,6 +50,7 @@ public class AdminController {
         return "admin/catalog";
     }
 
+
     // 5. Quản lý Tài khoản
     @GetMapping("/accounts")
     public String accounts(Model model) {

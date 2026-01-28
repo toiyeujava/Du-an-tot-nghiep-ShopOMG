@@ -30,6 +30,7 @@
             margin-bottom: auto;
         }
     </style>
+
 </head>
 
 <body>
@@ -109,17 +110,25 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="city" class="form-label small fw-bold">Tỉnh/Thành phố <span
                                             class="text-danger">*</span></label>
+
                                     <select class="form-select" id="city">
                                         <option value="">Chọn Tỉnh/Thành phố</option>
                                     </select>
+
+                                    <input type="text" class="form-control" id="city" placeholder="VD: Hà Nội">
+
                                     <div class="invalid-feedback"></div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="district" class="form-label small fw-bold">Quận/Huyện <span
                                             class="text-danger">*</span></label>
+
                                     <select class="form-select" id="district" disabled>
                                         <option value="">Chọn Quận/Huyện</option>
                                     </select>
+
+                                    <input type="text" class="form-control" id="district" placeholder="VD: Cầu Giấy">
+
                                     <div class="invalid-feedback"></div>
                                 </div>
                             </div>
@@ -496,6 +505,7 @@
                 return div.innerHTML;
             }
 
+
             // ========== PROVINCE AND DISTRICT DROPDOWN LOGIC ==========
 
             // Vietnam Provinces and Districts Data (2026) - All 63 Provinces
@@ -675,6 +685,7 @@
                 if (citySelect) setupDropdownLimit(citySelect);
                 if (districtSelect) setupDropdownLimit(districtSelect);
             });
+
         </script>
     </article>
 </body>

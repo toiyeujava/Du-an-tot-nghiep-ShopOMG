@@ -88,6 +88,7 @@ public class HomeController {
         return "(+84)" + first2 + asterisks + last2;
     }
 
+
     /*
      * ❌ XÓA HOẶC COMMENT ĐOẠN DƯỚI ĐÂY ĐỂ TRÁNH XUNG ĐỘT VỚI AccountController
      * (Vì AccountController đã quản lý các đường dẫn /account/... này rồi)

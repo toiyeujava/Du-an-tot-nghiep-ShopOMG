@@ -10,12 +10,17 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item"><a class="nav-link" href="/home">Trang chủ</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/products?gender=Nam">Nam</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/products?gender=Nu">Nữ</a></li>
-                    <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/products?sale=true">Sale</a></li>
-                </ul>
+				<ul class="navbar-nav mx-auto">
+				    <li class="nav-item"><a class="nav-link" href="/home">Trang chủ</a></li>
+				    
+				    <li class="nav-item"><a class="nav-link" th:href="@{/products(gender='Nam')}">Nam</a></li>
+				    
+				    <li class="nav-item"><a class="nav-link" th:href="@{/products(gender='Nữ')}">Nữ</a></li>
+				    
+				    <li class="nav-item"><a class="nav-link" th:href="@{/products(gender='Unisex')}">Unisex</a></li>
+				    
+				    <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/products?sale=true">Sale</a></li>
+				</ul>
                 
                 <div class="d-flex gap-3 align-items-center">
                     <a href="#"><i class="fas fa-search text-dark"></i></a>

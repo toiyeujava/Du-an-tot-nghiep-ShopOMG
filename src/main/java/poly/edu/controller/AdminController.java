@@ -50,6 +50,12 @@ public class AdminController {
         return "admin/catalog";
     }
 
+    // 5. Quản lý Loại
+    @GetMapping("/catalog")
+    public String catalog(Model model) {
+        model.addAttribute("pageTitle", "Quản lý danh mục");
+        return "admin/catalog";
+    }
 
     // 5. Quản lý Tài khoản
     @GetMapping("/accounts")

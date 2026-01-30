@@ -126,13 +126,7 @@ public class HomeController {
         }
     }
 
-    // --- GIỎ HÀNG & THANH TOÁN ---
-    @GetMapping("/cart")
-    public String cart(Model model) {
-        model.addAttribute("pageTitle", "Giỏ hàng");
-        return "user/cart";
-    }
-
+    // --- THANH TOÁN ---
     @GetMapping("/checkout")
     public String checkout(Model model) {
         model.addAttribute("pageTitle", "Thanh toán");

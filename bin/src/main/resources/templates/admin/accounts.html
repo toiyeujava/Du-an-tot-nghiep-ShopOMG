@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+<head>
+    <title>Tài khoản - Admin</title>
+</head>
+<body>
+    <article>
+        <div class="card-box">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold m-0">Danh sách Người dùng</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light border">Xuất Excel</button>
+                    <button class="btn btn-primary">+ Thêm mới</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Thông tin</th>
+                            <th>Liên hệ</th>
+                            <th>Vai trò</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-4">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="ps-4 fw-bold text-muted">#101</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="https://i.pravatar.cc/150?img=12" class="rounded-circle" width="40" height="40">
+                                    <div class="ms-3">
+                                        <h6 class="mb-0 fw-bold text-dark">Nguyễn Văn A</h6>
+                                        <small class="text-muted">Tham gia: 12/10/2024</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>nguyenvana@gmail.com</div>
+                                <div class="small text-muted">0909123456</div>
+                            </td>
+                            <td><span class="badge bg-secondary">USER</span></td>
+                            <td><span class="badge-light-success fw-bold">Hoạt động</span></td>
+                            <td class="text-end pe-4">
+                                <a href="#" class="btn-icon btn-icon-edit"><i class="fas fa-pen"></i></a>
+                                <a href="#" class="btn-icon btn-icon-delete ms-2"><i class="fas fa-lock"></i></a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4 fw-bold text-muted">#001</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="https://i.pravatar.cc/150?img=3" class="rounded-circle" width="40" height="40">
+                                    <div class="ms-3">
+                                        <h6 class="mb-0 fw-bold text-dark">Admin System</h6>
+                                        <small class="text-muted">Quản trị viên</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>admin@shopomg.com</div>
+                                <div class="small text-muted">---</div>
+                            </td>
+                            <td><span class="badge bg-dark">ADMIN</span></td>
+                            <td><span class="badge-light-success fw-bold">Hoạt động</span></td>
+                            <td class="text-end pe-4">
+                                </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </article>
+</body>
+</html>

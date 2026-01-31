@@ -1,30 +1,39 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
-	th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+
 <head>
     <title th:text="${pageTitle}">Cửa hàng - ShopOMG</title>
 </head>
+
 <body>
-	<article class="container py-5">
+    <article class="container py-5">
         <style>
-            .product-card:hover .quick-add-btn { opacity: 1 !important; }
-            .cursor-pointer { cursor: pointer; }
-            
+            .product-card:hover .quick-add-btn {
+                opacity: 1 !important;
+            }
+
+            .cursor-pointer {
+                cursor: pointer;
+            }
+
             /* === COLOR CIRCLE (Ô TRÒN MÀU) === */
             .color-circle {
-                display: inline-block; /* QUAN TRỌNG: Giúp ô tròn hiện hình */
-                width: 30px; 
-                height: 30px; 
+                display: inline-block;
+                /* QUAN TRỌNG: Giúp ô tròn hiện hình */
+                width: 30px;
+                height: 30px;
                 border-radius: 50%;
                 cursor: pointer;
                 vertical-align: middle;
                 margin-right: 5px;
-                border: 1px solid #ddd; /* Viền mờ mặc định */
+                border: 1px solid #ddd;
+                /* Viền mờ mặc định */
             }
-            
+
             /* Hiệu ứng khi chọn ô màu */
-            .color-option input:checked + .color-circle {
-                outline: 2px solid #667eea; /* Viền ngoài màu tím */
+            .color-option input:checked+.color-circle {
+                outline: 2px solid #667eea;
+                /* Viền ngoài màu tím */
                 outline-offset: 2px;
                 border-color: #667eea;
                 transform: scale(1.1);
@@ -49,25 +58,27 @@
             }
 
             /* Hiệu ứng khi chọn ô chữ */
-            .text-option input:checked + .text-badge {
-                background-color: #212529; /* Nền đen */
-                color: #fff;               /* Chữ trắng */
+            .text-option input:checked+.text-badge {
+                background-color: #212529;
+                /* Nền đen */
+                color: #fff;
+                /* Chữ trắng */
                 border-color: #212529;
                 font-weight: bold;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
             }
         </style>
 
-		<div class="row">
-			<div class="col-lg-3 mb-4">
-				<form id="filterForm" action="/products" method="get">
-				    <input type="hidden" name="gender" th:value="${selectedGender}">
-				    
-				    <input type="hidden" name="sale" th:value="${isSale}"> 
-				    
-				    <input type="hidden" name="page" value="0"> 
+        <div class="row">
+            <div class="col-lg-3 mb-4">
+                <form id="filterForm" action="/products" method="get">
+                    <input type="hidden" name="gender" th:value="${selectedGender}">
 
-				    <div class="card-box p-4 border rounded shadow-sm bg-white">
+                    <input type="hidden" name="sale" th:value="${isSale}">
+
+                    <input type="hidden" name="page" value="0">
+
+                    <div class="card-box p-4 border rounded shadow-sm bg-white">
                         <h5 class="fw-bold mb-4">Bộ lọc</h5>
 
                         <div class="filter-group mb-4">
@@ -75,18 +86,16 @@
                             <div class="d-flex flex-column gap-2 mt-2">
                                 <div class="checkbox-btn">
                                     <label class="cursor-pointer d-flex align-items-center">
-                                        <input type="radio" name="category" value="" 
-                                               class="me-2 form-check-input"
-                                               th:checked="${selectedCategory == null}"
-                                               onchange="this.form.submit()"> <span>Tất cả</span>
+                                        <input type="radio" name="category" value="" class="me-2 form-check-input"
+                                            th:checked="${selectedCategory == null}" onchange="this.form.submit()">
+                                        <span>Tất cả</span>
                                     </label>
                                 </div>
                                 <div class="checkbox-btn" th:each="cat : ${categories}">
                                     <label class="cursor-pointer d-flex align-items-center">
-                                        <input type="radio" name="category" th:value="${cat.id}" 
-                                               class="me-2 form-check-input"
-                                               th:checked="${selectedCategory == cat.id}"
-                                               onchange="this.form.submit()">
+                                        <input type="radio" name="category" th:value="${cat.id}"
+                                            class="me-2 form-check-input" th:checked="${selectedCategory == cat.id}"
+                                            onchange="this.form.submit()">
                                         <span th:text="${cat.name}"></span>
                                         <span class="text-muted ms-1 small" th:text="'(' + ${cat.count} + ')'"></span>
                                     </label>
@@ -96,131 +105,137 @@
 
                         <div class="filter-group">
                             <label class="fw-bold mb-2 border-bottom pb-1 w-100">Phân loại</label>
-                            
+
                             <div class="mb-2">
                                 <label class="cursor-pointer small text-muted">
-                                    <input type="radio" name="color" value="" 
-                                           th:checked="${selectedColor == null || selectedColor == ''}"
-                                           onchange="this.form.submit()" class="me-1"> 
+                                    <input type="radio" name="color" value=""
+                                        th:checked="${selectedColor == null || selectedColor == ''}"
+                                        onchange="this.form.submit()" class="me-1">
                                     Tất cả
                                 </label>
                             </div>
 
                             <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
                                 <label class="color-option" title="Đen">
-                                    <input type="radio" name="color" value="Đen" 
-                                           th:checked="${selectedColor == 'Đen'}" 
-                                           onchange="this.form.submit()" hidden>
+                                    <input type="radio" name="color" value="Đen" th:checked="${selectedColor == 'Đen'}"
+                                        onchange="this.form.submit()" hidden>
                                     <span class="color-circle" style="background-color: #000;"></span>
                                 </label>
 
                                 <label class="color-option" title="Trắng">
-                                    <input type="radio" name="color" value="Trắng" 
-                                           th:checked="${selectedColor == 'Trắng'}" 
-                                           onchange="this.form.submit()" hidden>
+                                    <input type="radio" name="color" value="Trắng"
+                                        th:checked="${selectedColor == 'Trắng'}" onchange="this.form.submit()" hidden>
                                     <span class="color-circle" style="background-color: #fff;"></span>
                                 </label>
 
                                 <label class="text-option">
-                                    <input type="radio" name="color" value="Tiêu chuẩn" 
-                                           th:checked="${selectedColor == 'Tiêu chuẩn'}" 
-                                           onchange="this.form.submit()" hidden>
+                                    <input type="radio" name="color" value="Tiêu chuẩn"
+                                        th:checked="${selectedColor == 'Tiêu chuẩn'}" onchange="this.form.submit()"
+                                        hidden>
                                     <span class="text-badge">Tiêu chuẩn</span>
                                 </label>
-                                
+
                                 <label class="text-option">
-                                    <input type="radio" name="color" value="Mặc định" 
-                                           th:checked="${selectedColor == 'Mặc định'}" 
-                                           onchange="this.form.submit()" hidden>
+                                    <input type="radio" name="color" value="Mặc định"
+                                        th:checked="${selectedColor == 'Mặc định'}" onchange="this.form.submit()"
+                                        hidden>
                                     <span class="text-badge">Mặc định</span>
                                 </label>
                             </div>
-                            
-                            <div class="mt-2 small text-primary fw-bold" th:if="${selectedColor != null && selectedColor != ''}">
+
+                            <div class="mt-2 small text-primary fw-bold"
+                                th:if="${selectedColor != null && selectedColor != ''}">
                                 Đang chọn: <span th:text="${selectedColor}"></span>
                             </div>
                         </div>
-                        
+
                         <a href="/products" class="btn btn-outline-dark w-100 btn-sm mt-3">Xóa bộ lọc</a>
                     </div>
                 </form>
-			</div>
+            </div>
 
-			<div class="col-lg-9">
-				<div class="d-flex justify-content-between mb-3 align-items-center">
-					<span class="fw-bold text-muted">
+            <div class="col-lg-9">
+                <div class="d-flex justify-content-between mb-3 align-items-center">
+                    <span class="fw-bold text-muted">
                         Tìm thấy <span th:text="${products.totalElements}">0</span> sản phẩm
-                    </span> 
-                    
-                    <select name="sort" form="filterForm" onchange="this.form.submit()" 
-                            class="form-select w-auto border-0 bg-light fw-bold shadow-sm cursor-pointer">
-						<option value="newest" th:selected="${selectedSort == 'newest'}">Mới nhất</option>
-						<option value="price_asc" th:selected="${selectedSort == 'price_asc'}">Giá tăng dần</option>
-						<option value="price_desc" th:selected="${selectedSort == 'price_desc'}">Giá giảm dần</option>
+                    </span>
+
+                    <select name="sort" form="filterForm" onchange="this.form.submit()"
+                        class="form-select w-auto border-0 bg-light fw-bold shadow-sm cursor-pointer">
+                        <option value="newest" th:selected="${selectedSort == 'newest'}">Mới nhất</option>
+                        <option value="price_asc" th:selected="${selectedSort == 'price_asc'}">Giá tăng dần</option>
+                        <option value="price_desc" th:selected="${selectedSort == 'price_desc'}">Giá giảm dần</option>
                         <option value="name_asc" th:selected="${selectedSort == 'name_asc'}">Tên A-Z</option>
-					</select>
-				</div>
-                
+                    </select>
+                </div>
+
                 <div th:if="${products.isEmpty()}" class="alert alert-warning text-center">
                     Không tìm thấy sản phẩm nào phù hợp!
                 </div>
 
-				<div class="row row-cols-2 row-cols-md-3 g-4">
-					<div class="col" th:each="product : ${products.content}">
-						<div class="card product-card h-100 border-0 shadow-sm">
-                            <div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold" 
-                                 th:if="${product.discount > 0}" th:text="'-' + ${product.discount} + '%'">
+                <div class="row row-cols-2 row-cols-md-3 g-4">
+                    <div class="col" th:each="product : ${products.content}">
+                        <div class="card product-card h-100 border-0 shadow-sm">
+                            <div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold"
+                                th:if="${product.discount > 0}" th:text="'-' + ${product.discount} + '%'">
                             </div>
 
-							<div class="img-wrapper position-relative overflow-hidden">
-								<a th:href="@{/product/{id}(id=${product.id})}"> 
-                                    <img th:src="${product.image}" class="card-img-top" style="height: 250px; object-fit: cover;" 
-                                         onerror="this.src='https://placehold.co/600x400?text=No+Image'">
-								</a>
-                                <form th:action="@{/cart/add}" method="post" class="quick-add-btn position-absolute bottom-0 start-0 w-100 text-center bg-dark text-white py-2 opacity-0" style="transition: 0.3s;">
+                            <div class="img-wrapper position-relative overflow-hidden">
+                                <a th:href="@{/product/{id}(id=${product.id})}">
+                                    <img th:src="${product.image}" class="card-img-top"
+                                        style="height: 250px; object-fit: cover;"
+                                        onerror="this.src='https://placehold.co/600x400?text=No+Image'">
+                                </a>
+                                <form th:action="@{/cart/add}" method="post"
+                                    class="quick-add-btn position-absolute bottom-0 start-0 w-100 text-center bg-dark text-white py-2 opacity-0"
+                                    style="transition: 0.3s;">
                                     <input type="hidden" name="productId" th:value="${product.id}">
                                     <input type="hidden" name="quantity" value="1">
-									<button type="submit" class="btn btn-link text-white text-decoration-none w-100 p-0">
+                                    <button type="submit"
+                                        class="btn btn-link text-white text-decoration-none w-100 p-0">
                                         <i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
                                     </button>
-								</form>
-							</div>
-							<div class="card-body text-center">
-								<h6 class="card-title fw-bold text-truncate">
-									<a th:href="@{/product/{id}(id=${product.id})}" class="text-dark text-decoration-none" th:text="${product.name}"></a>
-								</h6>
-								<div class="fw-bold text-danger">
-                                    <span th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
-                                    <small class="text-muted text-decoration-line-through fw-normal ms-1" 
-                                           th:if="${product.discount > 0}"
-                                           th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>
+                                </form>
+                            </div>
+                            <div class="card-body text-center">
+                                <h6 class="card-title fw-bold text-truncate">
+                                    <a th:href="@{/product/{id}(id=${product.id})}"
+                                        class="text-dark text-decoration-none" th:text="${product.name}"></a>
+                                </h6>
+                                <div class="fw-bold text-danger">
+                                    <span
+                                        th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                                    <small class="text-muted text-decoration-line-through fw-normal ms-1"
+                                        th:if="${product.discount > 0}"
+                                        th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>
                                 </div>
-							</div>
-						</div>
-					</div>
-				</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <nav class="mt-5 d-flex justify-content-center" th:if="${products.totalPages > 1}">
-					<ul class="pagination">
-						<li class="page-item" th:classappend="${products.first} ? 'disabled'">
-							<a class="page-link text-dark" 
-                               th:href="@{/products(page=${products.number - 1}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort})}">«</a>
-						</li>
-						<li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
+                    <ul class="pagination">
+                        <li class="page-item" th:classappend="${products.first} ? 'disabled'">
+                            <a class="page-link text-dark"
+                                th:href="@{/products(page=${products.number - 1}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort})}">«</a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
                             th:classappend="${i == products.number} ? 'active'">
-							<a class="page-link" 
-                               th:href="@{/products(page=${i}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort})}"
-                               th:text="${i + 1}"
-                               th:classappend="${i == products.number} ? 'bg-dark border-dark text-white' : 'text-dark'"></a>
-						</li>
-						<li class="page-item" th:classappend="${products.last} ? 'disabled'">
-							<a class="page-link text-dark" 
-                               th:href="@{/products(page=${products.number + 1}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort})}">»</a>
-						</li>
-					</ul>
-				</nav>
-			</div>
-		</div>
-	</article>
+                            <a class="page-link"
+                                th:href="@{/products(page=${i}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort})}"
+                                th:text="${i + 1}"
+                                th:classappend="${i == products.number} ? 'bg-dark border-dark text-white' : 'text-dark'"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${products.last} ? 'disabled'">
+                            <a class="page-link text-dark"
+                                th:href="@{/products(page=${products.number + 1}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort})}">»</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </article>
 </body>
+
 </html>

@@ -1,0 +1,408 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+    --primary-color: #000;
+    --accent-color: #ffc107;
+    --text-color: #333;
+    --bg-light: #f8f9fa;
+    --border-color: #eee;
+}
+
+body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); color: var(--text-color); }
+a { text-decoration: none; color: inherit; transition: 0.2s; }
+a:hover { color: var(--primary-color); }
+
+/* --- HEADER & FOOTER --- */
+.top-bar { font-size: 0.85rem; background: #000; color: #fff; }
+.navbar-brand { font-weight: 800; letter-spacing: -1px; font-size: 1.5rem; }
+.nav-link { font-weight: 500; margin: 0 10px; }
+.nav-link.active { font-weight: 700; color: #000 !important; }
+
+footer { background-color: #111; color: #aaa; padding: 60px 0 20px; }
+footer h5 { color: #fff; margin-bottom: 20px; }
+footer a:hover { color: #fff; }
+
+/* --- PRODUCT CARD (Trang chủ & Danh sách) --- */
+.product-card {
+    border: none; border-radius: 8px; background: #fff;
+    transition: all 0.3s ease; position: relative; overflow: hidden;
+}
+.product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+.img-wrapper { position: relative; padding-top: 133%; overflow: hidden; } /* Tỉ lệ 3:4 */
+.img-wrapper img {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    object-fit: cover; transition: transform 0.5s ease;
+}
+.product-card:hover .img-wrapper img { transform: scale(1.05); }
+.discount-badge {
+    background-color: #dc3545; color: white; padding: 4px 8px;
+    font-size: 0.75rem; font-weight: 700; position: absolute; top: 10px; left: 10px; z-index: 2; border-radius: 4px;
+}
+.quick-add-btn {
+    position: absolute; bottom: -50px; left: 0; width: 100%;
+    background: rgba(0,0,0,0.8); color: white; text-align: center; padding: 10px;
+    transition: bottom 0.3s ease; cursor: pointer;
+}
+.product-card:hover .quick-add-btn { bottom: 0; }
+
+/* --- ACCOUNT SIDEBAR (Trang tài khoản) --- */
+.account-sidebar { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); overflow: hidden; }
+.user-info { padding: 25px 20px; text-align: center; border-bottom: 1px solid var(--border-color); }
+.user-avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--bg-light); margin-bottom: 10px; }
+.nav-account .nav-link {
+    color: #555; padding: 15px 25px; font-weight: 500;
+    border-left: 3px solid transparent; display: flex; align-items: center;
+}
+.nav-account .nav-link:hover { background-color: #f9f9f9; color: #000; }
+.nav-account .nav-link.active {
+    background-color: #f0f2f5; color: #000; border-left-color: #000; font-weight: 700;
+}
+.nav-account .nav-link i { width: 25px; margin-right: 10px; }
+.card-box {
+    background: #fff; border-radius: 8px; padding: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid var(--border-color); margin-bottom: 20px;
+}
+
+/* --- CART & CHECKOUT STEPS --- */
+.steps { display: flex; justify-content: center; margin-bottom: 30px; }
+.step-item { display: flex; align-items: center; color: #ccc; font-weight: 600; font-size: 0.9rem; }
+.step-item.active, .step-item.completed { color: #000; }
+.step-circle {
+    width: 30px; height: 30px; border-radius: 50%; background: #eee;
+    display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 0.8rem;
+}
+.step-item.active .step-circle, .step-item.completed .step-circle { background: #000; color: #fff; }
+.step-line { width: 60px; height: 2px; background: #eee; margin: 0 15px; }
+.step-line.active { background: #000; }
+
+/* --- RATING STARS (Modal) --- */
+.rating-stars { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+.rating-stars i { font-size: 2rem; color: #ddd; cursor: pointer; transition: color 0.2s; }
+.rating-stars i.active { color: var(--accent-color); }
+.quick-tag {
+    border: 1px solid #eee; background: #fff; padding: 5px 12px; border-radius: 20px;
+    font-size: 0.85rem; cursor: pointer; display: inline-block; margin: 0 5px 5px 0;
+}
+.quick-tag:hover, .quick-tag.selected { border-color: var(--accent-color); background-color: #fff8e1; color: #d39e00; }
+
+/* --- BỔ SUNG CSS CHO CÁC TRANG CON --- */
+
+/* 1. SHOP PAGE (Sản phẩm) */
+.filter-group { margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; }
+.checkbox-btn { display: flex; align-items: center; margin-bottom: 8px; color: #555; cursor: pointer; }
+.checkbox-btn:hover { color: #000; }
+.filter-color { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #ddd; margin-right: 5px; cursor: pointer; }
+.filter-color.active { transform: scale(1.2); border-color: #000; }
+
+/* 2. PRODUCT DETAIL (Chi tiết) */
+.thumbnail-img { cursor: pointer; opacity: 0.6; transition: 0.3s; border: 2px solid transparent; }
+.thumbnail-img:hover, .thumbnail-img.active { opacity: 1; border-color: #000; }
+.variant-btn { min-width: 40px; height: 40px; border: 1px solid #ddd; background: #fff; margin-right: 5px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+.variant-btn:hover, .variant-input:checked + .variant-btn { border-color: #000; background: #000; color: #fff; }
+
+/* 3. ORDER HISTORY & REVIEWS (Tài khoản) */
+.nav-account .nav-link { border-radius: 0; }
+.status-tab { padding: 10px 15px; color: #777; font-weight: 500; border-bottom: 2px solid transparent; }
+.status-tab.active { color: #000; border-bottom-color: #000; font-weight: 700; }
+.order-img { width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; }
+.upload-box { width: 80px; height: 80px; border: 2px dashed #ddd; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #aaa; cursor: pointer; }
+.upload-box:hover { border-color: #000; color: #000; }
+
+/* =========================================
+   ADMIN DASHBOARD PRO STYLES
+   ========================================= */
+
+:root {
+    --sidebar-width: 260px;
+    --sidebar-bg: #1e1e2d; /* Màu đen tím than sang trọng */
+    --sidebar-color: #9899ac;
+    --sidebar-active: #ffffff;
+    --primary-color: #3699ff;
+    --bg-body: #f5f8fa; /* Màu nền xám xanh nhạt dịu mắt */
+    --card-shadow: 0 0 20px 0 rgba(76, 87, 125, 0.02);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-body);
+    color: #3f4254;
+}
+
+/* --- SIDEBAR --- */
+.admin-sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-color);
+    padding-top: 20px;
+    z-index: 1000;
+    transition: all 0.3s;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.sidebar-brand {
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 40px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.admin-menu { padding: 0 10px; }
+
+.admin-menu a {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: var(--sidebar-color);
+    text-decoration: none;
+    font-weight: 500;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    transition: all 0.3s;
+}
+
+.admin-menu a:hover, .admin-menu a.active {
+    background-color: #1b1b29;
+    color: var(--sidebar-active);
+}
+
+.admin-menu a i {
+    width: 30px;
+    font-size: 1.1rem;
+}
+
+/* --- MAIN CONTENT --- */
+.admin-content {
+    margin-left: var(--sidebar-width);
+    padding: 30px;
+}
+
+/* --- PRO CARDS (Thẻ trắng bo tròn đổ bóng) --- */
+.card-box {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 25px;
+    border: none;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 24px;
+}
+
+/* --- STAT CARDS (Thẻ thống kê màu sắc) --- */
+.stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.3s;
+}
+.stat-card:hover { transform: translateY(-5px); }
+
+.icon-box {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* Màu Icon Pastel */
+.bg-primary-soft { background-color: #e1f0ff; color: #3699ff; }
+.bg-success-soft { background-color: #c9f7f5; color: #1bc5bd; }
+.bg-warning-soft { background-color: #fff4de; color: #ffa800; }
+.bg-danger-soft  { background-color: #ffe2e5; color: #f64e60; }
+
+/* --- TABLE PRO (Bảng dữ liệu đẹp) --- */
+.table-custom {
+    width: 100%;
+    margin-bottom: 0;
+    color: #3f4254;
+}
+.table-custom thead th {
+    background-color: #f3f6f9;
+    color: #b5b5c3;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    border: none;
+    padding: 15px 20px;
+}
+.table-custom thead th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+.table-custom thead th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+.table-custom tbody td {
+    padding: 15px 20px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f3f6f9;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+.table-custom tr:last-child td { border-bottom: none; }
+
+/* --- BADGES (Nhãn trạng thái) --- */
+.badge-light-success { background-color: #c9f7f5; color: #1bc5bd; padding: 8px 12px; border-radius: 6px; }
+.badge-light-warning { background-color: #fff4de; color: #ffa800; padding: 8px 12px; border-radius: 6px; }
+.badge-light-danger  { background-color: #ffe2e5; color: #f64e60; padding: 8px 12px; border-radius: 6px; }
+.badge-light-primary { background-color: #e1f0ff; color: #3699ff; padding: 8px 12px; border-radius: 6px; }
+
+/* --- BUTTON ACTIONS --- */
+.btn-icon {
+    width: 35px; height: 35px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 6px; border: none; transition: 0.2s;
+}
+.btn-icon-edit { background: #f3f6f9; color: #3699ff; }
+.btn-icon-edit:hover { background: #3699ff; color: #fff; }
+.btn-icon-delete { background: #f3f6f9; color: #f64e60; }
+.btn-icon-delete:hover { background: #f64e60; color: #fff; }
+
+/* --- AUTHENTICATION PAGES (Login/Register) --- */
+.auth-container {
+    min-height: 80vh; /* Chiều cao tối thiểu */
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(0,0,0,0.05);
+}
+
+.auth-image {
+    background-image: url('https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    height: 100%;
+    min-height: 500px;
+}
+
+.auth-form-wrapper {
+    padding: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.social-btn {
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #333;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.social-btn:hover {
+    background: #f8f9fa;
+    border-color: #bbb;
+}
+
+.form-floating > .form-control:focus, 
+.form-floating > .form-control:not(:placeholder-shown) {
+    padding-top: 1.625rem;
+    padding-bottom: 0.625rem;
+}
+
+/* --- PROFILE AVATAR UPLOAD --- */
+.profile-avatar-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 20px;
+}
+
+.profile-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.avatar-upload-btn {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 35px;
+    height: 35px;
+    background: #000;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid #fff;
+}
+
+.avatar-upload-btn:hover {
+    background: #333;
+    transform: scale(1.1);
+}
+
+/* Social Login */
+        .btn-google {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: white;
+            border: 2px solid #e9ecef;
+            color: #333;
+            padding: 12px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-google:hover {
+            background: #f8f9fa;
+            border-color: #dee2e6;
+            transform: translateY(-1px);
+        }
+
+        .btn-google img {
+            width: 24px;
+            height: 24px;
+        }
+
+/* Facebook Login - Style y chang Google */
+		.btn-facebook {
+		    display: flex;
+		    align-items: center;
+		    justify-content: center;
+		    gap: 12px;
+		    background: white;
+		    border: 2px solid #e9ecef;
+		    color: #333;
+		    padding: 12px;
+		    border-radius: 10px;
+		    text-decoration: none;
+		    font-weight: 600;
+		    transition: all 0.3s;
+		    cursor: pointer;
+		}
+
+		.btn-facebook:hover {
+		    background: #f8f9fa;
+		    border-color: #dee2e6;
+		    transform: translateY(-1px);
+		    color: #333; /* Đảm bảo màu chữ không đổi khi hover */
+		}
+
+		.btn-facebook img {
+		    width: 24px;
+		    height: 24px;
+		}

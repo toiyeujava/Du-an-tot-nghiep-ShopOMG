@@ -1,453 +1,284 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
-
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
 <head>
-    <title>Trang chủ - ShopOMG</title>
+<title>Trang chủ - ShopOMG</title>
 </head>
 
 <body>
-    <article>
-        <style>
-            /* Khung chứa ảnh: Cần overflow hidden để ảnh phóng to không bị tràn ra ngoài */
-            .img-wrapper {
-                position: relative;
-                overflow: hidden;
-                border-radius: 5px 5px 0 0;
-            }
+	<article>
+		<style>
+/* Khung chứa ảnh: Cần overflow hidden để ảnh phóng to không bị tràn ra ngoài */
+.img-wrapper {
+	position: relative;
+	overflow: hidden;
+	border-radius: 5px 5px 0 0;
+}
 
-            /* Ảnh sản phẩm: Thêm transition để mượt mà */
-            .img-wrapper img {
-                transition: transform 0.5s ease;
-                width: 100%;
-                height: 250px;
-                /* Chiều cao cố định cho đẹp đội hình */
-                object-fit: cover;
-                display: block;
-            }
+/* Ảnh sản phẩm: Thêm transition để mượt mà */
+.img-wrapper img {
+	transition: transform 0.5s ease;
+	width: 100%;
+	height: 250px; /* Chiều cao cố định cho đẹp đội hình */
+	object-fit: cover;
+	display: block;
+}
 
-            /* HIỆU ỨNG 1: Di chuột vào card -> Ảnh phóng to (Zoom) */
-            .product-card:hover .img-wrapper img {
-                transform: scale(1.1);
-            }
+/* HIỆU ỨNG 1: Di chuột vào card -> Ảnh phóng to (Zoom) */
+.product-card:hover .img-wrapper img {
+	transform: scale(1.1);
+}
 
-            /* Nút thêm giỏ hàng: Mặc định ẩn xuống dưới */
-            .quick-add-btn {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                background: rgba(0, 0, 0, 0.7);
-                /* Nền đen mờ */
-                padding: 10px;
-                text-align: center;
-                transition: all 0.3s ease;
-                transform: translateY(100%);
-                /* Đẩy xuống khỏi khung hình */
-                opacity: 0;
-            }
+/* Nút thêm giỏ hàng: Mặc định ẩn xuống dưới */
+.quick-add-btn {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	background: rgba(0, 0, 0, 0.7); /* Nền đen mờ */
+	padding: 10px;
+	text-align: center;
+	transition: all 0.3s ease;
+	transform: translateY(100%); /* Đẩy xuống khỏi khung hình */
+	opacity: 0;
+}
 
-            /* HIỆU ỨNG 2: Di chuột vào card -> Nút trồi lên */
-            .product-card:hover .quick-add-btn {
-                transform: translateY(0);
-                opacity: 1;
-            }
+/* HIỆU ỨNG 2: Di chuột vào card -> Nút trồi lên */
+.product-card:hover .quick-add-btn {
+	transform: translateY(0);
+	opacity: 1;
+}
 
-            /* Link ảnh: Bỏ gạch chân */
-            .product-link {
-                text-decoration: none;
-                display: block;
-            }
-        </style>
+/* Link ảnh: Bỏ gạch chân */
+.product-link {
+	text-decoration: none;
+	display: block;
+}
 
-        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-inner">
-                <div class="carousel-item active" style="height: 500px;">
-                    <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b"
-                        class="d-block w-100 h-100 object-fit-cover" alt="...">
-                    <div class="carousel-caption d-none d-md-block text-start" style="bottom: 20%; left: 10%;">
-                        <h1 class="display-3 fw-bold">BST Thu Đông 2025</h1>
-                        <a href="/products" class="btn btn-light btn-lg px-4 fw-bold">Mua ngay</a>
-                    </div>
-                </div>
-            </div>
-        </div>
+/* --- PHẦN THÊM MỚI: CHAT BOX CSS --- */
+/* Nút mở Chat */
+.chat-btn-toggle {
+	position: fixed;
+	bottom: 30px;
+	right: 30px;
+	width: 60px;
+	height: 60px;
+	background-color: #0d6efd; /* Màu xanh bootstrap */
+	color: white;
+	border-radius: 50%;
+	text-align: center;
+	line-height: 60px;
+	font-size: 24px;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+	cursor: pointer;
+	z-index: 9999;
+	transition: transform 0.3s;
+}
 
-        <section class="container my-5">
-            <h3 class="text-center fw-bold mb-4">Sản phẩm nổi bật</h3>
+.chat-btn-toggle:hover {
+	transform: scale(1.1);
+}
 
-            <div class="row">
-                <div class="col-6 col-md-3 mb-4" th:each="product : ${products.content}">
-                    <div class="card product-card h-100 border-0 shadow-sm overflow-hidden">
+/* Khung Chat Box */
+.chat-box-container {
+	position: fixed;
+	bottom: 100px;
+	right: 30px;
+	width: 350px;
+	height: 450px;
+	background: white;
+	border-radius: 10px;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+	z-index: 9999;
+	display: none; /* Mặc định ẩn */
+	flex-direction: column;
+	overflow: hidden;
+	border: 1px solid #ddd;
+}
 
-                        <div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold"
-                            style="z-index: 10;" th:if="${product.discount > 0}"
-                            th:text="'-' + ${product.discount} + '%'">
-                        </div>
+/* Header Chat */
+.chat-header {
+	background-color: #0d6efd;
+	color: white;
+	padding: 15px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-weight: bold;
+}
 
-                        <div class="img-wrapper">
-                            <a th:href="@{/product/{id}(id=${product.id})}" class="product-link">
-                                <img th:src="${product.image}"
-                                    onerror="this.src='https://placehold.co/600x400?text=No+Image'" alt="Product Image">
-                            </a>
+/* Nội dung tin nhắn */
+.chat-body {
+	flex: 1;
+	padding: 15px;
+	overflow-y: auto;
+	background-color: #f8f9fa;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
 
-                            <!-- Quick Add Button (Triggers Modal) -->
-                            <button type="button"
-                                class="btn btn-dark quick-add-btn text-white fw-bold w-100 p-2 border-0 rounded-0"
-                                data-bs-toggle="modal" th:data-bs-target="'#quickViewModal-' + ${product.id}">
-                                <i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
-                            </button>
-                        </div>
+/* Footer nhập liệu */
+.chat-footer {
+	padding: 10px;
+	border-top: 1px solid #eee;
+	display: flex;
+	gap: 10px;
+	background: white;
+}
 
-                        <div class="card-body">
-                            <h6 class="card-title fw-bold text-truncate">
-                                <a th:href="@{/product/{id}(id=${product.id})}" class="text-dark text-decoration-none"
-                                    th:text="${product.name}">Tên sản phẩm</a>
-                            </h6>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="fw-bold text-danger"
-                                    th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
-                                </span>
-                                <small class="text-muted text-decoration-line-through" th:if="${product.discount > 0}"
-                                    th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">
-                                </small>
-                            </div>
-                        </div>
-                    </div>
+/* Bong bóng tin nhắn */
+.message {
+	max-width: 80%;
+	padding: 8px 12px;
+	border-radius: 15px;
+	font-size: 14px;
+	line-height: 1.4;
+}
 
-                    <!-- Quick View Modal -->
-                    <div class="modal fade" th:id="'quickViewModal-' + ${product.id}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header border-0">
-                                    <h5 class="modal-title fw-bold" th:text="${product.name}">Tên sản phẩm</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <img th:src="${product.image}" class="img-fluid rounded"
-                                                onerror="this.src='https://placehold.co/150x150?text=Image'"
-                                                alt="Product">
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="mb-3">
-                                                <span class="fs-5 fw-bold text-danger"
-                                                    th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
-                                                </span>
-                                                <small class="text-muted text-decoration-line-through ms-2"
-                                                    th:if="${product.discount > 0}"
-                                                    th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">
-                                                </small>
-                                            </div>
+.message.bot {
+	background-color: #e9ecef;
+	color: #333;
+	align-self: flex-start;
+	border-bottom-left-radius: 2px;
+}
 
-                                            <form th:action="@{/cart/add}" method="post"
-                                                th:id="'form-quick-' + ${product.id}">
-                                                <input type="hidden" name="productId" th:value="${product.id}">
-                                                <input type="hidden" name="variantId" id="selectedVariantId" required>
+.message.user {
+	background-color: #0d6efd;
+	color: white;
+	align-self: flex-end;
+	border-bottom-right-radius: 2px;
+}
+</style>
 
-                                                <!-- Color Selection -->
-                                                <div class="mb-2">
-                                                    <label class="form-label small fw-bold mb-1">Màu sắc:</label>
-                                                    <div class="d-flex flex-wrap gap-2"
-                                                        th:id="'colors-' + ${product.id}">
-                                                        <!-- JS will populate or we use Thymeleaf logic below -->
-                                                        <!-- Simple approach: Thymeleaf to list UNIQUE colors -->
-                                                        <th:block th:each="variant : ${product.variants}">
-                                                            <div th:if="${variant.quantity > 0}"
-                                                                class="d-none variant-data"
-                                                                th:data-color="${variant.color}"
-                                                                th:data-size="${variant.size}"
-                                                                th:data-id="${variant.id}"
-                                                                th:data-qty="${variant.quantity}"></div>
-                                                        </th:block>
+		<div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+			<div class="carousel-inner">
+				<div class="carousel-item active" style="height: 500px;">
+					<img
+						src="https://images.unsplash.com/photo-1483985988355-763728e1935b"
+						class="d-block w-100 h-100 object-fit-cover" alt="...">
+					<div class="carousel-caption d-none d-md-block text-start"
+						style="bottom: 20%; left: 10%;">
+						<h1 class="display-3 fw-bold">BST Thu Đông 2025</h1>
+						<a href="/products" class="btn btn-light btn-lg px-4 fw-bold">Mua
+							ngay</a>
+					</div>
+				</div>
+			</div>
+		</div>
 
-                                                        <!-- We use a Set to avoid duplicates in rendering -->
-                                                        <!-- NOTE: Standard Thymeleaf doesn't have .distinct() easily. 
-                                                             We will use JS to render buttons based on the hidden data above. -->
-                                                    </div>
-                                                </div>
+		<section class="container my-5">
+			<h3 class="text-center fw-bold mb-4">Sản phẩm nổi bật</h3>
 
-                                                <!-- Size Selection -->
-                                                <div class="mb-2">
-                                                    <label class="form-label small fw-bold mb-1">Kích thước:</label>
-                                                    <div class="d-flex flex-wrap gap-2"
-                                                        th:id="'sizes-' + ${product.id}">
-                                                        <!-- JS populates -->
-                                                    </div>
-                                                </div>
+			<div class="row">
+				<div class="col-6 col-md-3 mb-4"
+					th:each="product : ${products.content}">
+					<div
+						class="card product-card h-100 border-0 shadow-sm overflow-hidden">
 
-                                                <!-- Stock & Quantity -->
-                                                <div class="mb-3">
-                                                    <div th:id="'stock-msg-' + ${product.id}"
-                                                        class="small text-muted mb-1 fw-bold">Vui lòng chọn phân loại
-                                                    </div>
+						<div
+							class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold"
+							style="z-index: 10;" th:if="${product.discount > 0}"
+							th:text="'-' + ${product.discount} + '%'"></div>
 
-                                                    <div class="d-flex align-items-center">
-                                                        <button type="button" class="btn btn-outline-dark rounded-0"
-                                                            id="btn-minus" disabled>-</button>
-                                                        <input type="number" name="quantity"
-                                                            class="form-control form-control-sm text-center border-start-0 border-end-0 rounded-0"
-                                                            value="1" min="1" max="1" style="width: 60px; height: 38px;"
-                                                            required disabled>
-                                                        <button type="button" class="btn btn-outline-dark rounded-0"
-                                                            id="btn-plus" disabled>+</button>
-                                                    </div>
-                                                </div>
+						<div class="img-wrapper">
+							<a th:href="@{/product/{id}(id=${product.id})}"
+								class="product-link"> <img th:src="${product.image}"
+								onerror="this.src='https://placehold.co/600x400?text=No+Image'"
+								alt="Product Image">
+							</a>
 
-                                                <button type="submit" class="btn btn-dark w-100 fw-bold" disabled>
-                                                    <i class="fas fa-check me-2"></i>Xác nhận thêm
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
+							<form th:action="@{/cart/add}" method="post"
+								class="quick-add-btn">
+								<input type="hidden" name="productId" th:value="${product.id}">
+								<input type="hidden" name="quantity" value="1">
+								<button type="submit"
+									class="btn btn-link text-white text-decoration-none fw-bold w-100 p-0">
+									<i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
+								</button>
+							</form>
+						</div>
 
-                                <!-- Script to initialize this specific modal -->
-                                <script th:inline="javascript">
-                                    (function () {
-                                        var pid = /*[[${product.id}]]*/ 0;
-                                        var modalId = 'quickViewModal-' + pid;
-                                        var formId = 'form-quick-' + pid;
-                                        var colorsContainer = document.getElementById('colors-' + pid);
-                                        var sizesContainer = document.getElementById('sizes-' + pid);
-                                        var stockMsg = document.getElementById('stock-msg-' + pid);
-                                        var form = document.getElementById(formId);
-                                        var btnSubmit = form.querySelector('button[type="submit"]');
-                                        var qtyInput = form.querySelector('input[name="quantity"]');
-                                        var variantInput = form.querySelector('input[name="variantId"]');
-                                        var btnMinus = form.querySelector('#btn-minus');
-                                        var btnPlus = form.querySelector('#btn-plus');
+						<div class="card-body">
+							<h6 class="card-title fw-bold text-truncate">
+								<a th:href="@{/product/{id}(id=${product.id})}"
+									class="text-dark text-decoration-none"
+									th:text="${product.name}">Tên sản phẩm</a>
+							</h6>
+							<div class="d-flex justify-content-between align-items-center">
+								<span class="fw-bold text-danger"
+									th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+								</span> <small class="text-muted text-decoration-line-through"
+									th:if="${product.discount > 0}"
+									th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+								</small>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 
-                                        // Read variants from hidden divs
-                                        var variants = [];
-                                        var rawData = document.querySelectorAll('#' + modalId + ' .variant-data');
-                                        rawData.forEach(function (el) {
-                                            variants.push({
-                                                color: el.getAttribute('data-color'),
-                                                size: el.getAttribute('data-size'),
-                                                id: el.getAttribute('data-id'),
-                                                qty: parseInt(el.getAttribute('data-qty'))
-                                            });
-                                        });
+			<nav class="mt-4 d-flex justify-content-center"
+				th:if="${products.totalPages > 1}">
+				<ul class="pagination">
+					<li class="page-item"
+						th:classappend="${products.first} ? 'disabled'"><a
+						class="page-link text-dark border-0 shadow-none"
+						th:href="@{/home(page=${products.number - 1})}"> <i
+							class="fas fa-chevron-left"></i>
+					</a></li>
 
-                                        // Extract unique colors and sizes
-                                        var uniqueColors = [...new Set(variants.map(v => v.color))];
-                                        var uniqueSizes = [...new Set(variants.map(v => v.size))];
+					<li class="page-item"
+						th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
+						th:classappend="${i == products.number} ? 'active'"><a
+						class="page-link rounded-circle mx-1 border-0"
+						th:href="@{/home(page=${i})}" th:text="${i + 1}"
+						th:classappend="${i == products.number} ? 'bg-dark text-white' : 'text-dark bg-light'">
+					</a></li>
 
-                                        var selColor = null;
-                                        var selSize = null;
-                                        var currentMaxQty = 1;
+					<li class="page-item"
+						th:classappend="${products.last} ? 'disabled'"><a
+						class="page-link text-dark border-0 shadow-none"
+						th:href="@{/home(page=${products.number + 1})}"> <i
+							class="fas fa-chevron-right"></i>
+					</a></li>
+				</ul>
+			</nav>
 
-                                        // Helper: Show Error Modal
-                                        function showError(msg) {
-                                            var errModalEl = document.getElementById('errorModal');
-                                            if (errModalEl) {
-                                                document.getElementById('errorMessage').innerText = msg;
-                                                var errModal = new bootstrap.Modal(errModalEl);
-                                                errModal.show();
-                                            } else {
-                                                alert(msg);
-                                            }
-                                        }
+		</section>
+		<div class="chat-btn-toggle" onclick="toggleChatBox()">
+			<i class="fas fa-comments"></i>
+		</div>
 
-                                        // Helper: Update Button States based on Qty
-                                        function updateBtnState() {
-                                            if (!selColor || !selSize) {
-                                                btnMinus.disabled = true;
-                                                btnPlus.disabled = true;
-                                                return;
-                                            }
+		<div class="chat-box-container" id="chatBox">
+			<div class="chat-header">
+				<span><i class="fas fa-headset me-2"></i>CSKH - ShopOMG</span>
+				<button type="button" class="btn-close btn-close-white"
+					onclick="toggleChatBox()"></button>
+			</div>
 
-                                            var val = parseInt(qtyInput.value) || 0;
-                                            // Minus disabled if val <= 1
-                                            // Plus disabled if val >= currentMaxQty (Logic similar to cart)
-                                            // User requested: "nut tru ko bi khoa ma van bam dc", "chi la no khong tru duoi 1"
-                                            // Actually, user said: "khi chọn sản phẩm số lượng 1 thì cái nút trừ nó không bị khóa mà vẫn bấm đc chỉ là nó không trừ ở dưới 1 thôi"
+			<div class="chat-body" id="chatBody">
+				<div class="message bot">Xin chào! ShopOMG có thể giúp gì cho
+					bạn hôm nay?</div>
+			</div>
 
-                                            // So we ALWAYS enable buttons if variant selected, handling logic inside click
-                                            btnMinus.disabled = false;
-                                            btnPlus.disabled = false;
-                                        }
+			<div class="chat-footer">
+				<input type="text" id="chatInput" class="form-control"
+					placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)">
+				<button class="btn btn-primary" onclick="sendMessage()">
+					<i class="fas fa-paper-plane"></i>
+				</button>
+			</div>
+		</div>
 
-                                        // Event: Click Minus
-                                        btnMinus.onclick = function () {
-                                            var val = parseInt(qtyInput.value) || 0;
-                                            if (val > 1) {
-                                                qtyInput.value = val - 1;
-                                            }
-                                            // Logic: If decreasing, warning disappears (if we had inline warning)
-                                        };
 
-                                        // Event: Click Plus
-                                        btnPlus.onclick = function () {
-                                            var val = parseInt(qtyInput.value) || 0;
-                                            if (val < currentMaxQty) {
-                                                qtyInput.value = val + 1;
-                                            } else {
-                                                // If trying to exceed max -> Show Popup
-                                                showError("Lỗi: Không đủ hàng trong kho. Còn lại: " + currentMaxQty);
-                                            }
-                                        };
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
-                                        // Event: Input Change (Manual Entry)
-                                        qtyInput.addEventListener('change', function () {
-                                            var val = parseInt(this.value) || 0;
-                                            if (val < 1) {
-                                                this.value = 1;
-                                            } else if (val > currentMaxQty) {
-                                                // User requested: "khi tôi nhập 200 thì nó sẽ pop up ra thông báo"
-                                                showError("Lỗi: Không đủ hàng trong kho. Còn lại: " + currentMaxQty);
-                                                this.value = currentMaxQty; // Reset to max? Or existing logic? 
-                                                // Usually resetting to max is good UX after error.
-                                            }
-                                        });
-
-                                        // Render Color Buttons
-                                        uniqueColors.forEach(c => {
-                                            var btnC = document.createElement('button');
-                                            btnC.type = 'button';
-                                            btnC.className = 'btn btn-sm btn-outline-dark me-1 mb-1';
-                                            btnC.innerText = c;
-                                            btnC.onclick = function () {
-                                                colorsContainer.querySelectorAll('.btn').forEach(b => b.classList.remove('active', 'btn-dark'));
-                                                colorsContainer.querySelectorAll('.btn').forEach(b => b.classList.add('btn-outline-dark'));
-
-                                                if (selColor === c) {
-                                                    selColor = null;
-                                                } else {
-                                                    selColor = c;
-                                                    this.classList.remove('btn-outline-dark');
-                                                    this.classList.add('btn-dark', 'active');
-                                                }
-                                                updateState();
-                                            };
-                                            colorsContainer.appendChild(btnC);
-                                        });
-
-                                        // Render Size Buttons
-                                        uniqueSizes.forEach(s => {
-                                            var btnS = document.createElement('button');
-                                            btnS.type = 'button';
-                                            btnS.className = 'btn btn-sm btn-outline-dark me-1 mb-1';
-                                            btnS.innerText = s;
-                                            btnS.onclick = function () {
-                                                sizesContainer.querySelectorAll('.btn').forEach(b => b.classList.remove('active', 'btn-dark'));
-                                                sizesContainer.querySelectorAll('.btn').forEach(b => b.classList.add('btn-outline-dark'));
-
-                                                if (selSize === s) {
-                                                    selSize = null;
-                                                } else {
-                                                    selSize = s;
-                                                    this.classList.remove('btn-outline-dark');
-                                                    this.classList.add('btn-dark', 'active');
-                                                }
-                                                updateState();
-                                            };
-                                            sizesContainer.appendChild(btnS);
-                                        });
-
-                                        function updateState() {
-                                            // Validate matching variant
-                                            var validVariant = null;
-                                            if (selColor && selSize) {
-                                                validVariant = variants.find(v => v.color === selColor && v.size === selSize);
-                                            }
-
-                                            // Update stock message
-                                            if (selColor && selSize) {
-                                                if (validVariant) {
-                                                    currentMaxQty = validVariant.qty; // Store max qty
-                                                    stockMsg.innerText = "Còn hàng: " + validVariant.qty;
-                                                    stockMsg.className = "small text-success mb-1 fw-bold";
-
-                                                    // Enable Inputs based on new logic
-                                                    qtyInput.max = validVariant.qty;
-                                                    qtyInput.value = 1;
-                                                    qtyInput.disabled = false;
-
-                                                    btnSubmit.disabled = false;
-                                                    variantInput.value = validVariant.id;
-
-                                                    // Enable Buttons
-                                                    updateBtnState();
-
-                                                } else {
-                                                    stockMsg.innerText = "Hết hàng hoặc không có";
-                                                    stockMsg.className = "small text-danger mb-1";
-                                                    qtyInput.disabled = true;
-                                                    btnSubmit.disabled = true;
-                                                    variantInput.value = "";
-                                                    btnMinus.disabled = true;
-                                                    btnPlus.disabled = true;
-                                                }
-                                            } else {
-                                                stockMsg.innerText = "Vui lòng chọn màu và size";
-                                                stockMsg.className = "small text-muted mb-1";
-                                                qtyInput.disabled = true;
-                                                btnSubmit.disabled = true;
-                                                variantInput.value = "";
-                                                btnMinus.disabled = true;
-                                                btnPlus.disabled = true;
-                                            }
-                                        }
-                                    })();
-                                </script>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <nav class="mt-4 d-flex justify-content-center" th:if="${products.totalPages > 1}">
-                <ul class="pagination">
-                    <li class="page-item" th:classappend="${products.first} ? 'disabled'">
-                        <a class="page-link text-dark border-0 shadow-none"
-                            th:href="@{/home(page=${products.number - 1})}">
-                            <i class="fas fa-chevron-left"></i>
-                        </a>
-                    </li>
-
-                    <li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
-                        th:classappend="${i == products.number} ? 'active'">
-                        <a class="page-link rounded-circle mx-1 border-0" th:href="@{/home(page=${i})}"
-                            th:text="${i + 1}"
-                            th:classappend="${i == products.number} ? 'bg-dark text-white' : 'text-dark bg-light'">
-                        </a>
-                    </li>
-
-                    <li class="page-item" th:classappend="${products.last} ? 'disabled'">
-                        <a class="page-link text-dark border-0 shadow-none"
-                            th:href="@{/home(page=${products.number + 1})}">
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-
-        </section>
-        <!-- Generic Error Modal (Shared) -->
-        <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header border-0 pb-0">
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body text-center pt-0 pb-4">
-                        <div class="mb-3 text-warning">
-                            <i class="bi bi-exclamation-triangle-fill" style="font-size: 3rem;"></i>
-                        </div>
-                        <h5 class="fw-bold mb-3">Thông báo</h5>
-                        <p id="errorMessage" class="text-muted mb-4">Nội dung lỗi...</p>
-
-                        <div class="d-flex justify-content-center">
-                            <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">Đã hiểu</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </article>
+		<script th:src="@{/js/chat.js}"></script>
+	</article>
 </body>
 
 </html>

@@ -17,7 +17,7 @@ import poly.edu.security.CustomOAuth2UserService; // Đảm bảo bạn đã t�
 public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
-    
+
     @Autowired
     private CustomOAuth2UserService customOAuth2UserService; // 1. Tiêm service xử lý OAuth2
 
@@ -29,7 +29,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .userDetailsService(userDetailsService)
-                .csrf(csrf -> csrf.disable()) 
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/account/sign-up", "/register", "/login",
@@ -49,11 +49,14 @@ public class SecurityConfig {
                             String email = request.getParameter("email");
                             String contextPath = request.getContextPath();
                             if (exception instanceof org.springframework.security.authentication.DisabledException) {
-                                response.sendRedirect(contextPath + "/login?notVerified=true&email=" + (email != null ? email : ""));
+                                response.sendRedirect(
+                                        contextPath + "/login?notVerified=true&email=" + (email != null ? email : ""));
                             } else if (exception instanceof org.springframework.security.authentication.LockedException) {
-                                response.sendRedirect(contextPath + "/login?locked=true&email=" + (email != null ? email : ""));
+                                response.sendRedirect(
+                                        contextPath + "/login?locked=true&email=" + (email != null ? email : ""));
                             } else {
-                                response.sendRedirect(contextPath + "/login?error=true&email=" + (email != null ? email : ""));
+                                response.sendRedirect(
+                                        contextPath + "/login?error=true&email=" + (email != null ? email : ""));
                             }
                         })
                         .permitAll())
@@ -61,10 +64,8 @@ public class SecurityConfig {
                         .loginPage("/login")
                         // 2. Cấu hình điểm cuối nhận diện UserInfo để lưu vào DB
                         .userInfoEndpoint(userInfo -> userInfo
-                            .userService(customOAuth2UserService)
-                        )
-                        .successHandler(commonSuccessHandler()) 
-                )
+                                .userService(customOAuth2UserService))
+                        .successHandler(commonSuccessHandler()))
                 .rememberMe(remember -> remember
                         .key("shopOMGRememberKey")
                         .userDetailsService(userDetailsService)
@@ -84,13 +85,28 @@ public class SecurityConfig {
         return (request, response, authentication) -> {
             boolean isAdmin = authentication.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            
+
             String contextPath = request.getContextPath();
+            String redirectUrl = "/home";
+
             if (isAdmin) {
-                response.sendRedirect(contextPath + "/admin/dashboard");
+                redirectUrl = "/admin/dashboard";
             } else {
-                response.sendRedirect(contextPath + "/home");
+                // Check for pending redirect (guest tried to access restricted page)
+                jakarta.servlet.http.HttpSession session = request.getSession(false);
+                if (session != null) {
+                    String pendingRedirect = (String) session.getAttribute("redirectAfterLogin");
+                    if (pendingRedirect != null && !pendingRedirect.isEmpty()) {
+                        redirectUrl = pendingRedirect;
+                        session.removeAttribute("redirectAfterLogin");
+
+                        // Note: Pending cart action will be processed by the product detail page
+                        // or we could process it here, but it's cleaner to let the user review first
+                    }
+                }
             }
+
+            response.sendRedirect(contextPath + redirectUrl);
         };
     }
 

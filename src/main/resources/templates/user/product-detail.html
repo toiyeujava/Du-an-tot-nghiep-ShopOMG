@@ -1,73 +1,77 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+
 <head>
     <title th:text="${pageTitle}">Chi tiết sản phẩm</title>
 </head>
+
 <body>
     <article class="container py-5">
-        
+
         <style>
-            .variant-label { 
-                cursor: pointer; 
-                user-select: none; 
-                border: 1px solid #dee2e6; 
-                transition: all 0.2s; 
-                min-width: 40px; 
-                text-align: center; 
+            .variant-label {
+                cursor: pointer;
+                user-select: none;
+                border: 1px solid #dee2e6;
+                transition: all 0.2s;
+                min-width: 40px;
+                text-align: center;
             }
 
             /* Khi được chọn: Thêm !important để ép chữ thành màu trắng */
-            .variant-input:checked + .variant-label { 
-                background-color: #000 !important; 
-                color: #fff !important; 
-                border-color: #000 !important; 
-                font-weight: bold; 
+            .variant-input:checked+.variant-label {
+                background-color: #000 !important;
+                color: #fff !important;
+                border-color: #000 !important;
+                font-weight: bold;
             }
 
-            .variant-label.disabled { 
-                opacity: 0.3; 
-                pointer-events: none; 
-                background: #f2f2f2; 
-                color: #aaa !important; 
-                border-color: #eee; 
-                text-decoration: line-through; 
+            .variant-label.disabled {
+                opacity: 0.3;
+                pointer-events: none;
+                background: #f2f2f2;
+                color: #aaa !important;
+                border-color: #eee;
+                text-decoration: line-through;
             }
 
-            .color-dot { 
-                width: 20px; 
-                height: 20px; 
-                border-radius: 50%; 
-                display: inline-block; 
-                border: 1px solid #ccc; 
-                vertical-align: middle; 
-                margin-right: 5px; 
+            .color-dot {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                display: inline-block;
+                border: 1px solid #ccc;
+                vertical-align: middle;
+                margin-right: 5px;
             }
         </style>
 
         <div class="row" th:if="${product}">
             <div class="col-md-6 mb-4">
-                <img th:src="@{${product.image}}" class="img-fluid rounded w-100" onerror="this.src='https://placehold.co/600x400'">
+                <img th:src="@{${product.image}}" class="img-fluid rounded w-100"
+                    onerror="this.src='https://placehold.co/600x400'">
             </div>
 
             <div class="col-md-6">
                 <h2 class="fw-bold" th:text="${product.name}"></h2>
-                <h3 class="text-danger fw-bold my-3" 
-                    th:text="${#numbers.formatDecimal(product.price * (100 - product.discount) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'"></h3>
+                <h3 class="text-danger fw-bold my-3"
+                    th:text="${#numbers.formatDecimal(product.price * (100 - product.discount) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                </h3>
 
-                <form th:action="@{/cart/add}" method="post">
+                <form th:action="@{/cart/add}" method="post" sec:authorize="isAuthenticated()">
                     <input type="hidden" name="productId" th:value="${product.id}">
-                    
+
                     <div class="mb-3" th:if="${not #lists.isEmpty(uniqueColors)}">
                         <label class="fw-bold d-block mb-2">Màu sắc:</label>
                         <div class="d-flex flex-wrap gap-2">
                             <div th:each="color : ${uniqueColors}">
-                                <input type="radio" name="color" th:id="'c_' + ${color}" th:value="${color}" 
-                                       class="variant-input" hidden onclick="userSelectColor(this.value)">
-                                <label th:for="'c_' + ${color}" th:id="'btn_c_' + ${color}" 
-                                       class="variant-label btn btn-outline-light text-dark px-3 py-2 d-flex align-items-center">
+                                <input type="radio" name="color" th:id="'c_' + ${color}" th:value="${color}"
+                                    class="variant-input" hidden onclick="userSelectColor(this.value)">
+                                <label th:for="'c_' + ${color}" th:id="'btn_c_' + ${color}"
+                                    class="variant-label btn btn-outline-light text-dark px-3 py-2 d-flex align-items-center">
                                     <span class="color-dot" th:if="${color == 'Đen'}" style="background: #000;"></span>
-                                    <span class="color-dot" th:if="${color == 'Trắng'}" style="background: #fff;"></span>
+                                    <span class="color-dot" th:if="${color == 'Trắng'}"
+                                        style="background: #fff;"></span>
                                     <span class="color-dot" th:if="${color == 'Đỏ'}" style="background: red;"></span>
                                     <span class="color-dot" th:if="${color == 'Xanh'}" style="background: blue;"></span>
                                     <span th:text="${color}"></span>
@@ -80,10 +84,11 @@
                         <label class="fw-bold d-block mb-2">Kích thước:</label>
                         <div class="d-flex flex-wrap gap-2">
                             <div th:each="size : ${uniqueSizes}">
-                                <input type="radio" name="size" th:id="'s_' + ${size}" th:value="${size}" 
-                                       class="variant-input" hidden onclick="userSelectSize(this.value)">
-                                <label th:for="'s_' + ${size}" th:id="'btn_s_' + ${size}" 
-                                       class="variant-label btn btn-outline-light text-dark px-3 py-2" th:text="${size}"></label>
+                                <input type="radio" name="size" th:id="'s_' + ${size}" th:value="${size}"
+                                    class="variant-input" hidden onclick="userSelectSize(this.value)">
+                                <label th:for="'s_' + ${size}" th:id="'btn_s_' + ${size}"
+                                    class="variant-label btn btn-outline-light text-dark px-3 py-2"
+                                    th:text="${size}"></label>
                             </div>
                         </div>
                     </div>
@@ -91,15 +96,71 @@
                     <div class="mb-3">
                         <div id="stockDisplay" class="fw-bold text-success mb-2">Vui lòng chọn phân loại</div>
                         <div class="d-flex gap-2">
-                            <input type="number" name="quantity" id="qtyInput" class="form-control text-center" value="1" min="1" style="width: 70px;">
-                            <button type="submit" id="buyBtn" class="btn btn-dark flex-grow-1" disabled>THÊM VÀO GIỎ</button>
+                            <input type="number" name="quantity" id="qtyInput" class="form-control text-center"
+                                value="1" min="1" style="width: 70px;">
+                            <button type="submit" id="buyBtn" class="btn btn-dark flex-grow-1" disabled>THÊM VÀO
+                                GIỎ</button>
                         </div>
                     </div>
                 </form>
+
+                <!-- Guest User: Show Login Prompt -->
+                <div sec:authorize="isAnonymous()">
+                    <div class="mb-3" th:if="${not #lists.isEmpty(uniqueColors)}">
+                        <label class="fw-bold d-block mb-2">Màu sắc:</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <div th:each="color : ${uniqueColors}">
+                                <input type="radio" name="color" th:id="'guest_c_' + ${color}" th:value="${color}"
+                                    class="variant-input" hidden onclick="guestSelectColor(this.value)">
+                                <label th:for="'guest_c_' + ${color}" th:id="'guest_btn_c_' + ${color}"
+                                    class="variant-label btn btn-outline-light text-dark px-3 py-2 d-flex align-items-center">
+                                    <span class="color-dot" th:if="${color == 'Đen'}" style="background: #000;"></span>
+                                    <span class="color-dot" th:if="${color == 'Trắng'}"
+                                        style="background: #fff;"></span>
+                                    <span class="color-dot" th:if="${color == 'Đỏ'}" style="background: red;"></span>
+                                    <span class="color-dot" th:if="${color == 'Xanh'}" style="background: blue;"></span>
+                                    <span th:text="${color}"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" th:if="${not #lists.isEmpty(uniqueSizes)}">
+                        <label class="fw-bold d-block mb-2">Kích thước:</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <div th:each="size : ${uniqueSizes}">
+                                <input type="radio" name="size" th:id="'guest_s_' + ${size}" th:value="${size}"
+                                    class="variant-input" hidden onclick="guestSelectSize(this.value)">
+                                <label th:for="'guest_s_' + ${size}" th:id="'guest_btn_s_' + ${size}"
+                                    class="variant-label btn btn-outline-light text-dark px-3 py-2"
+                                    th:text="${size}"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div id="guestStockDisplay" class="fw-bold text-success mb-2">Vui lòng chọn phân loại</div>
+                        <div class="d-flex gap-2">
+                            <input type="number" id="guestQtyInput" class="form-control text-center" value="1" min="1"
+                                style="width: 70px;" disabled>
+                            <button type="button" id="guestBuyBtn" class="btn btn-dark flex-grow-1"
+                                data-bs-toggle="modal" data-bs-target="#guestLoginModal">
+                                <i class="fas fa-lock me-2"></i>ĐĂNG NHẬP ĐỂ MUA
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <i class="fas fa-info-circle me-1"></i>Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng
+                        </small>
+                    </div>
+                </div>
             </div>
         </div>
 
         <input type="hidden" id="data-variants" th:value="${jsonVariants}">
+
+        <!-- Include Guest Login Modal -->
+        <div th:replace="~{fragments/guest-login-modal :: guestLoginModal(redirectUrl='/product/' + ${product.id})}">
+        </div>
 
         <script>
             // 1. Lấy dữ liệu an toàn
@@ -114,46 +175,74 @@
 
             var selColor = null;
             var selSize = null;
+            var guestSelColor = null;
+            var guestSelSize = null;
 
+            // === AUTHENTICATED USER FUNCTIONS ===
             function userSelectColor(color) {
-                if(selColor === color) { 
-                    selColor = null; 
-                    document.getElementById('c_'+color).checked = false; 
-                } else { 
-                    selColor = color; 
+                if (selColor === color) {
+                    selColor = null;
+                    document.getElementById('c_' + color).checked = false;
+                } else {
+                    selColor = color;
                 }
                 checkStock();
             }
 
             function userSelectSize(size) {
-                if(selSize === size) { 
-                    selSize = null; 
-                    document.getElementById('s_'+size).checked = false; 
-                } else { 
-                    selSize = size; 
+                if (selSize === size) {
+                    selSize = null;
+                    document.getElementById('s_' + size).checked = false;
+                } else {
+                    selSize = size;
                 }
                 checkStock();
             }
 
+            // === GUEST USER FUNCTIONS ===
+            function guestSelectColor(color) {
+                if (guestSelColor === color) {
+                    guestSelColor = null;
+                    document.getElementById('guest_c_' + color).checked = false;
+                } else {
+                    guestSelColor = color;
+                }
+                checkGuestStock();
+            }
+
+            function guestSelectSize(size) {
+                if (guestSelSize === size) {
+                    guestSelSize = null;
+                    document.getElementById('guest_s_' + size).checked = false;
+                } else {
+                    guestSelSize = size;
+                }
+                checkGuestStock();
+            }
+
             function checkStock() {
                 // Logic Size
-                document.querySelectorAll('input[name="size"]').forEach(function(el) {
+                document.querySelectorAll('input[name="size"]').forEach(function (el) {
+                    if (el.id.startsWith('guest_')) return; // Skip guest elements
                     var s = el.value;
                     var btn = document.getElementById('btn_s_' + s);
-                    var available = variants.some(function(v) {
+                    if (!btn) return;
+                    var available = variants.some(function (v) {
                         return v.size == s && (!selColor || v.color == selColor) && v.quantity > 0;
                     });
-                    if(available) btn.classList.remove('disabled'); else btn.classList.add('disabled');
+                    if (available) btn.classList.remove('disabled'); else btn.classList.add('disabled');
                 });
 
                 // Logic Color
-                document.querySelectorAll('input[name="color"]').forEach(function(el) {
+                document.querySelectorAll('input[name="color"]').forEach(function (el) {
+                    if (el.id.startsWith('guest_')) return; // Skip guest elements
                     var c = el.value;
                     var btn = document.getElementById('btn_c_' + c);
-                    var available = variants.some(function(v) {
+                    if (!btn) return;
+                    var available = variants.some(function (v) {
                         return v.color == c && (!selSize || v.size == selSize) && v.quantity > 0;
                     });
-                    if(available) btn.classList.remove('disabled'); else btn.classList.add('disabled');
+                    if (available) btn.classList.remove('disabled'); else btn.classList.add('disabled');
                 });
 
                 // Logic hiển thị
@@ -161,44 +250,109 @@
                 var msg = "Vui lòng chọn phân loại";
                 var canBuy = false;
 
-                if(selColor && selSize) {
-                    var v = variants.find(function(i) { return i.color == selColor && i.size == selSize; });
-                    if(v) { 
-                        stock = v.quantity; 
-                        msg = "Kho: " + stock + " sản phẩm"; 
-                        canBuy = true; 
-                    } else { 
-                        msg = "Hết hàng biến thể này"; 
+                if (selColor && selSize) {
+                    var v = variants.find(function (i) { return i.color == selColor && i.size == selSize; });
+                    if (v) {
+                        stock = v.quantity;
+                        msg = "Kho: " + stock + " sản phẩm";
+                        canBuy = true;
+                    } else {
+                        msg = "Hết hàng biến thể này";
                     }
                 } else if (selColor) {
-                    stock = variants.filter(function(i) { return i.color == selColor; })
-                                    .reduce(function(a,b) { return a + b.quantity; }, 0);
+                    stock = variants.filter(function (i) { return i.color == selColor; })
+                        .reduce(function (a, b) { return a + b.quantity; }, 0);
                     msg = "Màu " + selColor + ": Còn " + stock + " (Chọn size)";
                 } else if (selSize) {
-                    stock = variants.filter(function(i) { return i.size == selSize; })
-                                    .reduce(function(a,b) { return a + b.quantity; }, 0);
+                    stock = variants.filter(function (i) { return i.size == selSize; })
+                        .reduce(function (a, b) { return a + b.quantity; }, 0);
                     msg = "Size " + selSize + ": Còn " + stock + " (Chọn màu)";
                 } else {
-                    stock = variants.reduce(function(a,b) { return a + b.quantity; }, 0);
-                    if(stock > 0) msg = "Tổng kho: " + stock;
+                    stock = variants.reduce(function (a, b) { return a + b.quantity; }, 0);
+                    if (stock > 0) msg = "Tổng kho: " + stock;
                 }
 
-                document.getElementById('stockDisplay').innerText = msg;
+                var stockDisplay = document.getElementById('stockDisplay');
+                if (stockDisplay) stockDisplay.innerText = msg;
+
                 var btnBuy = document.getElementById('buyBtn');
                 var qtyInput = document.getElementById('qtyInput');
-                
-                if(canBuy && stock > 0) {
-                    btnBuy.disabled = false;
-                    qtyInput.max = stock;
-                    qtyInput.value = 1;
-                } else {
-                    btnBuy.disabled = true;
+
+                if (btnBuy && qtyInput) {
+                    if (canBuy && stock > 0) {
+                        btnBuy.disabled = false;
+                        qtyInput.max = stock;
+                        qtyInput.value = 1;
+                    } else {
+                        btnBuy.disabled = true;
+                    }
                 }
             }
-            
+
+            function checkGuestStock() {
+                // Logic Size for Guest
+                document.querySelectorAll('input[name="size"]').forEach(function (el) {
+                    if (!el.id.startsWith('guest_')) return; // Only guest elements
+                    var s = el.value;
+                    var btn = document.getElementById('guest_btn_s_' + s);
+                    if (!btn) return;
+                    var available = variants.some(function (v) {
+                        return v.size == s && (!guestSelColor || v.color == guestSelColor) && v.quantity > 0;
+                    });
+                    if (available) btn.classList.remove('disabled'); else btn.classList.add('disabled');
+                });
+
+                // Logic Color for Guest
+                document.querySelectorAll('input[name="color"]').forEach(function (el) {
+                    if (!el.id.startsWith('guest_')) return; // Only guest elements
+                    var c = el.value;
+                    var btn = document.getElementById('guest_btn_c_' + c);
+                    if (!btn) return;
+                    var available = variants.some(function (v) {
+                        return v.color == c && (!guestSelSize || v.size == guestSelSize) && v.quantity > 0;
+                    });
+                    if (available) btn.classList.remove('disabled'); else btn.classList.add('disabled');
+                });
+
+                // Logic hiển thị for Guest
+                var stock = 0;
+                var msg = "Vui lòng chọn phân loại";
+
+                if (guestSelColor && guestSelSize) {
+                    var v = variants.find(function (i) { return i.color == guestSelColor && i.size == guestSelSize; });
+                    if (v) {
+                        stock = v.quantity;
+                        msg = "Kho: " + stock + " sản phẩm";
+                    } else {
+                        msg = "Hết hàng biến thể này";
+                    }
+                } else if (guestSelColor) {
+                    stock = variants.filter(function (i) { return i.color == guestSelColor; })
+                        .reduce(function (a, b) { return a + b.quantity; }, 0);
+                    msg = "Màu " + guestSelColor + ": Còn " + stock + " (Chọn size)";
+                } else if (guestSelSize) {
+                    stock = variants.filter(function (i) { return i.size == guestSelSize; })
+                        .reduce(function (a, b) { return a + b.quantity; }, 0);
+                    msg = "Size " + guestSelSize + ": Còn " + stock + " (Chọn màu)";
+                } else {
+                    stock = variants.reduce(function (a, b) { return a + b.quantity; }, 0);
+                    if (stock > 0) msg = "Tổng kho: " + stock;
+                }
+
+                var guestStockDisplay = document.getElementById('guestStockDisplay');
+                if (guestStockDisplay) guestStockDisplay.innerText = msg;
+            }
+
             // Chạy ngay khi tải xong
-            checkStock();
+            if (document.getElementById('stockDisplay')) {
+                checkStock();
+            }
+            if (document.getElementById('guestStockDisplay')) {
+                checkGuestStock();
+            }
         </script>
 
-    </article> </body>
+    </article>
+</body>
+
 </html>

@@ -14,7 +14,10 @@ import poly.edu.repository.AccountRepository;
 import poly.edu.repository.ProductVariantRepository;
 import poly.edu.service.CartService;
 
+import jakarta.servlet.http.HttpSession;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -36,7 +39,7 @@ public class CartController {
     @GetMapping
     public String viewCart(Model model) {
         Integer accountId = getCurrentAccountId();
-        
+
         if (accountId == null) {
             return "redirect:/login";
         }
@@ -58,16 +61,29 @@ public class CartController {
      */
     @PostMapping("/add")
     public String addToCart(@RequestParam("productId") Integer productId,
-                           @RequestParam(value = "color", required = false) String color,
-                           @RequestParam(value = "size", required = false) String size,
-                           @RequestParam(value = "variantId", required = false) Integer variantId,
-                           @RequestParam(value = "quantity", defaultValue = "1") Integer quantity,
-                           RedirectAttributes redirectAttributes) {
-        
+            @RequestParam(value = "color", required = false) String color,
+            @RequestParam(value = "size", required = false) String size,
+            @RequestParam(value = "variantId", required = false) Integer variantId,
+            @RequestParam(value = "quantity", defaultValue = "1") Integer quantity,
+            RedirectAttributes redirectAttributes,
+            HttpSession session) {
+
         Integer accountId = getCurrentAccountId();
-        
+
         if (accountId == null) {
-            redirectAttributes.addFlashAttribute("error", "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
+            // Store pending cart action for post-login processing
+            Map<String, Object> pendingAction = new HashMap<>();
+            pendingAction.put("productId", productId);
+            pendingAction.put("color", color);
+            pendingAction.put("size", size);
+            pendingAction.put("variantId", variantId);
+            pendingAction.put("quantity", quantity);
+            session.setAttribute("pendingCartAction", pendingAction);
+            session.setAttribute("redirectAfterLogin", "/product/" + productId);
+
+            redirectAttributes.addFlashAttribute("info",
+                    "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng và trải nghiệm mua sắm tuyệt vời! " +
+                            "Đăng ký ngay để nhận giảm 20% cho đơn hàng đầu tiên.");
             return "redirect:/login";
         }
 
@@ -77,12 +93,12 @@ public class CartController {
             // Case 1: Direct Variant ID provided
             if (variantId != null) {
                 finalVariantId = variantId;
-            } 
+            }
             // Case 2: Color and Size provided
             else if (color != null && size != null) {
                 finalVariantId = findVariantId(productId, color, size);
             }
-            
+
             if (finalVariantId == null) {
                 redirectAttributes.addFlashAttribute("error", "Vui lòng chọn màu sắc và kích thước hợp lệ");
                 return "redirect:/product/" + productId;
@@ -90,7 +106,7 @@ public class CartController {
 
             cartService.addToCart(accountId, finalVariantId, quantity);
             redirectAttributes.addFlashAttribute("success", "Đã thêm sản phẩm vào giỏ hàng");
-            
+
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/product/" + productId;
@@ -107,12 +123,13 @@ public class CartController {
      */
     @PostMapping("/update/{id}")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<java.util.Map<String, Object>> updateQuantity(@PathVariable("id") Integer cartId,
-                                 @RequestParam("quantity") Integer quantity) {
-        
+    public org.springframework.http.ResponseEntity<java.util.Map<String, Object>> updateQuantity(
+            @PathVariable("id") Integer cartId,
+            @RequestParam("quantity") Integer quantity) {
+
         Integer accountId = getCurrentAccountId();
         java.util.Map<String, Object> response = new java.util.HashMap<>();
-        
+
         if (accountId == null) {
             response.put("success", false);
             response.put("message", "Vui lòng đăng nhập");
@@ -121,10 +138,12 @@ public class CartController {
 
         try {
             Cart cart = cartService.updateQuantity(cartId, accountId, quantity);
-            
+
             // Calculate new item total price (with discount)
             double price = cart.getProductVariant().getProduct().getPrice();
-            int discount = cart.getProductVariant().getProduct().getDiscount() != null ? cart.getProductVariant().getProduct().getDiscount() : 0;
+            int discount = cart.getProductVariant().getProduct().getDiscount() != null
+                    ? cart.getProductVariant().getProduct().getDiscount()
+                    : 0;
             double finalPrice = price * (100 - discount) / 100.0;
             double itemTotal = finalPrice * cart.getQuantity();
 
@@ -132,9 +151,9 @@ public class CartController {
             response.put("newQuantity", cart.getQuantity());
             response.put("newItemTotal", itemTotal);
             response.put("cartItemCount", cartService.getCartItemCount(accountId));
-            
+
             return org.springframework.http.ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", e.getMessage());
@@ -147,10 +166,10 @@ public class CartController {
      */
     @PostMapping("/remove/{id}")
     public String removeFromCart(@PathVariable("id") Integer cartId,
-                                 RedirectAttributes redirectAttributes) {
-        
+            RedirectAttributes redirectAttributes) {
+
         Integer accountId = getCurrentAccountId();
-        
+
         if (accountId == null) {
             return "redirect:/login";
         }
@@ -171,7 +190,7 @@ public class CartController {
     @PostMapping("/clear")
     public String clearCart(RedirectAttributes redirectAttributes) {
         Integer accountId = getCurrentAccountId();
-        
+
         if (accountId == null) {
             return "redirect:/login";
         }
@@ -193,7 +212,7 @@ public class CartController {
      */
     private Integer getCurrentAccountId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        
+
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             System.out.println("DEBUG: User not authenticated");
             return null;
@@ -201,15 +220,15 @@ public class CartController {
 
         String principal = auth.getName();
         System.out.println("DEBUG: Principal = " + principal);
-        
+
         // Try to find by email first (since login uses email)
         Account account = accountRepository.findByEmail(principal).orElse(null);
-        
+
         // If not found, try username
         if (account == null) {
             account = accountRepository.findByUsername(principal).orElse(null);
         }
-        
+
         if (account != null) {
             System.out.println("DEBUG: Found account ID = " + account.getId());
             return account.getId();

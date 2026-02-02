@@ -44,16 +44,24 @@ public class CustomUserDetailsService implements UserDetailsService {
         String roleName = acc.getRole() != null ? acc.getRole().getName() : "USER";
         List<GrantedAuthority> auths = List.of(new SimpleGrantedAuthority("ROLE_" + roleName));
 
-        // SỬA: Kiểm tra cả isActive và emailVerified
-        boolean enabled = acc.getIsActive() != null && acc.getIsActive()
-                && acc.getEmailVerified() != null && acc.getEmailVerified();
+        // ADMIN bỏ qua kiểm tra email verification
+        // USER phải verify email mới được đăng nhập
+        boolean enabled;
+        if ("ADMIN".equals(roleName)) {
+            // Admin chỉ cần isActive = true
+            enabled = acc.getIsActive() != null && acc.getIsActive();
+        } else {
+            // User cần cả isActive = true VÀ emailVerified = true
+            enabled = acc.getIsActive() != null && acc.getIsActive()
+                    && acc.getEmailVerified() != null && acc.getEmailVerified();
+        }
 
         // Dùng email làm principal để đồng bộ với profile, nhưng login có thể nhập
         // username
         return User.withUsername(acc.getEmail())
                 .password(acc.getPassword())
                 .authorities(auths)
-                .disabled(!enabled) // Disable nếu chưa active hoặc chưa verify email
+                .disabled(!enabled) // Disable nếu chưa active hoặc (đối với USER) chưa verify email
                 .accountLocked(accountLocked) // Set locked status
                 .build();
     }

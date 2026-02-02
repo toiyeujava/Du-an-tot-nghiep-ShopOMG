@@ -1,0 +1,72 @@
+<!-- Guest Login Modal -->
+<div th:fragment="guestLoginModal" class="modal fade" id="guestLoginModal" tabindex="-1"
+    aria-labelledby="guestLoginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="guestLoginModalLabel">
+                    <i class="fas fa-shopping-bag me-2 text-primary"></i>Đăng nhập để mua hàng
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <div class="text-center mb-4">
+                    <div class="mb-3">
+                        <i class="fas fa-lock text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                    <p class="text-muted mb-3">
+                        Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng và tiếp tục mua sắm.
+                    </p>
+                </div>
+
+                <div class="alert alert-info border-0 bg-light">
+                    <h6 class="fw-bold mb-2">
+                        <i class="fas fa-gift me-2"></i>Ưu đãi khi đăng ký:
+                    </h6>
+                    <ul class="mb-0 small">
+                        <li>Giảm <strong>20%</strong> cho đơn hàng đầu tiên</li>
+                        <li>Theo dõi đơn hàng dễ dàng</li>
+                        <li>Lưu địa chỉ giao hàng</li>
+                        <li>Nhận thông báo khuyến mãi độc quyền</li>
+                    </ul>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <!-- Smart Login Link: Redirects back to product if url is provided -->
+                    <a th:href="${redirectUrl != null} ? @{/auth/require-login(target=${redirectUrl})} : @{/login}"
+                        class="btn btn-dark btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập ngay
+                    </a>
+                    <a th:href="@{/register}" class="btn btn-outline-dark btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Đăng ký tài khoản mới
+                    </a>
+                </div>
+
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        Hoặc <button type="button" class="btn btn-link btn-sm p-0" data-bs-dismiss="modal">tiếp tục xem
+                            sản phẩm</button>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #guestLoginModal .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    #guestLoginModal .btn-lg {
+        padding: 12px 24px;
+        font-weight: 600;
+        border-radius: 8px;
+    }
+
+    #guestLoginModal .alert-info {
+        border-left: 4px solid #0dcaf0;
+    }
+</style>

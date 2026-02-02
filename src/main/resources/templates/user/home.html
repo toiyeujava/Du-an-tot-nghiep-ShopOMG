@@ -1,44 +1,275 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
-<head>
-    <title>Trang chủ - ShopOMG</title>
-</head>
-<body>
-    <article>
-        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-inner">
-                <div class="carousel-item active" style="height: 500px;">
-                    <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b" class="d-block w-100 h-100 object-fit-cover" alt="...">
-                    <div class="carousel-caption d-none d-md-block text-start" style="bottom: 20%; left: 10%;">
-                        <h1 class="display-3 fw-bold">BST Thu Đông 2025</h1>
-                        <a href="#" class="btn btn-light btn-lg px-4 fw-bold">Mua ngay</a>
-                    </div>
-                </div>
-            </div>
-        </div>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
 
-        <section class="container my-5">
-            <h3 class="text-center fw-bold mb-4">Sản phẩm nổi bật</h3>
-            <div class="row">
-                <div class="col-6 col-md-3 mb-4">
-                    <div class="card product-card h-100">
-                        <div class="discount-badge">-20%</div>
-                        <div class="img-wrapper">
-                            <img src="https://n7media.coolmate.me/uploads/September2025/ao-the-thao-nam-promax-recycle-basics1-copy-navy-logo-moi-1.jpg?aio=w-1100" alt="">
-                            <div class="quick-add-btn"><i class="fas fa-shopping-cart me-2"></i>Thêm vào giỏ</div>
-                        </div>
-                        <div class="card-body">
-                            <h6 class="card-title fw-bold text-truncate">Áo Thun Nam Basic</h6>
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">200.000đ</span>
-                                <small class="text-muted text-decoration-line-through">250.000đ</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                </div>
-        </section>
-    </article>
+<head>
+	<title>Trang chủ - ShopOMG</title>
+</head>
+
+<body>
+	<article>
+		<style>
+			/* Khung chứa ảnh: Cần overflow hidden để ảnh phóng to không bị tràn ra ngoài */
+			.img-wrapper {
+				position: relative;
+				overflow: hidden;
+				border-radius: 5px 5px 0 0;
+			}
+
+			/* Ảnh sản phẩm: Thêm transition để mượt mà */
+			.img-wrapper img {
+				transition: transform 0.5s ease;
+				width: 100%;
+				height: 250px;
+				/* Chiều cao cố định cho đẹp đội hình */
+				object-fit: cover;
+				display: block;
+			}
+
+			/* HIỆU ỨNG 1: Di chuột vào card -> Ảnh phóng to (Zoom) */
+			.product-card:hover .img-wrapper img {
+				transform: scale(1.1);
+			}
+
+			/* Nút thêm giỏ hàng: Mặc định ẩn xuống dưới */
+			.quick-add-btn {
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				width: 100%;
+				background: rgba(0, 0, 0, 0.7);
+				/* Nền đen mờ */
+				padding: 10px;
+				text-align: center;
+				transition: all 0.3s ease;
+				transform: translateY(100%);
+				/* Đẩy xuống khỏi khung hình */
+				opacity: 0;
+			}
+
+			/* HIỆU ỨNG 2: Di chuột vào card -> Nút trồi lên */
+			.product-card:hover .quick-add-btn {
+				transform: translateY(0);
+				opacity: 1;
+			}
+
+			/* Link ảnh: Bỏ gạch chân */
+			.product-link {
+				text-decoration: none;
+				display: block;
+			}
+
+			/* --- PHẦN THÊM MỚI: CHAT BOX CSS --- */
+			/* Nút mở Chat */
+			.chat-btn-toggle {
+				position: fixed;
+				bottom: 30px;
+				right: 30px;
+				width: 60px;
+				height: 60px;
+				background-color: #0d6efd;
+				/* Màu xanh bootstrap */
+				color: white;
+				border-radius: 50%;
+				text-align: center;
+				line-height: 60px;
+				font-size: 24px;
+				box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+				cursor: pointer;
+				z-index: 9999;
+				transition: transform 0.3s;
+			}
+
+			.chat-btn-toggle:hover {
+				transform: scale(1.1);
+			}
+
+			/* Khung Chat Box */
+			.chat-box-container {
+				position: fixed;
+				bottom: 100px;
+				right: 30px;
+				width: 350px;
+				height: 450px;
+				background: white;
+				border-radius: 10px;
+				box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+				z-index: 9999;
+				display: none;
+				/* Mặc định ẩn */
+				flex-direction: column;
+				overflow: hidden;
+				border: 1px solid #ddd;
+			}
+
+			/* Header Chat */
+			.chat-header {
+				background-color: #0d6efd;
+				color: white;
+				padding: 15px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				font-weight: bold;
+			}
+
+			/* Nội dung tin nhắn */
+			.chat-body {
+				flex: 1;
+				padding: 15px;
+				overflow-y: auto;
+				background-color: #f8f9fa;
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+
+			/* Footer nhập liệu */
+			.chat-footer {
+				padding: 10px;
+				border-top: 1px solid #eee;
+				display: flex;
+				gap: 10px;
+				background: white;
+			}
+
+			/* Bong bóng tin nhắn */
+			.message {
+				max-width: 80%;
+				padding: 8px 12px;
+				border-radius: 15px;
+				font-size: 14px;
+				line-height: 1.4;
+			}
+
+			.message.bot {
+				background-color: #e9ecef;
+				color: #333;
+				align-self: flex-start;
+				border-bottom-left-radius: 2px;
+			}
+
+			.message.user {
+				background-color: #0d6efd;
+				color: white;
+				align-self: flex-end;
+				border-bottom-right-radius: 2px;
+			}
+		</style>
+
+		<div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+			<div class="carousel-inner">
+				<div class="carousel-item active" style="height: 500px;">
+					<img src="https://images.unsplash.com/photo-1483985988355-763728e1935b"
+						class="d-block w-100 h-100 object-fit-cover" alt="...">
+					<div class="carousel-caption d-none d-md-block text-start" style="bottom: 20%; left: 10%;">
+						<h1 class="display-3 fw-bold">BST Thu Đông 2025</h1>
+						<a href="/products" class="btn btn-light btn-lg px-4 fw-bold">Mua
+							ngay</a>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<section class="container my-5">
+			<!-- Guest Welcome Banner -->
+			<div th:replace="~{fragments/guest-banner :: guestBanner}"></div>
+
+			<h3 class="text-center fw-bold mb-4">Sản phẩm nổi bật</h3>
+
+			<div class="row">
+				<div class="col-6 col-md-3 mb-4" th:each="product : ${products.content}">
+					<div class="card product-card h-100 border-0 shadow-sm overflow-hidden">
+
+						<div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold"
+							style="z-index: 10;" th:if="${product.discount > 0}"
+							th:text="'-' + ${product.discount} + '%'"></div>
+
+						<div class="img-wrapper">
+							<a th:href="@{/product/{id}(id=${product.id})}" class="product-link"> <img
+									th:src="${product.image}"
+									onerror="this.src='https://placehold.co/600x400?text=No+Image'" alt="Product Image">
+							</a>
+
+							<form th:action="@{/cart/add}" method="post" class="quick-add-btn">
+								<input type="hidden" name="productId" th:value="${product.id}">
+								<input type="hidden" name="quantity" value="1">
+								<button type="submit"
+									class="btn btn-link text-white text-decoration-none fw-bold w-100 p-0">
+									<i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
+								</button>
+							</form>
+						</div>
+
+						<div class="card-body">
+							<h6 class="card-title fw-bold text-truncate">
+								<a th:href="@{/product/{id}(id=${product.id})}" class="text-dark text-decoration-none"
+									th:text="${product.name}">Tên sản phẩm</a>
+							</h6>
+							<div class="d-flex justify-content-between align-items-center">
+								<span class="fw-bold text-danger"
+									th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+								</span> <small class="text-muted text-decoration-line-through"
+									th:if="${product.discount > 0}"
+									th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+								</small>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<nav class="mt-4 d-flex justify-content-center" th:if="${products.totalPages > 1}">
+				<ul class="pagination">
+					<li class="page-item" th:classappend="${products.first} ? 'disabled'"><a
+							class="page-link text-dark border-0 shadow-none"
+							th:href="@{/home(page=${products.number - 1})}"> <i class="fas fa-chevron-left"></i>
+						</a></li>
+
+					<li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
+						th:classappend="${i == products.number} ? 'active'"><a
+							class="page-link rounded-circle mx-1 border-0" th:href="@{/home(page=${i})}"
+							th:text="${i + 1}"
+							th:classappend="${i == products.number} ? 'bg-dark text-white' : 'text-dark bg-light'">
+						</a></li>
+
+					<li class="page-item" th:classappend="${products.last} ? 'disabled'"><a
+							class="page-link text-dark border-0 shadow-none"
+							th:href="@{/home(page=${products.number + 1})}"> <i class="fas fa-chevron-right"></i>
+						</a></li>
+				</ul>
+			</nav>
+
+		</section>
+		<div class="chat-btn-toggle" onclick="toggleChatBox()">
+			<i class="fas fa-comments"></i>
+		</div>
+
+		<div class="chat-box-container" id="chatBox">
+			<div class="chat-header">
+				<span><i class="fas fa-headset me-2"></i>CSKH - ShopOMG</span>
+				<button type="button" class="btn-close btn-close-white" onclick="toggleChatBox()"></button>
+			</div>
+
+			<div class="chat-body" id="chatBody">
+				<div class="message bot">Xin chào! ShopOMG có thể giúp gì cho
+					bạn hôm nay?</div>
+			</div>
+
+			<div class="chat-footer">
+				<input type="text" id="chatInput" class="form-control" placeholder="Nhập tin nhắn..."
+					onkeypress="handleEnter(event)">
+				<button class="btn btn-primary" onclick="sendMessage()">
+					<i class="fas fa-paper-plane"></i>
+				</button>
+			</div>
+		</div>
+
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+		<script th:src="@{/js/chat.js}"></script>
+	</article>
 </body>
+
 </html>

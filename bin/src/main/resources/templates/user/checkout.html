@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+<head>
+    <title>Thanh toán - ShopOMG</title>
+</head>
+<body>
+    <article class="container py-5">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold m-0">Thanh toán</h4>
+            <a href="/cart" class="text-muted small text-decoration-none">
+                <i class="fas fa-arrow-left me-1"></i> Quay lại giỏ hàng
+            </a>
+        </div>
+
+        <div class="steps">
+            <div class="step-item completed"><div class="step-circle"><i class="fas fa-check"></i></div> Giỏ hàng</div>
+            <div class="step-line active"></div>
+            <div class="step-item active"><div class="step-circle">2</div> Thanh toán</div>
+            <div class="step-line"></div>
+            <div class="step-item"><div class="step-circle">3</div> Hoàn tất</div>
+        </div>
+
+        <form action="/checkout/process" method="post">
+            <div class="row">
+                <div class="col-lg-7 mb-4">
+                    <div class="card-box">
+                        <h5 class="fw-bold mb-4">Địa chỉ nhận hàng</h5>
+                        
+                        <div class="mb-3">
+                            <div class="form-check card p-3 mb-2 border bg-light">
+                                <input class="form-check-input" type="radio" name="addressId" id="addr1" checked>
+                                <label class="form-check-label w-100" for="addr1">
+                                    <span class="fw-bold">Nguyễn Văn A</span> <span class="badge bg-dark ms-2">Mặc định</span><br>
+                                    <small class="text-muted">0909123456</small><br>
+                                    <small>123 Đường Nguyễn Huệ, P. Bến Nghé, Quận 1, TP.HCM</small>
+                                </label>
+                            </div>
+                            <div class="form-check card p-3 border">
+                                <input class="form-check-input" type="radio" name="addressId" id="addr2">
+                                <label class="form-check-label w-100" for="addr2">
+                                    <span class="fw-bold">Công ty (Văn phòng)</span><br>
+                                    <small class="text-muted">0909123456</small><br>
+                                    <small>Tòa nhà Bitexco, Quận 1, TP.HCM</small>
+                                </label>
+                            </div>
+                            <button type="button" class="btn btn-link text-decoration-none p-0 mt-2 text-dark fw-bold small">+ Thêm địa chỉ mới</button>
+                        </div>
+
+                        <h5 class="fw-bold mb-3 mt-4">Phương thức thanh toán</h5>
+                        <div class="list-group">
+                            <label class="list-group-item d-flex gap-3 align-items-center p-3">
+                                <input class="form-check-input flex-shrink-0" type="radio" name="payment" checked>
+                                <i class="fas fa-money-bill-wave fs-4 text-success"></i>
+                                <div>
+                                    <strong class="d-block">Thanh toán khi nhận hàng (COD)</strong>
+                                    <small class="text-muted">Thanh toán tiền mặt cho shipper khi nhận hàng</small>
+                                </div>
+                            </label>
+                            <label class="list-group-item d-flex gap-3 align-items-center p-3">
+                                <input class="form-check-input flex-shrink-0" type="radio" name="payment">
+                                <i class="fas fa-qrcode fs-4 text-primary"></i>
+                                <div>
+                                    <strong class="d-block">VNPAY / QR Code</strong>
+                                    <small class="text-muted">Quét mã QR qua ứng dụng ngân hàng</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="card-box bg-light border-0">
+                        <h5 class="fw-bold mb-3">Đơn hàng của bạn</h5>
+                        
+                        <div class="border-bottom pb-3 mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <div>
+                                    <span class="fw-bold small">Áo Thun Nam Basic</span> <span class="text-muted small">x1</span>
+                                    <div class="text-muted small">Xanh / M</div>
+                                </div>
+                                <span class="fw-bold small">200.000đ</span>
+                            </div>
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Mã giảm giá">
+                            <button class="btn btn-dark" type="button">Áp dụng</button>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-1 small">
+                            <span class="text-muted">Tạm tính:</span> <span>200.000đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1 small">
+                            <span class="text-muted">Phí vận chuyển:</span> <span>30.000đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3 small text-success">
+                            <span>Giảm giá:</span> <span>-0đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-3 align-items-center">
+                            <span class="fw-bold fs-5">Tổng cộng</span>
+                            <span class="fw-bold fs-4 text-danger">230.000đ</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-dark w-100 py-3 mt-4 fw-bold fs-5 shadow-sm">
+                            ĐẶT HÀNG NGAY
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </article>
+</body>
+</html>

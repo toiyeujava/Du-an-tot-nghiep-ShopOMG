@@ -1,0 +1,27 @@
+<!-- Guest Welcome Banner -->
+<div th:fragment="guestBanner" class="alert alert-dismissible fade show mb-4"
+    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 12px; color: white;"
+    sec:authorize="isAnonymous()">
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="d-flex align-items-center">
+        <div class="me-3" style="font-size: 2.5rem;">
+            <i class="fas fa-gift"></i>
+        </div>
+        <div class="flex-grow-1">
+            <h5 class="alert-heading fw-bold mb-1">
+                <i class="fas fa-star me-2"></i>Chào mừng đến ShopOMG!
+            </h5>
+            <p class="mb-2">
+                Đăng ký ngay để nhận <strong>giảm 20%</strong> cho đơn hàng đầu tiên và trải nghiệm mua sắm tuyệt vời!
+            </p>
+            <div class="d-flex gap-2">
+                <a th:href="@{/register}" class="btn btn-light btn-sm fw-bold">
+                    <i class="fas fa-user-plus me-1"></i>Đăng ký ngay
+                </a>
+                <a th:href="@{/login}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

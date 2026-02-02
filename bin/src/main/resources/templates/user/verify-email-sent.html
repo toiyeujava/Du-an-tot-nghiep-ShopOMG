@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+
+<head>
+    <title>Kiểm tra email - ShopOMG</title>
+    <style>
+        .email-icon {
+            font-size: 80px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+        .check-steps {
+            text-align: left;
+            max-width: 500px;
+            margin: 30px auto;
+        }
+
+        .check-steps li {
+            margin-bottom: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <article class="py-5" style="background-color: #f8f9fa;">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body text-center p-5">
+
+                            <div class="email-icon">
+                                <i class="bi bi-envelope-check-fill"></i>
+                            </div>
+
+                            <h2 class="fw-bold mb-3">Kiểm tra email của bạn!</h2>
+
+                            <p class="text-muted mb-4">
+                                Chúng tôi đã gửi email xác thực đến địa chỉ email bạn đã đăng ký.
+                                <br>Vui lòng kiểm tra hộp thư và click vào link xác thực để hoàn tất đăng ký.
+                            </p>
+
+                            <!-- Thông báo thành công/lỗi khi resend -->
+                            <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span th:text="${success}"></span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+
+                            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <span th:text="${error}"></span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+
+                            <div class="check-steps">
+                                <h5 class="fw-bold mb-3">Các bước tiếp theo:</h5>
+                                <ol>
+                                    <li>Mở hộp thư email của bạn</li>
+                                    <li>Tìm email từ <strong>ShopOMG</strong></li>
+                                    <li>Click vào nút <strong>"XÁC THỰC EMAIL"</strong></li>
+                                    <li>Đăng nhập và bắt đầu mua sắm!</li>
+                                </ol>
+                            </div>
+
+                            <div class="alert alert-info mt-4">
+                                <i class="bi bi-info-circle-fill"></i>
+                                <strong>Lưu ý:</strong> Nếu không thấy email, vui lòng kiểm tra thư mục
+                                <strong>Spam</strong> hoặc <strong>Junk</strong>.
+                            </div>
+
+                            <hr class="my-4">
+
+                            <p class="text-muted small mb-3">Chưa nhận được email?</p>
+
+                            <a th:href="@{/resend-verification}" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-repeat"></i> Gửi lại email xác thực
+                            </a>
+
+                            <div class="mt-4">
+                                <a th:href="@{/home}" class="text-decoration-none">
+                                    <i class="bi bi-house-fill"></i> Quay về trang chủ
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </article>
+</body>
+
+</html>

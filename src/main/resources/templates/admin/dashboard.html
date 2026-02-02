@@ -103,6 +103,39 @@
                 });
             });
         </script>
+        
+        <div class="chat-btn-toggle" onclick="toggleChatBox()">
+			<i class="fas fa-comments"></i>
+		</div>
+
+		<div class="chat-box-container" id="chatBox">
+			<div class="chat-header">
+				<span><i class="fas fa-headset me-2"></i>CSKH - ShopOMG</span>
+				<button type="button" class="btn-close btn-close-white"
+					onclick="toggleChatBox()"></button>
+			</div>
+
+			<div class="chat-body" id="chatBody">
+				<div class="message bot">Xin chào! ShopOMG có thể giúp gì cho
+					bạn hôm nay?</div>
+			</div>
+
+			<div class="chat-footer">
+				<input type="text" id="chatInput" class="form-control"
+					placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)">
+				<button class="btn btn-primary" onclick="sendMessage()">
+					<i class="fas fa-paper-plane"></i>
+				</button>
+			</div>
+		</div>
+
+
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+		<script th:src="@{/js/chat.js}"></script>
     </article>
 </body>
 </html>

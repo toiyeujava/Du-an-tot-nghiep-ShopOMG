@@ -66,4 +66,9 @@ public class Product implements Serializable {
     // 2. Thêm @ToString.Exclude để tránh lỗi tràn bộ nhớ khi in log
     @ToString.Exclude 
     private List<ProductVariant> variants;
+    
+    
+    @OneToMany(mappedBy = "product", fetch = FetchType.EAGER)
+    @ToString.Exclude 
+    private List<ProductImage> productImages; // Phải có dòng này
 }

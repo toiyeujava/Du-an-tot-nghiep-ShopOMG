@@ -243,25 +243,27 @@
                     </div>
                 </div>
 
-                <nav class="mt-5 d-flex justify-content-center" th:if="${products.totalPages > 1}">
-                    <ul class="pagination">
-                        <li class="page-item" th:classappend="${products.first} ? 'disabled'">
-                            <a class="page-link text-dark"
-                                th:href="@{/products(page=${products.number - 1}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort})}">«</a>
-                        </li>
-                        <li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
-                            th:classappend="${i == products.number} ? 'active'">
-                            <a class="page-link"
-                                th:href="@{/products(page=${i}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort})}"
-                                th:text="${i + 1}"
-                                th:classappend="${i == products.number} ? 'bg-dark border-dark text-white' : 'text-dark'"></a>
-                        </li>
-                        <li class="page-item" th:classappend="${products.last} ? 'disabled'">
-                            <a class="page-link text-dark"
-                                th:href="@{/products(page=${products.number + 1}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort})}">»</a>
-                        </li>
-                    </ul>
-                </nav>
+				<nav class="mt-5 d-flex justify-content-center" th:if="${products.totalPages > 1}">
+				    <ul class="pagination">
+				        <li class="page-item" th:classappend="${products.first} ? 'disabled'">
+				            <a class="page-link text-dark"
+				                th:href="@{/products(page=${products.number - 1}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}">«</a>
+				        </li>
+
+				        <li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
+				            th:classappend="${i == products.number} ? 'active'">
+				            <a class="page-link"
+				                th:href="@{/products(page=${i}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}"
+				                th:text="${i + 1}"
+				                th:classappend="${i == products.number} ? 'bg-dark border-dark text-white' : 'text-dark'"></a>
+				        </li>
+
+				        <li class="page-item" th:classappend="${products.last} ? 'disabled'">
+				            <a class="page-link text-dark"
+				                th:href="@{/products(page=${products.number + 1}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}">»</a>
+				        </li>
+				    </ul>
+				</nav>
             </div>
         </div>
     </article>

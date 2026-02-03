@@ -11,10 +11,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        String location = "file:" + (uploadDir.endsWith("/") ? uploadDir : uploadDir + "/");
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations(location);
-    }
+    
+	@Override
+	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+	    registry.addResourceHandler("/images/**")
+	            .addResourceLocations("classpath:/static/images/");
+	}
 }

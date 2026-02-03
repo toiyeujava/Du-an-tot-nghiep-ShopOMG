@@ -25,7 +25,19 @@
                 </ul>
 
                 <div class="d-flex gap-3 align-items-center">
-                    <a href="#"><i class="fas fa-search text-dark"></i></a>
+					<div class="d-flex gap-3 align-items-center">
+					    <form action="/products" method="get" class="d-none d-md-flex position-relative me-2">
+					        <input type="text" name="keyword" th:value="${keyword}" 
+					               class="form-control form-control-sm rounded-pill ps-3 pe-5 border-dark" 
+					               placeholder="Tìm sản phẩm..." style="width: 200px;">
+					        <button type="submit" class="btn btn-sm position-absolute end-0 top-0 mt-1 me-2 border-0 bg-transparent">
+					            <i class="fas fa-search text-dark"></i>
+					        </button>
+					    </form>
+					    
+					    <a href="/cart" class="position-relative text-dark">
+					        </a>
+					    </div>
                     <a href="/cart" class="position-relative text-dark">
                         <i class="fas fa-shopping-bag"></i>
                         <span th:if="${cartItemCount > 0}"

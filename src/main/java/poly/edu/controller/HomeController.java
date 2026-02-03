@@ -46,6 +46,7 @@ public class HomeController {
     // --- CỬA HÀNG ---
     @GetMapping("/products")
     public String shop(Model model,
+    		@RequestParam(name = "keyword", required = false) String keyword, // THÊM DÒNG NÀY
             @RequestParam(name = "gender", required = false) String gender,
             @RequestParam(name = "category", required = false) Integer categoryId,
             @RequestParam(name = "color", required = false) String color,
@@ -64,10 +65,13 @@ public class HomeController {
             sort = Sort.by(Sort.Direction.ASC, "name");
 
         Pageable pageable = PageRequest.of(page, 12, sort);
-        Page<Product> productPage = productRepository.filterProducts(gender, categoryId, color, sale, minPrice,
-                maxPrice, pageable);
+        
+        Page<Product> productPage = productRepository.filterProducts(keyword, gender, categoryId, color, sale, 
+        		minPrice, maxPrice, pageable);
+        
         List<CategoryCountDTO> categories = categoryRepository.getCategoryCounts(gender, sale, color);
 
+        model.addAttribute("keyword", keyword);
         model.addAttribute("products", productPage);
         model.addAttribute("categories", categories);
         model.addAttribute("selectedGender", gender);

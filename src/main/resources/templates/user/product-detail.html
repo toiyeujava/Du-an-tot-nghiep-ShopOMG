@@ -44,13 +44,40 @@
                 vertical-align: middle;
                 margin-right: 5px;
             }
+			.thumb-img {
+			    border: 2px solid transparent;
+			    opacity: 0.7;
+			    transition: all 0.2s;
+			}
+			.thumb-img:hover, .thumb-img.active {
+			    border-color: #000;
+			    opacity: 1;
+			}
         </style>
 
         <div class="row" th:if="${product}">
-            <div class="col-md-6 mb-4">
-                <img th:src="@{${product.image}}" class="img-fluid rounded w-100"
-                    onerror="this.src='https://placehold.co/600x400'">
-            </div>
+			<div class="col-md-6 mb-4">
+			    <div class="main-image-container mb-3 text-center border rounded bg-light">
+			        <img id="mainImage" th:src="@{${product.image}}" class="img-fluid" 
+			             style="max-height: 500px; object-fit: contain;"
+			             onerror="this.src='https://placehold.co/600x600'">
+			    </div>
+
+			    <div class="d-flex gap-2 overflow-auto pb-2" style="scrollbar-width: thin;">
+			        <img th:src="@{${product.image}}" 
+			             class="img-thumbnail thumb-img active" 
+			             onclick="changeImage(this.src, this)"
+			             style="width: 80px; height: 80px; cursor: pointer; object-fit: cover;">
+			             
+			        <th:block th:each="img : ${product.productImages}">
+			            <img th:if="${img.image != product.image}"
+			                 th:src="@{${img.image}}" 
+			                 class="img-thumbnail thumb-img" 
+			                 onclick="changeImage(this.src, this)"
+			                 style="width: 80px; height: 80px; cursor: pointer; object-fit: cover;">
+			        </th:block>
+			    </div>
+			</div>
 
             <div class="col-md-6">
                 <h2 class="fw-bold" th:text="${product.name}"></h2>
@@ -350,6 +377,15 @@
             if (document.getElementById('guestStockDisplay')) {
                 checkGuestStock();
             }
+			
+			function changeImage(src, element) {
+			    // Đổi ảnh chính
+			    document.getElementById('mainImage').src = src;
+			    
+			    // Đổi trạng thái active cho các ảnh nhỏ
+			    document.querySelectorAll('.thumb-img').forEach(img => img.classList.remove('active'));
+			    element.classList.add('active');
+			}
         </script>
 
     </article>

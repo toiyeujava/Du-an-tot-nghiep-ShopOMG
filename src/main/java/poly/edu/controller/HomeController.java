@@ -34,8 +34,8 @@ public class HomeController {
 
     // --- TRANG CHỦ ---
     @GetMapping({ "/", "/home" })
-    public String index(Model model, 
-                        @RequestParam(name = "page", defaultValue = "0") int page) {
+    public String index(Model model,
+            @RequestParam(name = "page", defaultValue = "0") int page) {
         Pageable pageable = PageRequest.of(page, 8, Sort.by("createdAt").descending());
         Page<Product> productPage = productRepository.findAll(pageable);
         model.addAttribute("products", productPage);
@@ -45,21 +45,27 @@ public class HomeController {
 
     // --- CỬA HÀNG ---
     @GetMapping("/products")
-    public String shop(Model model, 
-                       @RequestParam(name = "gender", required = false) String gender,
-                       @RequestParam(name = "category", required = false) Integer categoryId,
-                       @RequestParam(name = "color", required = false) String color,
-                       @RequestParam(name = "sale", required = false) Boolean sale,
-                       @RequestParam(name = "sort", defaultValue = "newest") String sortType,
-                       @RequestParam(name = "page", defaultValue = "0") int page) {
-        
+    public String shop(Model model,
+            @RequestParam(name = "gender", required = false) String gender,
+            @RequestParam(name = "category", required = false) Integer categoryId,
+            @RequestParam(name = "color", required = false) String color,
+            @RequestParam(name = "sale", required = false) Boolean sale,
+            @RequestParam(name = "min", required = false) Double minPrice,
+            @RequestParam(name = "max", required = false) Double maxPrice,
+            @RequestParam(name = "sort", defaultValue = "newest") String sortType,
+            @RequestParam(name = "page", defaultValue = "0") int page) {
+
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
-        if ("price_asc".equals(sortType)) sort = Sort.by(Sort.Direction.ASC, "price");
-        else if ("price_desc".equals(sortType)) sort = Sort.by(Sort.Direction.DESC, "price");
-        else if ("name_asc".equals(sortType)) sort = Sort.by(Sort.Direction.ASC, "name");
+        if ("price_asc".equals(sortType))
+            sort = Sort.by(Sort.Direction.ASC, "price");
+        else if ("price_desc".equals(sortType))
+            sort = Sort.by(Sort.Direction.DESC, "price");
+        else if ("name_asc".equals(sortType))
+            sort = Sort.by(Sort.Direction.ASC, "name");
 
         Pageable pageable = PageRequest.of(page, 12, sort);
-        Page<Product> productPage = productRepository.filterProducts(gender, categoryId, color, sale, pageable);
+        Page<Product> productPage = productRepository.filterProducts(gender, categoryId, color, sale, minPrice,
+                maxPrice, pageable);
         List<CategoryCountDTO> categories = categoryRepository.getCategoryCounts(gender, sale, color);
 
         model.addAttribute("products", productPage);
@@ -69,11 +75,21 @@ public class HomeController {
         model.addAttribute("selectedColor", color);
         model.addAttribute("selectedSort", sortType);
         model.addAttribute("isSale", sale);
-        
+        model.addAttribute("minPrice", minPrice);
+        model.addAttribute("maxPrice", maxPrice);
+        model.addAttribute("categories", categories);
+        model.addAttribute("selectedGender", gender);
+        model.addAttribute("selectedCategory", categoryId);
+        model.addAttribute("selectedColor", color);
+        model.addAttribute("selectedSort", sortType);
+        model.addAttribute("isSale", sale);
+
         String pageTitle = "Tất cả sản phẩm";
-        if (Boolean.TRUE.equals(sale)) pageTitle = "Săn Sale Giá Sốc";
-        else if (gender != null && !gender.isEmpty()) pageTitle = "Thời trang " + gender;
-        
+        if (Boolean.TRUE.equals(sale))
+            pageTitle = "Săn Sale Giá Sốc";
+        else if (gender != null && !gender.isEmpty())
+            pageTitle = "Thời trang " + gender;
+
         model.addAttribute("pageTitle", pageTitle);
         return "user/product-list";
     }
@@ -90,7 +106,8 @@ public class HomeController {
 
             // 1. Lấy danh sách biến thể
             List<ProductVariant> variants = product.getVariants();
-            if (variants == null) variants = new ArrayList<>();
+            if (variants == null)
+                variants = new ArrayList<>();
 
             // 2. Lọc màu và size để vẽ nút (Java làm việc này rất tốt)
             List<String> uniqueColors = variants.stream()
@@ -110,13 +127,14 @@ public class HomeController {
                 json.append("\"size\":\"").append(v.getSize()).append("\",");
                 json.append("\"quantity\":").append(v.getQuantity());
                 json.append("}");
-                if (i < variants.size() - 1) json.append(",");
+                if (i < variants.size() - 1)
+                    json.append(",");
             }
             json.append("]");
 
             model.addAttribute("uniqueColors", uniqueColors);
             model.addAttribute("uniqueSizes", uniqueSizes);
-            
+
             // QUAN TRỌNG: Gửi chuỗi này xuống View
             model.addAttribute("jsonVariants", json.toString());
 
@@ -139,7 +157,7 @@ public class HomeController {
             @RequestParam(value = "selectedPhone", required = false) String phone,
             @RequestParam(value = "selectedAddress", required = false) String address,
             Model model) {
-        
+
         String maskedPhone = maskPhoneNumber(phone);
         model.addAttribute("pageTitle", "Đặt hàng thành công");
         model.addAttribute("recipientName", recipientName != null ? recipientName : "Chưa chọn địa chỉ");
@@ -150,9 +168,11 @@ public class HomeController {
 
     // --- UTILS ---
     private String maskPhoneNumber(String phone) {
-        if (phone == null || phone.isEmpty()) return "";
+        if (phone == null || phone.isEmpty())
+            return "";
         String digitsOnly = phone.replaceAll("\\D", "");
-        if (digitsOnly.length() < 4) return phone; 
+        if (digitsOnly.length() < 4)
+            return phone;
         String first2 = digitsOnly.substring(0, 2);
         String last2 = digitsOnly.substring(digitsOnly.length() - 2);
         int asteriskCount = digitsOnly.length() - 4;

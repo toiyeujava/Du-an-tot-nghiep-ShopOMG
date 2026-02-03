@@ -7,6 +7,10 @@
 
 <body>
     <article class="container py-5">
+        <!-- noUiSlider CDN -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
+
         <style>
             .product-card:hover .quick-add-btn {
                 opacity: 1 !important;
@@ -149,12 +153,37 @@
                             </div>
                         </div>
 
+                        <!-- PRICE RANGE FILTER -->
+                        <div class="filter-group mb-4 mt-4">
+                            <label class="fw-bold mb-3 border-bottom pb-1 w-100">Khoảng giá</label>
+
+                            <div class="d-flex align-items-center mb-3">
+                                <input type="number" id="input-min" name="min"
+                                    class="form-control form-control-sm text-center" placeholder="₫ TỪ"
+                                    th:value="${minPrice}" min="0" step="10000">
+                                <span class="mx-2 text-muted">-</span>
+                                <input type="number" id="input-max" name="max"
+                                    class="form-control form-control-sm text-center" placeholder="₫ ĐẾN"
+                                    th:value="${maxPrice}" min="0" step="10000">
+                            </div>
+
+                            <div id="price-slider" class="mb-4 mx-2"></div>
+
+                            <button type="button" onclick="this.form.submit()"
+                                class="btn btn-danger w-100 btn-sm fw-bold">
+                                ÁP DỤNG
+                            </button>
+                        </div>
+
                         <a href="/products" class="btn btn-outline-dark w-100 btn-sm mt-3">Xóa bộ lọc</a>
                     </div>
                 </form>
             </div>
 
             <div class="col-lg-9">
+                <!-- Guest Welcome Banner -->
+                <div th:replace="~{fragments/guest-banner :: guestBanner}"></div>
+
                 <div class="d-flex justify-content-between mb-3 align-items-center">
                     <span class="fw-bold text-muted">
                         Tìm thấy <span th:text="${products.totalElements}">0</span> sản phẩm
@@ -236,6 +265,87 @@
             </div>
         </div>
     </article>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var slider = document.getElementById('price-slider');
+            var inputMin = document.getElementById('input-min');
+            var inputMax = document.getElementById('input-max');
+
+            // Default range or current selected range
+            var minVal = parseInt(inputMin.value) || 0;
+            var maxVal = parseInt(inputMax.value) || 5000000; // Default max 5tr if null
+
+            noUiSlider.create(slider, {
+                start: [minVal, maxVal],
+                connect: true,
+                range: {
+                    'min': 0,
+                    'max': 10000000 // Max slider 10tr
+                },
+                step: 50000, // Bước nhảy 50k
+                format: {
+                    to: function (value) {
+                        return Math.round(value);
+                    },
+                    from: function (value) {
+                        return Number(value);
+                    }
+                }
+            });
+
+            // Update inputs when slider changes
+            slider.noUiSlider.on('update', function (values, handle) {
+                var value = values[handle];
+                if (handle) {
+                    inputMax.value = value;
+                } else {
+                    inputMin.value = value;
+                }
+            });
+
+            // Update slider when inputs change
+            inputMin.addEventListener('change', function () {
+                slider.noUiSlider.set([this.value, null]);
+            });
+
+            inputMax.addEventListener('change', function () {
+                slider.noUiSlider.set([null, this.value]);
+            });
+        });
+    </script>
+
+    <style>
+        /* Custom styled slider to match red danger button */
+        .noUi-connect {
+            background: #dc3545;
+        }
+
+        .noUi-horizontal {
+            height: 6px;
+        }
+
+        .noUi-handle {
+            height: 18px;
+            width: 18px;
+            top: -6px;
+            right: -9px;
+            border-radius: 50%;
+            border: 2px solid #dc3545;
+            background: #fff;
+            box-shadow: none;
+            cursor: pointer;
+        }
+
+        .noUi-handle:after,
+        .noUi-handle:before {
+            display: none;
+        }
+
+        .noUi-active {
+            transform: scale(1.2);
+            transition: transform 0.1s;
+        }
+    </style>
 </body>
 
 </html>

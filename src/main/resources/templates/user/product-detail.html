@@ -64,8 +64,10 @@
 			    </div>
 
 			    <div class="d-flex gap-2 overflow-auto pb-2" style="scrollbar-width: thin;">
+			        
 			        <img th:src="@{${product.image}}" 
 			             class="img-thumbnail thumb-img active" 
+			             onmouseover="changeImage(this.src, this)" 
 			             onclick="changeImage(this.src, this)"
 			             style="width: 80px; height: 80px; cursor: pointer; object-fit: cover;">
 			             
@@ -73,6 +75,7 @@
 			            <img th:if="${img.image != product.image}"
 			                 th:src="@{${img.image}}" 
 			                 class="img-thumbnail thumb-img" 
+			                 onmouseover="changeImage(this.src, this)" 
 			                 onclick="changeImage(this.src, this)"
 			                 style="width: 80px; height: 80px; cursor: pointer; object-fit: cover;">
 			        </th:block>

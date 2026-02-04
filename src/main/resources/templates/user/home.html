@@ -2,274 +2,244 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
 
 <head>
-	<title>Trang chủ - ShopOMG</title>
+    <title th:text="${pageTitle}">Trang chủ</title>
 </head>
 
 <body>
-	<article>
-		<style>
-			/* Khung chứa ảnh: Cần overflow hidden để ảnh phóng to không bị tràn ra ngoài */
-			.img-wrapper {
-				position: relative;
-				overflow: hidden;
-				border-radius: 5px 5px 0 0;
-			}
+    <article class="container py-5">
+        <style>
+            /* Copy Style từ product-list */
+            .filter-section { position: sticky; top: 20px; }
+            .color-dot { width: 20px; height: 20px; border-radius: 50%; display: inline-block; border: 1px solid #ddd; transition: 0.2s; }
+            .color-dot:hover { transform: scale(1.2); }
+            .img-wrapper { position: relative; overflow: hidden; border-radius: 5px 5px 0 0; }
+            .img-wrapper img { transition: transform 0.5s ease; width: 100%; height: 250px; object-fit: cover; display: block; }
+            .product-card:hover .img-wrapper img { transform: scale(1.1); }
+            .quick-add-btn { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.7); padding: 10px; text-align: center; transition: all 0.3s ease; transform: translateY(100%); opacity: 0; }
+            .product-card:hover .quick-add-btn { transform: translateY(0); opacity: 1; }
+            /* Chat Box CSS giữ nguyên */
+            .chat-btn-toggle { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: #0d6efd; color: white; border-radius: 50%; text-align: center; line-height: 60px; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 9999; }
+            .chat-box-container { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 450px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 9999; display: none; flex-direction: column; overflow: hidden; border: 1px solid #ddd; }
+            .chat-header { background-color: #0d6efd; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+            .chat-body { flex: 1; padding: 15px; overflow-y: auto; background-color: #f8f9fa; display: flex; flex-direction: column; gap: 10px; }
+            .chat-footer { padding: 10px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+            .message { max-width: 80%; padding: 8px 12px; border-radius: 15px; font-size: 14px; }
+            .message.bot { background-color: #e9ecef; align-self: flex-start; }
+            .message.user { background-color: #0d6efd; color: white; align-self: flex-end; }
+        </style>
 
-			/* Ảnh sản phẩm: Thêm transition để mượt mà */
-			.img-wrapper img {
-				transition: transform 0.5s ease;
-				width: 100%;
-				height: 250px;
-				/* Chiều cao cố định cho đẹp đội hình */
-				object-fit: cover;
-				display: block;
-			}
+        <div class="row">
+            <aside class="col-lg-3 d-none d-lg-block">
+                <div class="filter-section p-3 border rounded bg-white shadow-sm">
+                    <h5 class="fw-bold mb-4"><i class="fas fa-filter me-2"></i>Bộ lọc</h5>
 
-			/* HIỆU ỨNG 1: Di chuột vào card -> Ảnh phóng to (Zoom) */
-			.product-card:hover .img-wrapper img {
-				transform: scale(1.1);
-			}
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">Đối tượng</h6>
+                        <div class="list-group list-group-flush">
+                            <a th:href="@{/home(gender='', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="list-group-item list-group-item-action border-0 px-0 py-1"
+                                th:classappend="${selectedGender == null or selectedGender == ''} ? 'fw-bold text-primary' : ''">Tất cả</a>
+                            <a th:href="@{/home(gender='Nam', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="list-group-item list-group-item-action border-0 px-0 py-1"
+                                th:classappend="${selectedGender == 'Nam'} ? 'fw-bold text-primary' : ''">Nam</a>
+                            <a th:href="@{/home(gender='Nữ', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="list-group-item list-group-item-action border-0 px-0 py-1"
+                                th:classappend="${selectedGender == 'Nữ'} ? 'fw-bold text-primary' : ''">Nữ</a>
+                            <a th:href="@{/home(gender='Unisex', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="list-group-item list-group-item-action border-0 px-0 py-1"
+                                th:classappend="${selectedGender == 'Unisex'} ? 'fw-bold text-primary' : ''">Unisex</a>
+                        </div>
+                    </div>
 
-			/* Nút thêm giỏ hàng: Mặc định ẩn xuống dưới */
-			.quick-add-btn {
-				position: absolute;
-				bottom: 0;
-				left: 0;
-				width: 100%;
-				background: rgba(0, 0, 0, 0.7);
-				/* Nền đen mờ */
-				padding: 10px;
-				text-align: center;
-				transition: all 0.3s ease;
-				transform: translateY(100%);
-				/* Đẩy xuống khỏi khung hình */
-				opacity: 0;
-			}
+                    <div class="mb-4">
+                        <a th:href="@{/home(sale=${isSale == true ? false : true}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                            class="btn w-100 fw-bold" th:classappend="${isSale} ? 'btn-danger' : 'btn-outline-danger'">
+                            <i class="fas fa-fire me-2"></i>SĂN SALE SỐC
+                        </a>
+                    </div>
 
-			/* HIỆU ỨNG 2: Di chuột vào card -> Nút trồi lên */
-			.product-card:hover .quick-add-btn {
-				transform: translateY(0);
-				opacity: 1;
-			}
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">Danh mục</h6>
+                        <div class="list-group list-group-flush">
+                            <a th:href="@{/home(category='', gender=${selectedGender}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                               class="list-group-item list-group-item-action border-0 px-0 py-1"
+                               th:classappend="${selectedCategory == null} ? 'fw-bold text-primary' : ''">Tất cả</a>
+                            <a th:each="cat : ${categories}"
+                                th:href="@{/home(category=${cat.id}, gender=${selectedGender}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="list-group-item list-group-item-action border-0 px-0 py-1 d-flex justify-content-between align-items-center"
+                                th:classappend="${selectedCategory == cat.id} ? 'fw-bold text-primary' : ''">
+                                <span th:text="${cat.name}"></span>
+                                <span class="badge rounded-pill bg-light text-dark border" th:text="${cat.count}">0</span>
+                            </a>
+                        </div>
+                    </div>
 
-			/* Link ảnh: Bỏ gạch chân */
-			.product-link {
-				text-decoration: none;
-				display: block;
-			}
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">Khoảng giá (đ)</h6>
+                        <form th:action="@{/home}" method="get">
+                            <input type="hidden" name="gender" th:value="${selectedGender}">
+                            <input type="hidden" name="category" th:value="${selectedCategory}">
+                            <input type="hidden" name="color" th:value="${selectedColor}">
+                            <input type="hidden" name="sort" th:value="${selectedSort}">
+                            <input type="hidden" name="keyword" th:value="${keyword}">
+                            <input type="hidden" name="sale" th:value="${isSale}">
+                            
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <input type="number" name="min" class="form-control form-control-sm" placeholder="Từ" th:value="${minPrice}">
+                                <span>-</span>
+                                <input type="number" name="max" class="form-control form-control-sm" placeholder="Đến" th:value="${maxPrice}">
+                            </div>
+                            <button type="submit" class="btn btn-dark btn-sm w-100">Áp dụng</button>
+                        </form>
+                    </div>
 
-			/* --- PHẦN THÊM MỚI: CHAT BOX CSS --- */
-			/* Nút mở Chat */
-			.chat-btn-toggle {
-				position: fixed;
-				bottom: 30px;
-				right: 30px;
-				width: 60px;
-				height: 60px;
-				background-color: #0d6efd;
-				/* Màu xanh bootstrap */
-				color: white;
-				border-radius: 50%;
-				text-align: center;
-				line-height: 60px;
-				font-size: 24px;
-				box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-				cursor: pointer;
-				z-index: 9999;
-				transition: transform 0.3s;
-			}
+                    <div>
+                        <h6 class="fw-bold mb-3">Màu sắc</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a th:href="@{/home(color='', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                               class="btn btn-sm btn-outline-secondary" th:classappend="${selectedColor == null or selectedColor == ''} ? 'active' : ''">X</a>
+                            
+                            <a th:href="@{/home(color='Đen', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" 
+                               class="color-dot" style="background: #000;" title="Đen" th:classappend="${selectedColor == 'Đen'} ? 'border-primary border-3' : ''"></a>
+                            <a th:href="@{/home(color='Trắng', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" 
+                               class="color-dot" style="background: #fff;" title="Trắng" th:classappend="${selectedColor == 'Trắng'} ? 'border-primary border-3' : ''"></a>
+                            <a th:href="@{/home(color='Đỏ', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" 
+                               class="color-dot" style="background: red;" title="Đỏ" th:classappend="${selectedColor == 'Đỏ'} ? 'border-primary border-3' : ''"></a>
+                            <a th:href="@{/home(color='Xanh', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" 
+                               class="color-dot" style="background: blue;" title="Xanh" th:classappend="${selectedColor == 'Xanh'} ? 'border-primary border-3' : ''"></a>
+                        </div>
+                    </div>
+                </div>
+            </aside>
 
-			.chat-btn-toggle:hover {
-				transform: scale(1.1);
-			}
+            <main class="col-lg-9">
+                <div id="heroCarousel" class="carousel slide mb-4 shadow-sm rounded overflow-hidden" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active" style="height: 400px;">
+                            <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b" class="d-block w-100 h-100 object-fit-cover" alt="Banner">
+                            <div class="carousel-caption d-none d-md-block text-start" style="bottom: 20%; left: 10%;">
+                                <h1 class="display-4 fw-bold">BST Thu Đông 2025</h1>
+                                <a href="/products" class="btn btn-light btn-lg px-4 fw-bold shadow">Mua ngay</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-			/* Khung Chat Box */
-			.chat-box-container {
-				position: fixed;
-				bottom: 100px;
-				right: 30px;
-				width: 350px;
-				height: 450px;
-				background: white;
-				border-radius: 10px;
-				box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-				z-index: 9999;
-				display: none;
-				/* Mặc định ẩn */
-				flex-direction: column;
-				overflow: hidden;
-				border: 1px solid #ddd;
-			}
+                <div class="d-flex justify-content-between align-items-center mb-4 bg-light p-3 rounded">
+                    <div>
+                        <h4 class="fw-bold mb-0">
+                            <span th:if="${keyword != null and keyword != ''}" th:text="'Kết quả tìm kiếm: ' + ${keyword}"></span>
+                            <span th:unless="${keyword != null and keyword != ''}">Tất cả sản phẩm</span>
+                        </h4>
+                        <small class="text-muted" th:text="${products.totalElements} + ' sản phẩm'">0 sản phẩm</small>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        <label class="me-2 text-nowrap">Sắp xếp:</label>
+                        <select class="form-select form-select-sm" style="width: 180px;" 
+                                onchange="location = this.value;">
+                            <option th:value="@{/home(sort='newest', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}" 
+                                    th:selected="${selectedSort == 'newest'}">Mới nhất</option>
+                            <option th:value="@{/home(sort='price_asc', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}" 
+                                    th:selected="${selectedSort == 'price_asc'}">Giá tăng dần</option>
+                            <option th:value="@{/home(sort='price_desc', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}" 
+                                    th:selected="${selectedSort == 'price_desc'}">Giá giảm dần</option>
+                            <option th:value="@{/home(sort='name_asc', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}" 
+                                    th:selected="${selectedSort == 'name_asc'}">Tên A-Z</option>
+                        </select>
+                    </div>
+                </div>
 
-			/* Header Chat */
-			.chat-header {
-				background-color: #0d6efd;
-				color: white;
-				padding: 15px;
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				font-weight: bold;
-			}
+                <div class="row g-4">
+                    <div class="col-6 col-md-4" th:each="product : ${products.content}">
+                        <div class="card product-card h-100 border-0 shadow-sm overflow-hidden">
+                            <div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold"
+                                style="z-index: 10;" th:if="${product.discount > 0}"
+                                th:text="'-' + ${product.discount} + '%'"></div>
 
-			/* Nội dung tin nhắn */
-			.chat-body {
-				flex: 1;
-				padding: 15px;
-				overflow-y: auto;
-				background-color: #f8f9fa;
-				display: flex;
-				flex-direction: column;
-				gap: 10px;
-			}
+                            <div class="img-wrapper">
+                                <a th:href="@{/product/{id}(id=${product.id})}" class="product-link"> 
+                                    <img th:src="${product.image}" onerror="this.src='https://placehold.co/600x400?text=No+Image'" alt="Product">
+                                </a>
+                                <form th:action="@{/cart/add}" method="post" class="quick-add-btn">
+                                    <input type="hidden" name="productId" th:value="${product.id}">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="btn btn-link text-white text-decoration-none fw-bold w-100 p-0">
+                                        <i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
+                                    </button>
+                                </form>
+                            </div>
 
-			/* Footer nhập liệu */
-			.chat-footer {
-				padding: 10px;
-				border-top: 1px solid #eee;
-				display: flex;
-				gap: 10px;
-				background: white;
-			}
+                            <div class="card-body">
+                                <h6 class="card-title fw-bold text-truncate">
+                                    <a th:href="@{/product/{id}(id=${product.id})}" class="text-dark text-decoration-none"
+                                        th:text="${product.name}">Tên sản phẩm</a>
+                                </h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-danger"
+                                        th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                    </span> 
+                                    <small class="text-muted text-decoration-line-through" th:if="${product.discount > 0}"
+                                        th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 text-center py-5" th:if="${products.totalElements == 0}">
+                        <h5 class="text-muted">Không tìm thấy sản phẩm nào phù hợp!</h5>
+                        <a href="/home" class="btn btn-outline-dark mt-3">Xóa bộ lọc</a>
+                    </div>
+                </div>
 
-			/* Bong bóng tin nhắn */
-			.message {
-				max-width: 80%;
-				padding: 8px 12px;
-				border-radius: 15px;
-				font-size: 14px;
-				line-height: 1.4;
-			}
+                <nav class="mt-5 d-flex justify-content-center" th:if="${products.totalPages > 1}">
+                    <ul class="pagination">
+                        <li class="page-item" th:classappend="${products.first} ? 'disabled'">
+                            <a class="page-link text-dark border-0" 
+                               th:href="@{/home(page=${products.number - 1}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}"> 
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
 
-			.message.bot {
-				background-color: #e9ecef;
-				color: #333;
-				align-self: flex-start;
-				border-bottom-left-radius: 2px;
-			}
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
+                            th:classappend="${i == products.number} ? 'active'">
+                            <a class="page-link rounded-circle mx-1 border-0" 
+                               th:href="@{/home(page=${i}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}"
+                               th:text="${i + 1}"
+                               th:classappend="${i == products.number} ? 'bg-dark text-white' : 'text-dark bg-light'">
+                            </a>
+                        </li>
 
-			.message.user {
-				background-color: #0d6efd;
-				color: white;
-				align-self: flex-end;
-				border-bottom-right-radius: 2px;
-			}
-		</style>
+                        <li class="page-item" th:classappend="${products.last} ? 'disabled'">
+                            <a class="page-link text-dark border-0" 
+                               th:href="@{/home(page=${products.number + 1}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}"> 
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </main>
+        </div>
 
-		<div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
-			<div class="carousel-inner">
-				<div class="carousel-item active" style="height: 500px;">
-					<img src="https://images.unsplash.com/photo-1483985988355-763728e1935b"
-						class="d-block w-100 h-100 object-fit-cover" alt="...">
-					<div class="carousel-caption d-none d-md-block text-start" style="bottom: 20%; left: 10%;">
-						<h1 class="display-3 fw-bold">BST Thu Đông 2025</h1>
-						<a href="/products" class="btn btn-light btn-lg px-4 fw-bold">Mua
-							ngay</a>
-					</div>
-				</div>
-			</div>
-		</div>
+        <div class="chat-btn-toggle" onclick="toggleChatBox()"><i class="fas fa-comments"></i></div>
+        <div class="chat-box-container" id="chatBox">
+            <div class="chat-header">
+                <span><i class="fas fa-headset me-2"></i>CSKH - ShopOMG</span>
+                <button type="button" class="btn-close btn-close-white" onclick="toggleChatBox()"></button>
+            </div>
+            <div class="chat-body" id="chatBody">
+                <div class="message bot">Xin chào! ShopOMG có thể giúp gì cho bạn hôm nay?</div>
+            </div>
+            <div class="chat-footer">
+                <input type="text" id="chatInput" class="form-control" placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)">
+                <button class="btn btn-primary" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
 
-		<section class="container my-5">
-			<!-- Guest Welcome Banner -->
-			<div th:replace="~{fragments/guest-banner :: guestBanner}"></div>
-
-			<h3 class="text-center fw-bold mb-4">Sản phẩm nổi bật</h3>
-
-			<div class="row">
-				<div class="col-6 col-md-3 mb-4" th:each="product : ${products.content}">
-					<div class="card product-card h-100 border-0 shadow-sm overflow-hidden">
-
-						<div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold"
-							style="z-index: 10;" th:if="${product.discount > 0}"
-							th:text="'-' + ${product.discount} + '%'"></div>
-
-						<div class="img-wrapper">
-							<a th:href="@{/product/{id}(id=${product.id})}" class="product-link"> <img
-									th:src="${product.image}"
-									onerror="this.src='https://placehold.co/600x400?text=No+Image'" alt="Product Image">
-							</a>
-
-							<form th:action="@{/cart/add}" method="post" class="quick-add-btn">
-								<input type="hidden" name="productId" th:value="${product.id}">
-								<input type="hidden" name="quantity" value="1">
-								<button type="submit"
-									class="btn btn-link text-white text-decoration-none fw-bold w-100 p-0">
-									<i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
-								</button>
-							</form>
-						</div>
-
-						<div class="card-body">
-							<h6 class="card-title fw-bold text-truncate">
-								<a th:href="@{/product/{id}(id=${product.id})}" class="text-dark text-decoration-none"
-									th:text="${product.name}">Tên sản phẩm</a>
-							</h6>
-							<div class="d-flex justify-content-between align-items-center">
-								<span class="fw-bold text-danger"
-									th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
-								</span> <small class="text-muted text-decoration-line-through"
-									th:if="${product.discount > 0}"
-									th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">
-								</small>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<nav class="mt-4 d-flex justify-content-center" th:if="${products.totalPages > 1}">
-				<ul class="pagination">
-					<li class="page-item" th:classappend="${products.first} ? 'disabled'"><a
-							class="page-link text-dark border-0 shadow-none"
-							th:href="@{/home(page=${products.number - 1})}"> <i class="fas fa-chevron-left"></i>
-						</a></li>
-
-					<li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
-						th:classappend="${i == products.number} ? 'active'"><a
-							class="page-link rounded-circle mx-1 border-0" th:href="@{/home(page=${i})}"
-							th:text="${i + 1}"
-							th:classappend="${i == products.number} ? 'bg-dark text-white' : 'text-dark bg-light'">
-						</a></li>
-
-					<li class="page-item" th:classappend="${products.last} ? 'disabled'"><a
-							class="page-link text-dark border-0 shadow-none"
-							th:href="@{/home(page=${products.number + 1})}"> <i class="fas fa-chevron-right"></i>
-						</a></li>
-				</ul>
-			</nav>
-
-		</section>
-		<div class="chat-btn-toggle" onclick="toggleChatBox()">
-			<i class="fas fa-comments"></i>
-		</div>
-
-		<div class="chat-box-container" id="chatBox">
-			<div class="chat-header">
-				<span><i class="fas fa-headset me-2"></i>CSKH - ShopOMG</span>
-				<button type="button" class="btn-close btn-close-white" onclick="toggleChatBox()"></button>
-			</div>
-
-			<div class="chat-body" id="chatBody">
-				<div class="message bot">Xin chào! ShopOMG có thể giúp gì cho
-					bạn hôm nay?</div>
-			</div>
-
-			<div class="chat-footer">
-				<input type="text" id="chatInput" class="form-control" placeholder="Nhập tin nhắn..."
-					onkeypress="handleEnter(event)">
-				<button class="btn btn-primary" onclick="sendMessage()">
-					<i class="fas fa-paper-plane"></i>
-				</button>
-			</div>
-		</div>
-
-
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-
-		<script th:src="@{/js/chat.js}"></script>
-	</article>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+        <script th:src="@{/js/chat.js}"></script>
+    </article>
 </body>
-
 </html>

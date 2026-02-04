@@ -35,17 +35,57 @@ public class HomeController {
     // --- TRANG CHỦ ---
     @GetMapping({ "/", "/home" })
     public String index(Model model,
-            @RequestParam(name = "page", defaultValue = "0") int page) {
-        Pageable pageable = PageRequest.of(page, 8, Sort.by("createdAt").descending());
-        Page<Product> productPage = productRepository.findAll(pageable);
+                        @RequestParam(name = "keyword", required = false) String keyword,
+                        @RequestParam(name = "gender", required = false) String gender,
+                        @RequestParam(name = "category", required = false) Integer categoryId,
+                        @RequestParam(name = "color", required = false) String color,
+                        @RequestParam(name = "sale", required = false) Boolean sale,
+                        @RequestParam(name = "min", required = false) Double minPrice,
+                        @RequestParam(name = "max", required = false) Double maxPrice,
+                        @RequestParam(name = "sort", defaultValue = "newest") String sortType,
+                        @RequestParam(name = "page", defaultValue = "0") int page) {
+
+        // 1. Xử lý Sắp xếp
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        if ("price_asc".equals(sortType)) sort = Sort.by(Sort.Direction.ASC, "price");
+        else if ("price_desc".equals(sortType)) sort = Sort.by(Sort.Direction.DESC, "price");
+        else if ("name_asc".equals(sortType)) sort = Sort.by(Sort.Direction.ASC, "name");
+
+        // 2. Gọi Repository lọc dữ liệu
+        Pageable pageable = PageRequest.of(page, 12, sort);
+        Page<Product> productPage = productRepository.filterProducts(keyword, gender, categoryId, color, sale, minPrice, maxPrice, pageable);
+        
+        // 3. Lấy danh sách danh mục (có đếm số lượng theo bộ lọc hiện tại)
+        List<CategoryCountDTO> categories = categoryRepository.getCategoryCounts(gender, sale, color);
+
+        // 4. Gửi dữ liệu sang View
         model.addAttribute("products", productPage);
-        model.addAttribute("pageTitle", "Trang chủ - ShopOMG");
+        model.addAttribute("categories", categories); // Sidebar danh mục
+        
+        // 5. Gửi lại các tham số đã chọn để giữ trạng thái trên View (Pagination, Search, Sidebar)
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedGender", gender);
+        model.addAttribute("selectedCategory", categoryId);
+        model.addAttribute("selectedColor", color);
+        model.addAttribute("selectedSort", sortType);
+        model.addAttribute("isSale", sale);
+        model.addAttribute("minPrice", minPrice);
+        model.addAttribute("maxPrice", maxPrice);
+
+        // 6. Tiêu đề trang động
+        String pageTitle = "Trang chủ - ShopOMG";
+        if (keyword != null && !keyword.isEmpty()) pageTitle = "Tìm kiếm: " + keyword;
+        else if (gender != null && !gender.isEmpty()) pageTitle = "Thời trang " + gender;
+        
+        model.addAttribute("pageTitle", pageTitle);
+
         return "user/home";
     }
 
     // --- CỬA HÀNG ---
     @GetMapping("/products")
     public String shop(Model model,
+    		@RequestParam(name = "keyword", required = false) String keyword, // THÊM DÒNG NÀY
             @RequestParam(name = "gender", required = false) String gender,
             @RequestParam(name = "category", required = false) Integer categoryId,
             @RequestParam(name = "color", required = false) String color,
@@ -64,10 +104,13 @@ public class HomeController {
             sort = Sort.by(Sort.Direction.ASC, "name");
 
         Pageable pageable = PageRequest.of(page, 12, sort);
-        Page<Product> productPage = productRepository.filterProducts(gender, categoryId, color, sale, minPrice,
-                maxPrice, pageable);
+        
+        Page<Product> productPage = productRepository.filterProducts(keyword, gender, categoryId, color, sale, 
+        		minPrice, maxPrice, pageable);
+        
         List<CategoryCountDTO> categories = categoryRepository.getCategoryCounts(gender, sale, color);
 
+        model.addAttribute("keyword", keyword);
         model.addAttribute("products", productPage);
         model.addAttribute("categories", categories);
         model.addAttribute("selectedGender", gender);

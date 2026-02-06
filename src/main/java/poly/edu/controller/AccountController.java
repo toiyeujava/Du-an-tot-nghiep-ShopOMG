@@ -2,7 +2,7 @@ package poly.edu.controller;
 
 import java.io.IOException;
 import java.security.Principal;
-
+import java.util.Optional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -23,6 +23,7 @@ import poly.edu.repository.AccountRepository;
 import poly.edu.service.AccountService;
 import poly.edu.service.EmailVerificationService;
 import poly.edu.service.FileService;
+import poly.edu.service.OrderService;
 
 @Controller
 @RequestMapping("/account")
@@ -39,6 +40,12 @@ public class AccountController {
 
     @Autowired
     EmailVerificationService emailVerificationService;
+
+    @Autowired
+    OrderService orderService;
+
+    @Autowired
+    poly.edu.repository.OrderRepository orderRepository;
 
     // HÀM BỔ TRỢ: Tìm account dù là đăng nhập bằng Form hay mạng xã hội
     private Account getAuthenticatedAccount(Principal principal) {
@@ -112,7 +119,9 @@ public class AccountController {
             try {
                 String avatarPath = fileService.save(avatarFile);
                 acc.setAvatar(avatarPath);
-            } catch (IOException e) { e.printStackTrace(); }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         accountService.save(acc);
@@ -122,8 +131,46 @@ public class AccountController {
 
     // --- 2. CÁC TRANG KHÁC CỦA TÀI KHOẢN ---
 
+    @PostMapping("/orders/cancel")
+    public String cancelOrder(@RequestParam("orderId") Integer orderId, Principal principal, RedirectAttributes ra) {
+        Account acc = getAuthenticatedAccount(principal);
+        if (acc == null)
+            return "redirect:/login";
+
+        Optional<poly.edu.entity.Order> orderOpt = orderService.getOrderById(orderId);
+        if (orderOpt.isPresent()) {
+            poly.edu.entity.Order order = orderOpt.get();
+            // Security check: ensure the order belongs to the current user
+            if (order.getAccount().getId().equals(acc.getId())) {
+                try {
+                    orderService.cancelOrder(orderId);
+                    ra.addFlashAttribute("success", "Hủy đơn hàng thành công!");
+                } catch (Exception e) {
+                    ra.addFlashAttribute("error", "Không thể hủy đơn hàng: " + e.getMessage());
+                }
+            } else {
+                ra.addFlashAttribute("error", "Bạn không có quyền hủy đơn hàng này!");
+            }
+        } else {
+            ra.addFlashAttribute("error", "Không tìm thấy đơn hàng!");
+        }
+
+        return "redirect:/account/orders";
+    }
+
     @GetMapping("/orders")
-    public String orders(Model model) {
+    public String orders(Model model, Principal principal) {
+        Account acc = getAuthenticatedAccount(principal);
+
+        if (acc == null)
+            return "redirect:/login?error=true";
+
+        // Fetch all orders for this user, ordered by date descending
+        java.util.List<poly.edu.entity.Order> orders = orderRepository.findByAccountIdOrderByOrderDateDesc(
+                acc.getId(),
+                org.springframework.data.domain.Pageable.unpaged()).getContent();
+
+        model.addAttribute("orders", orders);
         model.addAttribute("activePage", "orders");
         return "user/account-orders";
     }

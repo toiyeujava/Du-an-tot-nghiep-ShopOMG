@@ -1,17 +1,15 @@
 <div th:fragment="sidebar(activePage)" class="account-sidebar">
     <div class="user-info">
-        <img th:src="${currentUser != null and currentUser.avatar != null} ? @{${currentUser.avatar}} : 'https://i.pravatar.cc/150?img=12'" 
-             class="user-avatar" 
-             style="object-fit: cover;">
-        
-        <h6 class="fw-bold mb-0" 
-            th:text="${currentUser != null} ? ${currentUser.fullName} : 'Khách hàng'">
+        <img th:src="${currentUser != null and currentUser.avatar != null} ? @{${currentUser.avatar}} : 'https://i.pravatar.cc/150?img=12'"
+            class="user-avatar" style="object-fit: cover;" onerror="this.src='https://i.pravatar.cc/150?img=12'">
+
+        <h6 class="fw-bold mb-0" th:text="${currentUser != null} ? ${currentUser.fullName} : 'Khách hàng'">
             Nguyễn Văn A
         </h6>
-        
+
         <small class="text-muted">Thành viên Bạc</small>
     </div>
-    
+
     <div class="nav flex-column nav-account">
         <a href="/account/profile" class="nav-link" th:classappend="${activePage == 'profile'} ? 'active'">
             <i class="far fa-user"></i> Tài khoản của tôi

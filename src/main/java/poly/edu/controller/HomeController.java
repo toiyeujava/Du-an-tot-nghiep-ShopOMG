@@ -13,15 +13,25 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import poly.edu.dto.CategoryCountDTO;
+import poly.edu.entity.Account;
+import poly.edu.entity.Cart;
 import poly.edu.entity.Product;
 import poly.edu.entity.ProductVariant;
+import poly.edu.repository.AccountRepository;
 import poly.edu.repository.CategoryRepository;
 import poly.edu.repository.ProductRepository;
+import poly.edu.service.CartService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import java.security.Principal;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import poly.edu.entity.Order;
+import poly.edu.service.OrderService;
+import poly.edu.service.AccountService;
 
 @Controller
 public class HomeController {
@@ -32,37 +42,51 @@ public class HomeController {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private CartService cartService;
+
+    @Autowired
+    private AccountService accountService;
+
     // --- TRANG CHỦ ---
     @GetMapping({ "/", "/home" })
     public String index(Model model,
-                        @RequestParam(name = "keyword", required = false) String keyword,
-                        @RequestParam(name = "gender", required = false) String gender,
-                        @RequestParam(name = "category", required = false) Integer categoryId,
-                        @RequestParam(name = "color", required = false) String color,
-                        @RequestParam(name = "sale", required = false) Boolean sale,
-                        @RequestParam(name = "min", required = false) Double minPrice,
-                        @RequestParam(name = "max", required = false) Double maxPrice,
-                        @RequestParam(name = "sort", defaultValue = "newest") String sortType,
-                        @RequestParam(name = "page", defaultValue = "0") int page) {
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "gender", required = false) String gender,
+            @RequestParam(name = "category", required = false) Integer categoryId,
+            @RequestParam(name = "color", required = false) String color,
+            @RequestParam(name = "sale", required = false) Boolean sale,
+            @RequestParam(name = "min", required = false) Double minPrice,
+            @RequestParam(name = "max", required = false) Double maxPrice,
+            @RequestParam(name = "sort", defaultValue = "newest") String sortType,
+            @RequestParam(name = "page", defaultValue = "0") int page) {
 
         // 1. Xử lý Sắp xếp
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
-        if ("price_asc".equals(sortType)) sort = Sort.by(Sort.Direction.ASC, "price");
-        else if ("price_desc".equals(sortType)) sort = Sort.by(Sort.Direction.DESC, "price");
-        else if ("name_asc".equals(sortType)) sort = Sort.by(Sort.Direction.ASC, "name");
+        if ("price_asc".equals(sortType))
+            sort = Sort.by(Sort.Direction.ASC, "price");
+        else if ("price_desc".equals(sortType))
+            sort = Sort.by(Sort.Direction.DESC, "price");
+        else if ("name_asc".equals(sortType))
+            sort = Sort.by(Sort.Direction.ASC, "name");
 
         // 2. Gọi Repository lọc dữ liệu
         Pageable pageable = PageRequest.of(page, 12, sort);
-        Page<Product> productPage = productRepository.filterProducts(keyword, gender, categoryId, color, sale, minPrice, maxPrice, pageable);
-        
+        Page<Product> productPage = productRepository.filterProducts(keyword, gender, categoryId, color, sale, minPrice,
+                maxPrice, pageable);
+
         // 3. Lấy danh sách danh mục (có đếm số lượng theo bộ lọc hiện tại)
         List<CategoryCountDTO> categories = categoryRepository.getCategoryCounts(gender, sale, color);
 
         // 4. Gửi dữ liệu sang View
         model.addAttribute("products", productPage);
         model.addAttribute("categories", categories); // Sidebar danh mục
-        
-        // 5. Gửi lại các tham số đã chọn để giữ trạng thái trên View (Pagination, Search, Sidebar)
+
+        // 5. Gửi lại các tham số đã chọn để giữ trạng thái trên View (Pagination,
+        // Search, Sidebar)
         model.addAttribute("keyword", keyword);
         model.addAttribute("selectedGender", gender);
         model.addAttribute("selectedCategory", categoryId);
@@ -74,9 +98,11 @@ public class HomeController {
 
         // 6. Tiêu đề trang động
         String pageTitle = "Trang chủ - ShopOMG";
-        if (keyword != null && !keyword.isEmpty()) pageTitle = "Tìm kiếm: " + keyword;
-        else if (gender != null && !gender.isEmpty()) pageTitle = "Thời trang " + gender;
-        
+        if (keyword != null && !keyword.isEmpty())
+            pageTitle = "Tìm kiếm: " + keyword;
+        else if (gender != null && !gender.isEmpty())
+            pageTitle = "Thời trang " + gender;
+
         model.addAttribute("pageTitle", pageTitle);
 
         return "user/home";
@@ -85,7 +111,7 @@ public class HomeController {
     // --- CỬA HÀNG ---
     @GetMapping("/products")
     public String shop(Model model,
-    		@RequestParam(name = "keyword", required = false) String keyword, // THÊM DÒNG NÀY
+            @RequestParam(name = "keyword", required = false) String keyword, // THÊM DÒNG NÀY
             @RequestParam(name = "gender", required = false) String gender,
             @RequestParam(name = "category", required = false) Integer categoryId,
             @RequestParam(name = "color", required = false) String color,
@@ -104,10 +130,10 @@ public class HomeController {
             sort = Sort.by(Sort.Direction.ASC, "name");
 
         Pageable pageable = PageRequest.of(page, 12, sort);
-        
-        Page<Product> productPage = productRepository.filterProducts(keyword, gender, categoryId, color, sale, 
-        		minPrice, maxPrice, pageable);
-        
+
+        Page<Product> productPage = productRepository.filterProducts(keyword, gender, categoryId, color, sale,
+                minPrice, maxPrice, pageable);
+
         List<CategoryCountDTO> categories = categoryRepository.getCategoryCounts(gender, sale, color);
 
         model.addAttribute("keyword", keyword);
@@ -166,6 +192,7 @@ public class HomeController {
             for (int i = 0; i < variants.size(); i++) {
                 ProductVariant v = variants.get(i);
                 json.append("{");
+                json.append("\"id\":").append(v.getId()).append(",");
                 json.append("\"color\":\"").append(v.getColor()).append("\",");
                 json.append("\"size\":\"").append(v.getSize()).append("\",");
                 json.append("\"quantity\":").append(v.getQuantity());
@@ -190,23 +217,89 @@ public class HomeController {
     // --- THANH TOÁN ---
     @GetMapping("/checkout")
     public String checkout(Model model) {
+        // Get current account ID
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return "redirect:/login";
+        }
+
+        String username = auth.getName();
+        Account account = accountRepository.findByUsername(username).orElse(null);
+
+        if (account == null) {
+            return "redirect:/login";
+        }
+
+        // Get cart items
+        List<Cart> cartItems = cartService.getCartItems(account.getId());
+        Double cartTotal = cartService.getCartTotal(account.getId());
+
+        model.addAttribute("cartItems", cartItems);
+        model.addAttribute("cartTotal", cartTotal);
         model.addAttribute("pageTitle", "Thanh toán");
         return "user/checkout";
     }
+
+    @Autowired
+    OrderService orderService;
 
     @PostMapping("/checkout/process")
     public String processCheckout(
             @RequestParam(value = "selectedRecipientName", required = false) String recipientName,
             @RequestParam(value = "selectedPhone", required = false) String phone,
             @RequestParam(value = "selectedAddress", required = false) String address,
+            @RequestParam(value = "buyNowVariantId", required = false) Integer buyNowVariantId,
+            @RequestParam(value = "buyNowQuantity", required = false) Integer buyNowQuantity,
+            Principal principal,
             Model model) {
 
-        String maskedPhone = maskPhoneNumber(phone);
-        model.addAttribute("pageTitle", "Đặt hàng thành công");
-        model.addAttribute("recipientName", recipientName != null ? recipientName : "Chưa chọn địa chỉ");
-        model.addAttribute("phone", maskedPhone);
-        model.addAttribute("fullAddress", address != null ? address : "");
-        return "user/order-success";
+        Account account = getAuthenticatedAccount(principal);
+        if (account == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            Order order;
+            if (buyNowVariantId != null && buyNowQuantity != null) {
+                // 1. Process Buy Now
+                order = orderService.createOrderFromVariant(account, buyNowVariantId, buyNowQuantity,
+                        recipientName, phone, address);
+            } else {
+                // 2. Process Cart Checkout
+                List<Cart> cartItems = cartService.getCartItems(account.getId());
+                if (cartItems == null || cartItems.isEmpty()) {
+                    return "redirect:/checkout?error=empty";
+                }
+                order = orderService.createOrder(account, cartItems, recipientName, phone, address);
+
+                // 3. Clear Cart (only for cart checkout)
+                cartService.clearCart(account.getId());
+            }
+
+            // 4. Success Info
+            String maskedPhone = maskPhoneNumber(phone);
+            model.addAttribute("pageTitle", "Đặt hàng thành công");
+            model.addAttribute("recipientName", recipientName != null ? recipientName : "Chưa chọn địa chỉ");
+            model.addAttribute("phone", maskedPhone);
+            model.addAttribute("fullAddress", address != null ? address : "");
+            model.addAttribute("orderId", order.getId());
+            return "user/order-success";
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            return "redirect:/checkout?error=stock";
+        }
+    }
+
+    // Helper method to get authenticated account (similar to AccountController)
+    private Account getAuthenticatedAccount(Principal principal) {
+        if (principal == null)
+            return null;
+        String identifier = principal.getName();
+        Account acc = accountRepository.findByUsername(identifier).orElse(null);
+        if (acc == null) {
+            acc = accountService.findByEmail(identifier);
+        }
+        return acc;
     }
 
     // --- UTILS ---

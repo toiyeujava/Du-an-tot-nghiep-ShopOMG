@@ -21,6 +21,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderDetailRepository orderDetailRepository;
+    private final poly.edu.repository.ProductVariantRepository productVariantRepository;
 
     /**
      * Get all orders with pagination
@@ -115,8 +116,7 @@ public class OrderService {
                 // Restore quantity
                 int restoredQuantity = variant.getQuantity() + detail.getQuantity();
                 variant.setQuantity(restoredQuantity);
-                // Note: ProductVariant would need a repository to save
-                // For now, this assumes cascade save through Product
+                productVariantRepository.save(variant);
             }
         }
 
@@ -182,6 +182,115 @@ public class OrderService {
      */
     public List<Order> getRecentOrders() {
         return orderRepository.findTop10ByOrderByOrderDateDesc();
+    }
+
+    /**
+     * Create a new order from cart items
+     */
+    @Transactional
+    public Order createOrder(poly.edu.entity.Account account, List<poly.edu.entity.Cart> cartItems,
+            String receiverName, String receiverPhone, String shippingAddress) {
+        if (cartItems == null || cartItems.isEmpty()) {
+            throw new RuntimeException("Cart is empty");
+        }
+
+        Order order = new Order();
+        order.setAccount(account);
+        order.setOrderDate(LocalDateTime.now());
+        order.setStatus("PENDING");
+        order.setReceiverName(receiverName);
+        order.setReceiverPhone(receiverPhone);
+        order.setShippingAddress(shippingAddress);
+
+        java.math.BigDecimal totalAmount = java.math.BigDecimal.ZERO;
+
+        // Save order first to get ID
+        Order savedOrder = orderRepository.save(order);
+
+        for (poly.edu.entity.Cart cartItem : cartItems) {
+            OrderDetail detail = new OrderDetail();
+            detail.setOrder(savedOrder);
+            detail.setProductVariant(cartItem.getProductVariant());
+            detail.setProductName(cartItem.getProductVariant().getProduct().getName());
+            detail.setQuantity(cartItem.getQuantity());
+
+            double price = cartItem.getProductVariant().getProduct().getPrice();
+            int discount = cartItem.getProductVariant().getProduct().getDiscount();
+            double finalPrice = price * (1 - (double) discount / 100);
+
+            detail.setPrice(java.math.BigDecimal.valueOf(finalPrice));
+            detail.calculateTotal();
+
+            totalAmount = totalAmount.add(detail.getTotal());
+            orderDetailRepository.save(detail);
+
+            // Update product variant inventory
+            ProductVariant variant = cartItem.getProductVariant();
+            int newQuantity = variant.getQuantity() - cartItem.getQuantity();
+            if (newQuantity < 0) {
+                throw new RuntimeException("Insufficient stock for product: " + variant.getProduct().getName());
+            }
+            variant.setQuantity(newQuantity);
+            productVariantRepository.save(variant);
+        }
+
+        savedOrder.setTotalAmount(totalAmount);
+        savedOrder.setFinalAmount(totalAmount); // Assuming no additional fees/discounts for now
+        savedOrder.setShippingFee(java.math.BigDecimal.ZERO);
+        savedOrder.setDiscountAmount(java.math.BigDecimal.ZERO);
+
+        return orderRepository.save(savedOrder);
+    }
+
+    /**
+     * Create a new order for a single variant (Buy Now flow)
+     */
+    @Transactional
+    public Order createOrderFromVariant(poly.edu.entity.Account account, Integer variantId, Integer quantity,
+            String receiverName, String receiverPhone, String shippingAddress) {
+        ProductVariant variant = productVariantRepository.findById(variantId)
+                .orElseThrow(() -> new RuntimeException("Product variant not found"));
+
+        if (variant.getQuantity() < quantity) {
+            throw new RuntimeException("Insufficient stock for product: " + variant.getProduct().getName());
+        }
+
+        Order order = new Order();
+        order.setAccount(account);
+        order.setOrderDate(LocalDateTime.now());
+        order.setStatus("PENDING");
+        order.setReceiverName(receiverName);
+        order.setReceiverPhone(receiverPhone);
+        order.setShippingAddress(shippingAddress);
+
+        // Save order first to get ID
+        Order savedOrder = orderRepository.save(order);
+
+        OrderDetail detail = new OrderDetail();
+        detail.setOrder(savedOrder);
+        detail.setProductVariant(variant);
+        detail.setProductName(variant.getProduct().getName());
+        detail.setQuantity(quantity);
+
+        double price = variant.getProduct().getPrice();
+        int discount = variant.getProduct().getDiscount();
+        double finalPrice = price * (1 - (double) discount / 100);
+
+        detail.setPrice(java.math.BigDecimal.valueOf(finalPrice));
+        detail.calculateTotal();
+
+        orderDetailRepository.save(detail);
+
+        // Update product variant inventory
+        variant.setQuantity(variant.getQuantity() - quantity);
+        productVariantRepository.save(variant);
+
+        savedOrder.setTotalAmount(detail.getTotal());
+        savedOrder.setFinalAmount(detail.getTotal());
+        savedOrder.setShippingFee(java.math.BigDecimal.ZERO);
+        savedOrder.setDiscountAmount(java.math.BigDecimal.ZERO);
+
+        return orderRepository.save(savedOrder);
     }
 
     /**

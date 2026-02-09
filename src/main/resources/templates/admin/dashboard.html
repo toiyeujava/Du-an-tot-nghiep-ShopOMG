@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+    th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+
 <head>
     <title>Tổng quan - Admin</title>
 </head>
+
 <body>
     <article>
+        <!-- Stats Cards - Real data from DashboardService -->
         <div class="row g-4 mb-4">
             <div class="col-md-3">
                 <div class="stat-card">
                     <div>
                         <h6 class="text-muted small fw-bold text-uppercase mb-1">Doanh thu tháng</h6>
-                        <h3 class="fw-bold mb-0">125.0M</h3>
+                        <h3 class="fw-bold mb-0"
+                            th:text="${#numbers.formatDecimal(monthlyRevenue/1000000, 0, 'COMMA', 1, 'POINT')}+'M'">0M
+                        </h3>
                     </div>
                     <div class="icon-box bg-primary-soft"><i class="fas fa-dollar-sign"></i></div>
                 </div>
@@ -19,8 +24,8 @@
             <div class="col-md-3">
                 <div class="stat-card">
                     <div>
-                        <h6 class="text-muted small fw-bold text-uppercase mb-1">Đơn hàng mới</h6>
-                        <h3 class="fw-bold mb-0">24</h3>
+                        <h6 class="text-muted small fw-bold text-uppercase mb-1">Đơn hàng chờ xử lý</h6>
+                        <h3 class="fw-bold mb-0" th:text="${pendingOrders}">0</h3>
                     </div>
                     <div class="icon-box bg-success-soft"><i class="fas fa-shopping-bag"></i></div>
                 </div>
@@ -29,7 +34,9 @@
                 <div class="stat-card">
                     <div>
                         <h6 class="text-muted small fw-bold text-uppercase mb-1">Khách hàng</h6>
-                        <h3 class="fw-bold mb-0">1.2k</h3>
+                        <h3 class="fw-bold mb-0"
+                            th:text="${totalCustomers >= 1000 ? #numbers.formatDecimal(totalCustomers/1000, 0, 'COMMA', 1, 'POINT')+'k' : totalCustomers}">
+                            0</h3>
                     </div>
                     <div class="icon-box bg-warning-soft"><i class="fas fa-user-plus"></i></div>
                 </div>
@@ -38,7 +45,7 @@
                 <div class="stat-card">
                     <div>
                         <h6 class="text-muted small fw-bold text-uppercase mb-1">Sản phẩm</h6>
-                        <h3 class="fw-bold mb-0">850</h3>
+                        <h3 class="fw-bold mb-0" th:text="${totalProducts}">0</h3>
                     </div>
                     <div class="icon-box bg-danger-soft"><i class="fas fa-box"></i></div>
                 </div>
@@ -46,6 +53,7 @@
         </div>
 
         <div class="row">
+            <!-- Revenue Chart -->
             <div class="col-lg-8 mb-4">
                 <div class="card-box h-100">
                     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -59,83 +67,76 @@
                 </div>
             </div>
 
+            <!-- Pending Orders List -->
             <div class="col-lg-4 mb-4">
                 <div class="card-box h-100">
                     <h5 class="fw-bold mb-4">Đơn chờ xử lý</h5>
-                    <div class="d-flex align-items-center mb-3 p-3 rounded bg-light">
-                        <div class="icon-box bg-white shadow-sm me-3" style="width:40px; height:40px"><i class="fas fa-file-invoice text-warning"></i></div>
-                        <div class="flex-grow-1">
-                            <h6 class="fw-bold mb-0">#ORD-009</h6>
-                            <small class="text-muted">Vừa xong</small>
+
+                    <!-- Dynamic pending orders from database -->
+                    <div th:if="${recentOrders != null and !recentOrders.isEmpty()}">
+                        <div th:each="order, stat : ${recentOrders}" th:if="${stat.index < 5}"
+                            class="d-flex align-items-center mb-3 p-3 rounded bg-light">
+                            <div class="icon-box bg-white shadow-sm me-3" style="width:40px; height:40px">
+                                <i class="fas fa-file-invoice text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold mb-0" th:text="'#ORD-' + ${order.id}">Order</h6>
+                                <small class="text-muted"
+                                    th:text="${#temporals.format(order.orderDate, 'dd/MM HH:mm')}">Time</small>
+                            </div>
+                            <a th:href="@{/admin/orders/{id}(id=${order.id})}"
+                                class="btn btn-sm btn-dark rounded-pill px-3">Xem</a>
                         </div>
-                        <button class="btn btn-sm btn-dark rounded-pill px-3">Xem</button>
                     </div>
-                    <div class="d-flex align-items-center mb-3 p-3 rounded bg-light">
-                        <div class="icon-box bg-white shadow-sm me-3" style="width:40px; height:40px"><i class="fas fa-file-invoice text-warning"></i></div>
-                        <div class="flex-grow-1">
-                            <h6 class="fw-bold mb-0">#ORD-008</h6>
-                            <small class="text-muted">5 phút trước</small>
-                        </div>
-                        <button class="btn btn-sm btn-dark rounded-pill px-3">Xem</button>
+
+                    <!-- Empty state -->
+                    <div th:if="${recentOrders == null or recentOrders.isEmpty()}" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p class="mb-0">Không có đơn hàng chờ xử lý</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <script>
-            // Fake Chart JS
-            document.addEventListener("DOMContentLoaded", function() {
-                const ctx = document.getElementById('revenueChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
-                        datasets: [{
-                            label: 'Doanh thu (Triệu)',
-                            data: [12, 19, 10, 15, 8, 30, 45],
-                            borderColor: '#3699ff',
-                            backgroundColor: 'rgba(54, 153, 255, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }]
-                    },
-                    options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } } } }
-                });
+        <!-- Chart initialization - main logic in /js/admin/admin.js -->
+        <script th:inline="javascript">
+            document.addEventListener("DOMContentLoaded", function () {
+                const chartData = /*[[${revenueChartData}]]*/[];
+                initRevenueChart(chartData);
             });
         </script>
-        
+
+        <!-- Chat Widget -->
         <div class="chat-btn-toggle" onclick="toggleChatBox()">
-			<i class="fas fa-comments"></i>
-		</div>
+            <i class="fas fa-comments"></i>
+        </div>
 
-		<div class="chat-box-container" id="chatBox">
-			<div class="chat-header">
-				<span><i class="fas fa-headset me-2"></i>CSKH - ShopOMG</span>
-				<button type="button" class="btn-close btn-close-white"
-					onclick="toggleChatBox()"></button>
-			</div>
+        <div class="chat-box-container" id="chatBox">
+            <div class="chat-header">
+                <span><i class="fas fa-headset me-2"></i>CSKH - ShopOMG</span>
+                <button type="button" class="btn-close btn-close-white" onclick="toggleChatBox()"></button>
+            </div>
 
-			<div class="chat-body" id="chatBody">
-				<div class="message bot">Xin chào! ShopOMG có thể giúp gì cho
-					bạn hôm nay?</div>
-			</div>
+            <div class="chat-body" id="chatBody">
+                <div class="message bot">Xin chào! ShopOMG có thể giúp gì cho
+                    bạn hôm nay?</div>
+            </div>
 
-			<div class="chat-footer">
-				<input type="text" id="chatInput" class="form-control"
-					placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)">
-				<button class="btn btn-primary" onclick="sendMessage()">
-					<i class="fas fa-paper-plane"></i>
-				</button>
-			</div>
-		</div>
+            <div class="chat-footer">
+                <input type="text" id="chatInput" class="form-control" placeholder="Nhập tin nhắn..."
+                    onkeypress="handleEnter(event)">
+                <button class="btn btn-primary" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
 
 
-		<script
-			src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
-		<script
-			src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
-		<script th:src="@{/js/chat.js}"></script>
+        <script th:src="@{/js/chat.js}"></script>
     </article>
 </body>
+
 </html>

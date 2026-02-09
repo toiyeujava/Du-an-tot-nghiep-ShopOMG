@@ -14,7 +14,18 @@ import poly.edu.service.*;
 
 import java.util.Map;
 
-@Controller
+/**
+ * @deprecated This controller has been refactored into separate controllers:
+ *             - AdminDashboardController
+ *             - AdminProductController
+ *             - AdminOrderController
+ *             - AdminCategoryController
+ *             - AdminAccountController
+ * 
+ *             Keeping this file for reference. To re-enable,
+ *             uncomment @Controller below.
+ */
+// @Controller // DISABLED: Refactored into poly.edu.controller.admin.* package
 @RequestMapping("/admin")
 @RequiredArgsConstructor
 public class AdminController {

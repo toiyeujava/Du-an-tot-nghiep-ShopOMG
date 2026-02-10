@@ -1,6 +1,7 @@
-package poly.edu.controller;
+package poly.edu.controller.user;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -20,29 +21,46 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * CartController - Handles shopping cart CRUD operations.
+ *
+ * Rubber Duck Explanation:
+ * -------------------------
+ * "Why does CartController directly use repositories (AccountRepository,
+ * ProductVariantRepository)?"
+ *
+ * These are used only in private helper methods:
+ * - getCurrentAccountId(): resolves the logged-in user's ID from
+ * SecurityContext
+ * - findVariantId(): resolves a variant from product+color+size
+ *
+ * These are lightweight lookups, not business logic, so keeping them here
+ * avoids over-engineering. If the auth resolution becomes complex, we could
+ * extract a shared AuthenticationHelper service.
+ *
+ * "Why updateQuantity() returns JSON (ResponseEntity) while others redirect?"
+ * - updateQuantity is called via AJAX (JavaScript fetch)
+ * - The cart page updates quantities without full page reload
+ * - Other operations (add, remove, clear) still use traditional form POST +
+ * redirect
+ */
 @Controller
 @RequestMapping("/cart")
+@RequiredArgsConstructor
 public class CartController {
 
-    @Autowired
-    private CartService cartService;
-
-    @Autowired
-    private AccountRepository accountRepository;
-
-    @Autowired
-    private ProductVariantRepository productVariantRepository;
+    private final CartService cartService;
+    private final AccountRepository accountRepository;
+    private final ProductVariantRepository productVariantRepository;
 
     /**
-     * Hiển thị trang giỏ hàng
+     * Display cart page.
      */
     @GetMapping
     public String viewCart(Model model) {
         Integer accountId = getCurrentAccountId();
-
-        if (accountId == null) {
+        if (accountId == null)
             return "redirect:/login";
-        }
 
         List<Cart> cartItems = cartService.getCartItems(accountId);
         Double cartTotal = cartService.getCartTotal(accountId);
@@ -52,12 +70,11 @@ public class CartController {
         model.addAttribute("cartTotal", cartTotal);
         model.addAttribute("itemCount", itemCount);
         model.addAttribute("pageTitle", "Giỏ hàng");
-
         return "user/cart";
     }
 
     /**
-     * Thêm sản phẩm vào giỏ hàng
+     * Add product to cart.
      */
     @PostMapping("/add")
     public String addToCart(@RequestParam("productId") Integer productId,
@@ -71,7 +88,6 @@ public class CartController {
         Integer accountId = getCurrentAccountId();
 
         if (accountId == null) {
-            // Store pending cart action for post-login processing
             Map<String, Object> pendingAction = new HashMap<>();
             pendingAction.put("productId", productId);
             pendingAction.put("color", color);
@@ -89,13 +105,9 @@ public class CartController {
 
         try {
             Integer finalVariantId = null;
-
-            // Case 1: Direct Variant ID provided
             if (variantId != null) {
                 finalVariantId = variantId;
-            }
-            // Case 2: Color and Size provided
-            else if (color != null && size != null) {
+            } else if (color != null && size != null) {
                 finalVariantId = findVariantId(productId, color, size);
             }
 
@@ -106,40 +118,34 @@ public class CartController {
 
             cartService.addToCart(accountId, finalVariantId, quantity);
             redirectAttributes.addFlashAttribute("success", "Đã thêm sản phẩm vào giỏ hàng");
-
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/product/" + productId;
         }
-
         return "redirect:/cart";
     }
 
     /**
-     * Cập nhật số lượng sản phẩm
-     */
-    /**
-     * Cập nhật số lượng sản phẩm (AJAX)
+     * Update cart item quantity (AJAX endpoint).
      */
     @PostMapping("/update/{id}")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<java.util.Map<String, Object>> updateQuantity(
+    public ResponseEntity<Map<String, Object>> updateQuantity(
             @PathVariable("id") Integer cartId,
             @RequestParam("quantity") Integer quantity) {
 
         Integer accountId = getCurrentAccountId();
-        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        Map<String, Object> response = new HashMap<>();
 
         if (accountId == null) {
             response.put("success", false);
             response.put("message", "Vui lòng đăng nhập");
-            return org.springframework.http.ResponseEntity.status(401).body(response);
+            return ResponseEntity.status(401).body(response);
         }
 
         try {
             Cart cart = cartService.updateQuantity(cartId, accountId, quantity);
 
-            // Calculate new item total price (with discount)
             double price = cart.getProductVariant().getProduct().getPrice();
             int discount = cart.getProductVariant().getProduct().getDiscount() != null
                     ? cart.getProductVariant().getProduct().getDiscount()
@@ -151,28 +157,23 @@ public class CartController {
             response.put("newQuantity", cart.getQuantity());
             response.put("newItemTotal", itemTotal);
             response.put("cartItemCount", cartService.getCartItemCount(accountId));
-
-            return org.springframework.http.ResponseEntity.ok(response);
-
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", e.getMessage());
-            return org.springframework.http.ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
     /**
-     * Xóa sản phẩm khỏi giỏ hàng
+     * Remove item from cart.
      */
     @PostMapping("/remove/{id}")
     public String removeFromCart(@PathVariable("id") Integer cartId,
             RedirectAttributes redirectAttributes) {
-
         Integer accountId = getCurrentAccountId();
-
-        if (accountId == null) {
+        if (accountId == null)
             return "redirect:/login";
-        }
 
         try {
             cartService.removeFromCart(cartId, accountId);
@@ -180,67 +181,42 @@ public class CartController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-
         return "redirect:/cart";
     }
 
     /**
-     * Xóa toàn bộ giỏ hàng
+     * Clear entire cart.
      */
     @PostMapping("/clear")
     public String clearCart(RedirectAttributes redirectAttributes) {
         Integer accountId = getCurrentAccountId();
-
-        if (accountId == null) {
+        if (accountId == null)
             return "redirect:/login";
-        }
 
         try {
             cartService.clearCart(accountId);
-            // Removed success message as per user request
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-
         return "redirect:/cart";
     }
 
-    // ===== HELPER METHODS =====
+    // ===== PRIVATE HELPERS =====
 
-    /**
-     * Lấy ID tài khoản hiện tại từ Security Context
-     */
     private Integer getCurrentAccountId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            System.out.println("DEBUG: User not authenticated");
             return null;
         }
 
         String principal = auth.getName();
-        System.out.println("DEBUG: Principal = " + principal);
-
-        // Try to find by email first (since login uses email)
         Account account = accountRepository.findByEmail(principal).orElse(null);
-
-        // If not found, try username
         if (account == null) {
             account = accountRepository.findByUsername(principal).orElse(null);
         }
-
-        if (account != null) {
-            System.out.println("DEBUG: Found account ID = " + account.getId());
-            return account.getId();
-        } else {
-            System.out.println("DEBUG: Account not found for principal: " + principal);
-            return null;
-        }
+        return account != null ? account.getId() : null;
     }
 
-    /**
-     * Tìm variant ID dựa trên productId, color, size
-     */
     private Integer findVariantId(Integer productId, String color, String size) {
         Optional<ProductVariant> variant = productVariantRepository
                 .findByProductIdAndColorAndSize(productId, color, size);

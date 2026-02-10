@@ -1,6 +1,6 @@
 package poly.edu.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,16 +14,11 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import poly.edu.security.CustomOAuth2UserService; // Đảm bảo bạn đã tạo class này
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
-
-    @Autowired
-    private CustomOAuth2UserService customOAuth2UserService; // 1. Tiêm service xử lý OAuth2
-
-    public SecurityConfig(UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
-    }
+    private final CustomOAuth2UserService customOAuth2UserService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

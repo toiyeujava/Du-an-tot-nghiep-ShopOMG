@@ -1,6 +1,6 @@
 package poly.edu.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import poly.edu.entity.Account;
@@ -15,16 +15,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
 
-    @Autowired
-    private CartRepository cartRepository;
-
-    @Autowired
-    private AccountRepository accountRepository;
-
-    @Autowired
-    private ProductVariantRepository productVariantRepository;
+    private final CartRepository cartRepository;
+    private final AccountRepository accountRepository;
+    private final ProductVariantRepository productVariantRepository;
 
     @Override
     @Transactional
@@ -39,8 +35,8 @@ public class CartServiceImpl implements CartService {
 
         // Check stock
         if (variant.getQuantity() == null || variant.getQuantity() < quantity) {
-            throw new RuntimeException("Không đủ hàng trong kho. Còn lại: " + 
-                (variant.getQuantity() != null ? variant.getQuantity() : 0));
+            throw new RuntimeException("Không đủ hàng trong kho. Còn lại: " +
+                    (variant.getQuantity() != null ? variant.getQuantity() : 0));
         }
 
         // Check if item already exists in cart
@@ -50,12 +46,12 @@ public class CartServiceImpl implements CartService {
             // Update quantity
             Cart cart = existingCart.get();
             Integer newQuantity = cart.getQuantity() + quantity;
-            
+
             // Validate new quantity against stock
             if (newQuantity > variant.getQuantity()) {
                 throw new RuntimeException("Số lượng vượt quá tồn kho. Còn lại: " + variant.getQuantity());
             }
-            
+
             cart.setQuantity(newQuantity);
             return cartRepository.save(cart);
         } else {
@@ -87,8 +83,8 @@ public class CartServiceImpl implements CartService {
         // Check stock
         ProductVariant variant = cart.getProductVariant();
         if (variant.getQuantity() == null || variant.getQuantity() < quantity) {
-            throw new RuntimeException("Không đủ hàng trong kho. Còn lại: " + 
-                (variant.getQuantity() != null ? variant.getQuantity() : 0));
+            throw new RuntimeException("Không đủ hàng trong kho. Còn lại: " +
+                    (variant.getQuantity() != null ? variant.getQuantity() : 0));
         }
 
         cart.setQuantity(quantity);
@@ -128,17 +124,17 @@ public class CartServiceImpl implements CartService {
     @Override
     public Double getCartTotal(Integer accountId) {
         List<Cart> cartItems = cartRepository.findByAccountId(accountId);
-        
+
         return cartItems.stream()
                 .mapToDouble(cart -> {
                     ProductVariant variant = cart.getProductVariant();
                     Product product = variant.getProduct();
-                    
+
                     // Calculate price with discount
                     Double price = product.getPrice();
                     Integer discount = product.getDiscount() != null ? product.getDiscount() : 0;
                     Double finalPrice = price * (100 - discount) / 100.0;
-                    
+
                     return finalPrice * cart.getQuantity();
                 })
                 .sum();

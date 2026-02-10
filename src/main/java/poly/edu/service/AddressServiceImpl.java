@@ -1,6 +1,6 @@
 package poly.edu.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import poly.edu.dto.AddressDTO;
@@ -20,13 +20,11 @@ import java.util.stream.Collectors;
  * Handles all business logic for address management
  */
 @Service
+@RequiredArgsConstructor
 public class AddressServiceImpl implements AddressService {
 
-    @Autowired
-    private AddressRepository addressRepository;
-
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AddressRepository addressRepository;
+    private final AccountRepository accountRepository;
 
     @Override
     @Transactional

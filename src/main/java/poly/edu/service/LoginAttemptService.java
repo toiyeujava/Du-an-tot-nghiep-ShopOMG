@@ -2,17 +2,17 @@ package poly.edu.service;
 
 import java.time.LocalDateTime;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import poly.edu.entity.Account;
 
 @Service
+@RequiredArgsConstructor
 public class LoginAttemptService {
 
-    @Autowired
-    private AccountService accountService;
+    private final AccountService accountService;
 
     // Cấu hình
     private static final int MAX_ATTEMPTS = 5;

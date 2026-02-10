@@ -10,15 +10,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import poly.edu.entity.Product;
-import poly.edu.entity.ProductVariant;
 import poly.edu.service.CategoryService;
 import poly.edu.service.ProductService;
-import poly.edu.service.ProductVariantService;
-
-import java.util.Map;
 
 /**
- * AdminProductController - Handles all product-related admin operations.
+ * AdminProductController - Handles product CRUD for admin.
  * 
  * Rubber Duck Explanation:
  * -------------------------
@@ -29,13 +25,8 @@ import java.util.Map;
  * 3. Easier to maintain: Changes to products don't affect orders
  * 4. Easier to scale: Can add product-specific middleware
  * 
- * "Why include variant management here?"
- * 
- * ProductVariant is a child entity of Product (composition relationship).
- * Managing variants through the product controller makes sense because:
- * - URL structure: /products/{id}/variants follows REST best practices
- * - User flow: Admin edits product → then configures variants
- * - Transaction boundary: Variant changes may affect product availability
+ * Variant management has been extracted to AdminProductVariantController
+ * to further adhere to SRP - each controller handles one concern.
  * 
  * Time/Space Complexity:
  * - getAllProducts(): O(n) time, O(n) space (n = page size)
@@ -50,7 +41,6 @@ public class AdminProductController {
 
     private final ProductService productService;
     private final CategoryService categoryService;
-    private final ProductVariantService productVariantService;
 
     // ==================== PRODUCT CRUD ====================
 
@@ -182,84 +172,5 @@ public class AdminProductController {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
         return "redirect:/admin/products";
-    }
-
-    // ==================== VARIANT MANAGEMENT ====================
-
-    /**
-     * List variants for a product.
-     * 
-     * This is a new feature added based on ADMIN_ANALYSIS.md recommendations.
-     */
-    @GetMapping("/{id}/variants")
-    public String productVariants(@PathVariable Integer id, Model model) {
-        Product product = productService.getProductById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
-
-        model.addAttribute("pageTitle", "Quản lý biến thể - " + product.getName());
-        model.addAttribute("product", product);
-        model.addAttribute("variants", productVariantService.getVariantsByProduct(id));
-        model.addAttribute("newVariant", new ProductVariant());
-
-        return "admin/product-variants";
-    }
-
-    /**
-     * Add new variant to product.
-     * 
-     * Algorithm:
-     * 1. Validate size/color combination doesn't exist
-     * 2. Generate SKU if not provided
-     * 3. Save variant with product reference
-     */
-    @PostMapping("/{id}/variants")
-    public String addVariant(@PathVariable Integer id,
-            @ModelAttribute ProductVariant variant,
-            RedirectAttributes redirectAttributes) {
-        try {
-            productVariantService.createVariant(id, variant);
-            redirectAttributes.addFlashAttribute("successMessage", "Thêm biến thể thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
-        }
-        return "redirect:/admin/products/" + id + "/variants";
-    }
-
-    /**
-     * Update variant.
-     */
-    @PostMapping("/{productId}/variants/{variantId}")
-    public String updateVariant(@PathVariable Integer productId,
-            @PathVariable Integer variantId,
-            @ModelAttribute ProductVariant variant,
-            RedirectAttributes redirectAttributes) {
-        try {
-            productVariantService.updateVariant(variantId, variant);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật biến thể thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
-        }
-        return "redirect:/admin/products/" + productId + "/variants";
-    }
-
-    /**
-     * Delete variant.
-     * 
-     * Algorithm:
-     * 1. Check if variant is in any pending orders
-     * 2. If yes → throw exception
-     * 3. If no → hard delete (variants can be recreated)
-     */
-    @PostMapping("/{productId}/variants/{variantId}/delete")
-    public String deleteVariant(@PathVariable Integer productId,
-            @PathVariable Integer variantId,
-            RedirectAttributes redirectAttributes) {
-        try {
-            productVariantService.deleteVariant(variantId);
-            redirectAttributes.addFlashAttribute("successMessage", "Xóa biến thể thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
-        }
-        return "redirect:/admin/products/" + productId + "/variants";
     }
 }

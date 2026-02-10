@@ -1,6 +1,6 @@
 package poly.edu.listener;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
@@ -9,10 +9,10 @@ import org.springframework.stereotype.Component;
 import poly.edu.service.LoginAttemptService;
 
 @Component
+@RequiredArgsConstructor
 public class AuthenticationEventListener {
 
-    @Autowired
-    private LoginAttemptService loginAttemptService;
+    private final LoginAttemptService loginAttemptService;
 
     /**
      * Lắng nghe sự kiện đăng nhập thành công

@@ -1,7 +1,6 @@
-package poly.edu.controller;
+package poly.edu.controller.user;
 
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,226 +13,146 @@ import poly.edu.exception.UnauthorizedAccessException;
 import poly.edu.repository.AccountRepository;
 import poly.edu.service.AddressService;
 
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * REST Controller for Address Management
- * Provides CRUD operations for user addresses
+ * AddressController - REST API for user address management.
+ *
+ * Rubber Duck Explanation:
+ * -------------------------
+ * "Why is this a @RestController instead of @Controller?"
+ *
+ * Address management is called via JavaScript (AJAX) from the
+ * account-addresses.html page. It returns JSON data, not HTML views.
+ * This is different from other controllers that return Thymeleaf templates.
+ *
+ * "Why keep local @ExceptionHandlers instead of using GlobalExceptionHandler?"
+ * - This is a REST API - it returns JSON error responses
+ * - The GlobalExceptionHandler returns HTML error pages
+ * - Mixing JSON and HTML error responses would break the frontend
+ * - When the app adds more REST APIs, we could create a separate
+ * 
+ * @RestControllerAdvice for JSON-only error handling
  */
 @RestController
 @RequestMapping("/api/addresses")
+@RequiredArgsConstructor
 public class AddressController {
 
-    @Autowired
-    private AddressService addressService;
+    private final AddressService addressService;
+    private final AccountRepository accountRepository;
 
-    @Autowired
-    private AccountRepository accountRepository;
-
-    /**
-     * Get all addresses of current user
-     * 
-     * @param principal Authenticated user
-     * @return List of addresses
-     */
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllAddresses(Principal principal) {
         Integer accountId = getAccountIdFromPrincipal(principal);
         List<AddressDTO> addresses = addressService.getAllAddresses(accountId);
-
         return ResponseEntity.ok(createResponse(true, "Lấy danh sách địa chỉ thành công", addresses));
     }
 
-    /**
-     * Get single address by ID
-     * 
-     * @param id        Address ID
-     * @param principal Authenticated user
-     * @return Address details
-     */
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getAddressById(@PathVariable Integer id, Principal principal) {
         Integer accountId = getAccountIdFromPrincipal(principal);
         AddressDTO address = addressService.getAddressById(id, accountId);
-
         return ResponseEntity.ok(createResponse(true, "Lấy thông tin địa chỉ thành công", address));
     }
 
-    /**
-     * Get default address of current user
-     * 
-     * @param principal Authenticated user
-     * @return Default address or null
-     */
     @GetMapping("/default")
     public ResponseEntity<Map<String, Object>> getDefaultAddress(Principal principal) {
         Integer accountId = getAccountIdFromPrincipal(principal);
         AddressDTO address = addressService.getDefaultAddress(accountId);
-
         if (address == null) {
             return ResponseEntity.ok(createResponse(true, "Chưa có địa chỉ mặc định", null));
         }
-
         return ResponseEntity.ok(createResponse(true, "Lấy địa chỉ mặc định thành công", address));
     }
 
-    /**
-     * Create new address
-     * 
-     * @param request   Address data
-     * @param principal Authenticated user
-     * @return Created address
-     */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createAddress(
-            @Valid @RequestBody AddressRequest request,
-            Principal principal) {
-
+            @Valid @RequestBody AddressRequest request, Principal principal) {
         Integer accountId = getAccountIdFromPrincipal(principal);
         AddressDTO createdAddress = addressService.createAddress(accountId, request);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
+        return ResponseEntity.status(HttpStatus.CREATED)
                 .body(createResponse(true, "Thêm địa chỉ thành công", createdAddress));
     }
 
-    /**
-     * Update existing address
-     * 
-     * @param id        Address ID
-     * @param request   Updated address data
-     * @param principal Authenticated user
-     * @return Updated address
-     */
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> updateAddress(
             @PathVariable Integer id,
-            @Valid @RequestBody AddressRequest request,
-            Principal principal) {
-
+            @Valid @RequestBody AddressRequest request, Principal principal) {
         Integer accountId = getAccountIdFromPrincipal(principal);
         AddressDTO updatedAddress = addressService.updateAddress(id, accountId, request);
-
         return ResponseEntity.ok(createResponse(true, "Cập nhật địa chỉ thành công", updatedAddress));
     }
 
-    /**
-     * Delete address
-     * 
-     * @param id        Address ID
-     * @param principal Authenticated user
-     * @return Success message
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> deleteAddress(
-            @PathVariable Integer id,
-            Principal principal) {
-
+            @PathVariable Integer id, Principal principal) {
         Integer accountId = getAccountIdFromPrincipal(principal);
         addressService.deleteAddress(id, accountId);
-
         return ResponseEntity.ok(createResponse(true, "Xóa địa chỉ thành công", null));
     }
 
-    /**
-     * Set address as default
-     * 
-     * @param id        Address ID
-     * @param principal Authenticated user
-     * @return Success message
-     */
     @PatchMapping("/{id}/set-default")
     public ResponseEntity<Map<String, Object>> setDefaultAddress(
-            @PathVariable Integer id,
-            Principal principal) {
-
+            @PathVariable Integer id, Principal principal) {
         Integer accountId = getAccountIdFromPrincipal(principal);
         addressService.setDefaultAddress(id, accountId);
-
         return ResponseEntity.ok(createResponse(true, "Đặt địa chỉ mặc định thành công", null));
     }
 
-    /**
-     * Exception handler for AddressNotFoundException
-     */
+    // ===== LOCAL EXCEPTION HANDLERS (REST-only, returns JSON) =====
+
     @ExceptionHandler(AddressNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleAddressNotFound(AddressNotFoundException ex) {
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(createResponse(false, ex.getMessage(), null));
     }
 
-    /**
-     * Exception handler for UnauthorizedAccessException
-     */
     @ExceptionHandler(UnauthorizedAccessException.class)
     public ResponseEntity<Map<String, Object>> handleUnauthorizedAccess(UnauthorizedAccessException ex) {
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(createResponse(false, ex.getMessage(), null));
     }
 
-    /**
-     * Exception handler for CannotDeleteDefaultAddressException
-     */
     @ExceptionHandler(CannotDeleteDefaultAddressException.class)
     public ResponseEntity<Map<String, Object>> handleCannotDeleteDefault(CannotDeleteDefaultAddressException ex) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(createResponse(false, ex.getMessage(), null));
     }
 
-    /**
-     * Exception handler for validation errors
-     */
     @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationErrors(
             org.springframework.web.bind.MethodArgumentNotValidException ex) {
-
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors()
                 .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(createResponse(false, "Dữ liệu không hợp lệ", errors));
     }
 
-    /**
-     * Generic exception handler
-     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(createResponse(false, "Đã xảy ra lỗi: " + ex.getMessage(), null));
     }
 
-    /**
-     * Helper method to get account ID from authenticated principal
-     * Supports both form login and OAuth2
-     */
+    // ===== PRIVATE HELPERS =====
+
     private Integer getAccountIdFromPrincipal(Principal principal) {
         if (principal == null) {
             throw new UnauthorizedAccessException("Bạn cần đăng nhập để thực hiện thao tác này");
         }
-
         String identifier = principal.getName();
-
-        // Try to find by username first
         Account account = accountRepository.findByUsername(identifier)
                 .orElseGet(() -> accountRepository.findByEmail(identifier)
                         .orElseThrow(() -> new UnauthorizedAccessException("Không tìm thấy tài khoản")));
-
         return account.getId();
     }
 
-    /**
-     * Helper method to create standardized API response
-     */
     private Map<String, Object> createResponse(boolean success, String message, Object data) {
         Map<String, Object> response = new HashMap<>();
         response.put("success", success);

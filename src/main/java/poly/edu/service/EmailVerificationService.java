@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,16 +13,12 @@ import poly.edu.entity.EmailVerificationToken;
 import poly.edu.repository.EmailVerificationTokenRepository;
 
 @Service
+@RequiredArgsConstructor
 public class EmailVerificationService {
 
-    @Autowired
-    private EmailVerificationTokenRepository tokenRepository;
-
-    @Autowired
-    private EmailService emailService;
-
-    @Autowired
-    private AccountService accountService;
+    private final EmailVerificationTokenRepository tokenRepository;
+    private final EmailService emailService;
+    private final AccountService accountService;
 
     /**
      * Tạo token verification và gửi email

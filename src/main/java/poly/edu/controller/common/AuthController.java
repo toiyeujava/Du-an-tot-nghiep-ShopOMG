@@ -1,19 +1,29 @@
-package poly.edu.controller;
+package poly.edu.controller.common;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.servlet.http.HttpSession;
-
 import poly.edu.service.LoginAttemptService;
 
+/**
+ * AuthController - Handles login page and authentication redirects.
+ *
+ * Rubber Duck Explanation:
+ * -------------------------
+ * "Why is this in the common/ package?"
+ *
+ * Authentication endpoints (/login, /register) are neither user-specific
+ * nor admin-specific - they're used by BOTH roles. The common/ package
+ * holds cross-cutting controllers that don't fit neatly into user/ or admin/.
+ */
 @Controller
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private LoginAttemptService loginAttemptService;
+    private final LoginAttemptService loginAttemptService;
 
     @GetMapping("/login")
     public String showLoginForm(Model model,
@@ -21,13 +31,11 @@ public class AuthController {
             String error,
             String locked) {
 
-        // Nếu có email parameter, kiểm tra số lần thử còn lại
         if (email != null && !email.isBlank()) {
             int remaining = loginAttemptService.getRemainingAttempts(email);
             model.addAttribute("remainingAttempts", remaining);
             model.addAttribute("email", email);
 
-            // Kiểm tra xem có bị locked không
             boolean isLocked = loginAttemptService.isAccountLocked(email);
             if (isLocked) {
                 long minutesLeft = loginAttemptService.getMinutesUntilUnlock(email);
@@ -50,6 +58,4 @@ public class AuthController {
         }
         return "redirect:/login";
     }
-
-    // XÓA HẾT CÁC PHẦN ĐĂNG KÝ (REGISTER) Ở ĐÂY ĐỂ TRÁNH XUNG ĐỘT
 }

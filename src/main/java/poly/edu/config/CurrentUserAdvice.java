@@ -1,6 +1,6 @@
 package poly.edu.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -10,19 +10,17 @@ import poly.edu.repository.AccountRepository;
 import poly.edu.service.AccountService;
 
 @ControllerAdvice
+@RequiredArgsConstructor
 public class CurrentUserAdvice {
 
-    @Autowired
-    private AccountService accountService;
-    
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountService accountService;
+    private final AccountRepository accountRepository;
 
     @ModelAttribute("currentUser")
     public Account getCurrentUser(Authentication auth) {
         if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
             String identifier = "";
-            
+
             if (auth instanceof OAuth2AuthenticationToken token) {
                 identifier = token.getPrincipal().getAttribute("email");
                 if (identifier == null) {

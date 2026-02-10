@@ -1,6 +1,6 @@
 package poly.edu.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -16,13 +16,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    @Autowired
-    private AccountRepository accountRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
+    private final AccountRepository accountRepository;
+    private final RoleRepository roleRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -35,7 +33,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
         String providerId = oAuth2User.getName(); // ID số của Facebook hoặc Google
-        
+
         // 1. Lấy ảnh đại diện
         String picture = "";
         if ("google".equalsIgnoreCase(clientName)) {
@@ -69,7 +67,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             acc.setPassword(UUID.randomUUID().toString());
             acc.setEmailVerified(true);
             acc.setIsActive(true);
-            
+
             Role roleUser = roleRepository.findByName("USER").orElseThrow();
             acc.setRole(roleUser);
         }

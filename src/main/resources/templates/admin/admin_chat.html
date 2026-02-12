@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::.chat-container})}">
+<head>
+    <title>Hỗ trợ khách hàng - Admin</title>
+</head>
+<body>
+    <div class="chat-container container-fluid p-0">
+        <style>
+            /* Giao diện Chat Admin */
+            .chat-layout { display: flex; height: 85vh; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #ddd; margin-top: 10px; }
+            
+            /* Cột trái: Danh sách khách hàng */
+            .user-list { width: 300px; border-right: 1px solid #ddd; overflow-y: auto; background: #f8f9fa; }
+            .user-item { padding: 15px; cursor: pointer; border-bottom: 1px solid #eee; transition: 0.2s; display: flex; align-items: center; }
+            .user-item:hover { background: #e9ecef; }
+            .user-item.active { background: #cfe2ff; border-left: 4px solid #0d6efd; }
+            .user-avatar { width: 40px; height: 40px; background: #6c757d; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-weight: bold; font-size: 18px; }
+            
+            /* Cột phải: Khung chat */
+            .chat-area { flex: 1; display: flex; flex-direction: column; background: #fff; }
+            .chat-header { padding: 15px; border-bottom: 1px solid #ddd; font-weight: bold; background: #fff; display: flex; align-items: center; justify-content: space-between; }
+            .messages-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #fdfdfd; }
+            
+            /* Bong bóng tin nhắn */
+            .message { max-width: 70%; padding: 10px 15px; border-radius: 15px; font-size: 14px; word-wrap: break-word; }
+            .message.received { background: #e9ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; }
+            .message.sent { background: #0d6efd; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+            
+            /* Khu vực nhập liệu */
+            .input-area { padding: 15px; border-top: 1px solid #ddd; display: flex; gap: 10px; background: #fff; }
+        </style>
+
+        <div class="chat-layout">
+            <div class="user-list" id="userList">
+                </div>
+
+            <div class="chat-area">
+                <div class="chat-header">
+                    <span id="chatHeader">Chọn một khách hàng để bắt đầu</span>
+                    <span class="badge bg-success" id="statusBadge" style="display:none">Online</span>
+                </div>
+                
+                <div class="messages-box" id="messagesBox">
+                    </div>
+                
+                <div class="input-area">
+                    <input type="text" id="adminInput" class="form-control" placeholder="Nhập tin nhắn..." disabled onkeypress="handleAdminEnter(event)">
+                    <button class="btn btn-primary" onclick="sendAdminMessage()" id="sendBtn" disabled>
+                        <i class="fas fa-paper-plane"></i> Gửi
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+        
+        <script>
+            var stompClient = null;
+            var currentRecipient = null; // Lưu tên khách hàng đang chat
+            var userChats = {}; // Lưu lịch sử chat: { "user1": [msg1, msg2], "user2": ... }
+
+            function connectAdmin() {
+                var socket = new SockJS('/ws-chat');
+                stompClient = Stomp.over(socket);
+                
+                // Kết nối WebSocket
+                stompClient.connect({}, function (frame) {
+                    console.log('Admin Connected: ' + frame);
+                    
+                    // Đăng ký nhận tin nhắn riêng của Admin
+                    // Khi Controller gửi: convertAndSendToUser("admin", ...)
+                    // Admin sẽ nhận được tại: /user/queue/messages
+                    stompClient.subscribe('/user/queue/messages', function (messageOutput) {
+                        var message = JSON.parse(messageOutput.body);
+                        handleIncomingMessage(message);
+                    });
+                });
+            }
+
+            // Xử lý khi có tin nhắn mới từ khách
+            function handleIncomingMessage(message) {
+                console.log("Tin nhắn từ: " + message.sender);
+                var sender = message.sender;
+
+                // Nếu chưa có trong danh sách user bên trái thì thêm vào
+                if (!userChats[sender]) {
+                    userChats[sender] = [];
+                    renderUserInList(sender);
+                }
+                
+                // Lưu tin nhắn vào bộ nhớ tạm
+                userChats[sender].push({ type: 'received', content: message.content });
+
+                // Nếu đang mở chat với đúng người này thì hiện tin nhắn lên luôn
+                if (currentRecipient === sender) {
+                    renderMessage('received', message.content);
+                } else {
+                    // Nếu đang chat với người khác, highlight người gửi mới để báo hiệu
+                    var row = document.getElementById("user-row-" + sender);
+                    if(row) {
+                        row.style.fontWeight = "bold";
+                        row.style.backgroundColor = "#e2e6ea";
+                    }
+                }
+            }
+
+            // Vẽ user vào danh sách bên trái
+            function renderUserInList(username) {
+                var list = document.getElementById("userList");
+                
+                // Kiểm tra trùng lặp
+                if(document.getElementById("user-row-" + username)) return;
+
+                var div = document.createElement("div");
+                div.className = "user-item";
+                div.id = "user-row-" + username;
+                div.onclick = function() { selectUser(username); };
+                
+                // Avatar lấy chữ cái đầu
+                var firstLetter = username.charAt(0).toUpperCase();
+                
+                div.innerHTML = `
+                    <div class="user-avatar">${firstLetter}</div>
+                    <div style="overflow: hidden;">
+                        <div class="fw-bold text-truncate" style="max-width: 180px;">${username}</div>
+                        <small class="text-muted" style="font-size: 12px;">Khách hàng</small>
+                    </div>
+                `;
+                list.appendChild(div);
+            }
+
+            // Chọn user để chat
+            function selectUser(username) {
+                currentRecipient = username;
+                
+                // Cập nhật Header và mở khóa ô nhập
+                document.getElementById("chatHeader").innerText = "Đang chat với: " + username;
+                document.getElementById("statusBadge").style.display = "inline-block";
+                document.getElementById("adminInput").disabled = false;
+                document.getElementById("sendBtn").disabled = false;
+                
+                // Xóa highlight đậm (đã xem)
+                var row = document.getElementById("user-row-" + username);
+                if(row) {
+                    row.style.fontWeight = "normal";
+                    row.style.backgroundColor = "";
+                }
+                
+                // Highlight active (người đang chọn)
+                document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
+                if(row) row.classList.add('active');
+
+                // Load lại lịch sử tin nhắn của người này
+                var box = document.getElementById("messagesBox");
+                box.innerHTML = ""; // Xóa trắng khung chat cũ
+                
+                if (userChats[username]) {
+                    userChats[username].forEach(msg => {
+                        renderMessage(msg.type, msg.content);
+                    });
+                }
+                
+                // Focus vào ô nhập
+                setTimeout(() => document.getElementById("adminInput").focus(), 100);
+            }
+
+            // Vẽ 1 bong bóng tin nhắn
+            function renderMessage(type, content) {
+                var box = document.getElementById("messagesBox");
+                var div = document.createElement("div");
+                div.className = "message " + type;
+                div.innerText = content;
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight; // Tự cuộn xuống dưới cùng
+            }
+
+            // Gửi tin nhắn trả lời
+            function sendAdminMessage() {
+                var input = document.getElementById("adminInput");
+                var text = input.value.trim();
+                
+                if (text && currentRecipient) {
+                    var chatMessage = {
+                        sender: "Admin",
+                        recipient: currentRecipient, // Gửi đúng cho người đang chat
+                        content: text
+                    };
+                    
+                    // Gửi lên Server
+                    stompClient.send("/app/chat.sendToUser", {}, JSON.stringify(chatMessage));
+                    
+                    // Lưu và hiển thị tin nhắn phía mình
+                    if (!userChats[currentRecipient]) userChats[currentRecipient] = [];
+                    userChats[currentRecipient].push({ type: 'sent', content: text });
+                    
+                    renderMessage('sent', text);
+                    input.value = "";
+                }
+            }
+            
+            function handleAdminEnter(e) {
+                if (e.key === 'Enter') sendAdminMessage();
+            }
+            
+            // Khởi động kết nối ngay khi vào trang
+            connectAdmin();
+        </script>
+    </div>
+</body>
+</html>

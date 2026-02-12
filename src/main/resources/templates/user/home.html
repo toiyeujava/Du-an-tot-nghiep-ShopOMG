@@ -263,21 +263,38 @@
 			</div>
 
 			<div class="chat-footer">
-				<input type="text" id="chatInput" class="form-control"
-					placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)">
-				<button class="btn btn-primary" onclick="sendMessage()">
-					<i class="fas fa-paper-plane"></i>
-				</button>
+				<div th:if="${#authorization.expression('isAuthenticated()')}"
+					class="w-100 d-flex gap-2">
+					<input type="text" id="chatInput" class="form-control"
+						placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)">
+					<button class="btn btn-primary" onclick="sendMessage()">
+						<i class="fas fa-paper-plane"></i>
+					</button>
+				</div>
+
+				<div th:unless="${#authorization.expression('isAuthenticated()')}"
+					class="w-100 text-center">
+					<p class="small text-muted mb-2">Vui lòng đăng nhập để chat</p>
+					<a href="/login" class="btn btn-sm btn-primary w-100">Đăng nhập
+						ngay</a>
+				</div>
 			</div>
 		</div>
 
 
-		<script
-			src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
-		<script
-			src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
-		<script th:src="@{/js/chat.js}"></script>
+<script th:inline="javascript">
+    var authName = /*[[${#authentication.name}]]*/ null;
+    if (authName === 'anonymousUser') {
+        window.chatUser = null;
+    } else {
+        window.chatUser = authName;
+    }
+</script>
+
+<script th:src="@{/js/chat.js}"></script>
 	</article>
 </body>
 

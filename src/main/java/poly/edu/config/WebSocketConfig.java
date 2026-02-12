@@ -1,4 +1,4 @@
-package poly.edu.config; // Đổi package theo project của bạn
+package poly.edu.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -11,16 +11,19 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
-    public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Nơi tin nhắn được gửi về (Client đăng ký lắng nghe ở đây)
-        config.enableSimpleBroker("/topic"); 
-        // Tiền tố khi Client gửi tin lên Server
-        config.setApplicationDestinationPrefixes("/app"); 
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        //"/queue" ĐỂ CHAT RIÊNG HOẠT ĐỘNG
+        registry.enableSimpleBroker("/topic", "/queue"); 
+        
+        // Prefix gửi từ Client lên Server
+        registry.setApplicationDestinationPrefixes("/app");
+        
+        // Prefix dành cho user riêng (Spring tự xử lý)
+        registry.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Điểm kết nối WebSocket
-        registry.addEndpoint("/ws-chat").withSockJS(); 
+        registry.addEndpoint("/ws-chat").withSockJS();
     }
 }

@@ -18,6 +18,7 @@ import poly.edu.entity.ProductVariant;
 import poly.edu.repository.CategoryRepository;
 import poly.edu.repository.ProductRepository;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +41,7 @@ public class HomeController {
         Page<Product> productPage = productRepository.findAll(pageable);
         model.addAttribute("products", productPage);
         model.addAttribute("pageTitle", "Trang chủ - ShopOMG");
+     // THÊM DÒNG NÀY: Truyền tên user xuống View an toàn
         return "user/home";
     }
 

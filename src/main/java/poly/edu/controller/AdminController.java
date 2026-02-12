@@ -347,4 +347,11 @@ public class AdminController {
         }
         return "redirect:/admin/accounts";
     }
+    
+ // THÊM ĐOẠN NÀY ĐỂ MỞ TRANG CHAT
+    @GetMapping("/chat")
+    public String openAdminChat(Model model) {
+        model.addAttribute("pageTitle", "Hỗ trợ khách hàng");
+        return "admin/admin_chat";
+    }
 }

@@ -1,69 +1,85 @@
+
+
+// 1. Lấy user từ biến toàn cục bên home.html
+var username = window.chatUser;
 var stompClient = null;
 
-// Kết nối ngay khi trang tải xong (hoặc khi bấm mở chat)
 function connect() {
-    var socket = new SockJS('/ws-chat'); // Kết nối tới endpoint đã config ở Java
-    stompClient = Stomp.over(socket);
-    
-    stompClient.connect({}, function (frame) {
-        console.log('Connected: ' + frame);
-        
-        // Đăng ký nhận tin nhắn từ Server gửi về
-        stompClient.subscribe('/topic/public', function (message) {
-            showMessage(JSON.parse(message.body));
-        });
-    });
-}
+	// 2. Nếu chưa login (username là null) -> Dừng, không kết nối
+	if (!username) {
+		console.log("Chưa đăng nhập -> Không kết nối Chat.");
+		return;
+	}
 
-// Gọi hàm connect ngay khi file js chạy
-connect();
+	var socket = new SockJS('/ws-chat');
+	stompClient = Stomp.over(socket);
 
-function toggleChatBox() {
-    var chatBox = document.getElementById("chatBox");
-    if (chatBox.style.display === "none" || chatBox.style.display === "") {
-        chatBox.style.display = "flex";
-        setTimeout(() => document.getElementById("chatInput").focus(), 100);
-    } else {
-        chatBox.style.display = "none";
-    }
-}
+	stompClient.connect({}, function(frame) {
+		console.log('Đã kết nối: ' + username);
 
-function handleEnter(e) {
-    if (e.key === 'Enter') {
-        sendMessage();
-    }
+		stompClient.subscribe('/user/queue/messages', function(message) {
+			var msgBody = JSON.parse(message.body);
+			if (msgBody.sender === "Admin") {
+				showMessage(msgBody, "bot");
+
+				// Hiện chat box nếu đang ẩn
+				var chatBox = document.getElementById("chatBox");
+				if (chatBox && chatBox.style.display === "none") {
+					chatBox.style.display = "flex";
+				}
+			}
+		});
+	});
 }
 
 function sendMessage() {
-    var input = document.getElementById("chatInput");
-    var messageText = input.value.trim();
+	var input = document.getElementById("chatInput");
+	if (!input) return;
 
-    if (messageText !== "" && stompClient) {
-        var chatMessage = {
-            sender: "Khách", // Sau này lấy từ session đăng nhập
-            content: messageText
-        };
-        
-        // Gửi tin lên Server (Java Controller)
-        stompClient.send("/app/sendMessage", {}, JSON.stringify(chatMessage));
-        input.value = "";
-    }
+	var messageText = input.value.trim();
+
+	if (messageText !== "" && stompClient && username) {
+		var chatMessage = {
+			sender: username,
+			recipient: "Admin",
+			content: messageText
+		};
+
+		stompClient.send("/app/chat.sendToAdmin", {}, JSON.stringify(chatMessage));
+		showMessage({ content: messageText }, "user");
+		input.value = "";
+	} else {
+		alert("Lỗi: Bạn chưa kết nối hoặc chưa đăng nhập.");
+	}
 }
 
-// Hàm hiển thị tin nhắn nhận được từ Server
-function showMessage(message) {
-    var chatBody = document.getElementById("chatBody");
-    var messageElement = document.createElement("div");
+function showMessage(message, type) {
+	var chatBody = document.getElementById("chatBody");
+	if (!chatBody) return;
 
-    // Phân biệt tin nhắn của mình và người khác
-    // Lưu ý: Đây là logic đơn giản, sau này cần so sánh ID người dùng
-    if (message.sender === "Khách") { 
-         messageElement.className = "message user"; // Bên phải
-    } else {
-         messageElement.className = "message bot"; // Bên trái (Nhân viên)
-    }
+	var messageElement = document.createElement("div");
+	messageElement.className = (type === "user") ? "message user" : "message bot";
+	messageElement.innerText = message.content;
 
-    messageElement.innerText = message.content; // + " (" + message.sender + ")";
-    chatBody.appendChild(messageElement);
-    chatBody.scrollTop = chatBody.scrollHeight;
+	chatBody.appendChild(messageElement);
+	chatBody.scrollTop = chatBody.scrollHeight;
 }
+
+// Hàm này BẮT BUỘC phải có để nút bấm hoạt động
+function toggleChatBox() {
+	var chatBox = document.getElementById("chatBox");
+	if (chatBox.style.display === "none" || chatBox.style.display === "") {
+		chatBox.style.display = "flex";
+		var input = document.getElementById("chatInput");
+		if (input) setTimeout(() => input.focus(), 100);
+	} else {
+		chatBox.style.display = "none";
+	}
+}
+
+function handleEnter(e) {
+	if (e.key === 'Enter') sendMessage();
+}
+
+// Chạy kết nối
+connect();

@@ -81,5 +81,25 @@ function handleEnter(e) {
 	if (e.key === 'Enter') sendMessage();
 }
 
+// Thêm hàm này để load lịch sử khi F5
+function loadHistory() {
+    if (!username) return;
+    
+    // Gọi API lấy tin nhắn cũ
+    fetch('/api/chat/history?user=' + username)
+        .then(response => response.json())
+        .then(messages => {
+            messages.forEach(msg => {
+                // Nếu người gửi là mình (username) -> type="user", ngược lại "bot"
+                let type = (msg.sender === username) ? "user" : "bot";
+                showMessage(msg, type);
+            });
+        })
+        .catch(err => console.error("Lỗi load history:", err));
+}
+
+// Gọi hàm này ngay khi file JS chạy hoặc trong $(document).ready
+loadHistory();
+
 // Chạy kết nối
 connect();

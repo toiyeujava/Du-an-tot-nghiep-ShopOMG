@@ -40,7 +40,7 @@
                 <div id="ordersContainer">
 
                     <div th:each="order : ${orders}" class="card-box p-0 overflow-hidden mb-4 order-card"
-                        th:attr="data-status=${order.status}">
+                        th:attr="data-status=${order.status},data-order-id=${order.id}">
 
                         <!-- Order Status Header -->
                         <div class="bg-light px-4 py-2 border-bottom d-flex justify-content-between align-items-center">
@@ -64,7 +64,8 @@
                                 <span class="fw-bold text-success">Đang chờ xác nhận</span>
                             </div>
                         </div>
-                        <div class="px-4 py-3 bg-white border-bottom" th:if="${order.status == 'SHIPPING'}">
+                        <div class="px-4 py-3 bg-white border-bottom shipping-status-bar"
+                            th:if="${order.status == 'SHIPPING'}">
                             <div class="d-flex align-items-center text-muted">
                                 <i class="fas fa-truck me-2"></i>
                                 <span class="fw-bold text-success">Đang giao</span>
@@ -126,27 +127,64 @@
             </div>
         </div>
 
-        <!-- Cancellation Confirmation Modal -->
+        <!-- Cancellation Reason Modal -->
         <div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow">
-                    <div class="modal-header border-0 pb-0">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+                <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+                    <!-- Header -->
+                    <div class="modal-header border-0 px-4 pt-4 pb-2 d-flex align-items-center justify-content-between">
+                        <h5 class="fw-bold mb-0" style="font-size: 1.1rem;">Chọn lý do</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body text-center p-4">
-                        <div class="mb-3">
-                            <i
-                                class="fas fa-exclamation-circle fa-4x text-danger animate__animated animate__pulse animate__infinite"></i>
+
+                    <!-- Reason List -->
+                    <div class="modal-body px-4 py-2">
+                        <div class="cancel-reasons">
+                            <label
+                                class="cancel-reason-item d-flex align-items-center justify-content-between py-3 border-bottom">
+                                <span>Không cần nữa</span>
+                                <input type="radio" name="cancelReason" value="Không cần nữa" class="reason-radio">
+                            </label>
+                            <label
+                                class="cancel-reason-item d-flex align-items-center justify-content-between py-3 border-bottom">
+                                <span>Cần thay đổi phương thức thanh toán</span>
+                                <input type="radio" name="cancelReason" value="Cần thay đổi phương thức thanh toán"
+                                    class="reason-radio">
+                            </label>
+                            <label
+                                class="cancel-reason-item d-flex align-items-center justify-content-between py-3 border-bottom">
+                                <span>Chi phí giao hàng cao</span>
+                                <input type="radio" name="cancelReason" value="Chi phí giao hàng cao"
+                                    class="reason-radio">
+                            </label>
+                            <label
+                                class="cancel-reason-item d-flex align-items-center justify-content-between py-3 border-bottom">
+                                <span>Có giá tốt hơn</span>
+                                <input type="radio" name="cancelReason" value="Có giá tốt hơn" class="reason-radio">
+                            </label>
+                            <label
+                                class="cancel-reason-item d-flex align-items-center justify-content-between py-3 border-bottom">
+                                <span>Cần thay đổi địa chỉ giao hàng</span>
+                                <input type="radio" name="cancelReason" value="Cần thay đổi địa chỉ giao hàng"
+                                    class="reason-radio">
+                            </label>
+                            <label class="cancel-reason-item d-flex align-items-center justify-content-between py-3">
+                                <span>Người bán không trả lời thắc mắc</span>
+                                <input type="radio" name="cancelReason" value="Người bán không trả lời thắc mắc"
+                                    class="reason-radio">
+                            </label>
                         </div>
-                        <h4 class="fw-bold mb-2">Hủy đơn hàng?</h4>
-                        <p class="text-muted">Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này không thể hoàn
-                            tác.</p>
                     </div>
-                    <div class="modal-footer border-0 justify-content-center pb-4">
-                        <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Đóng</button>
-                        <form id="cancelForm" th:action="@{/account/orders/cancel}" method="post">
+
+                    <!-- Footer: only Xong button -->
+                    <div class="modal-footer border-0 px-4 pb-4 pt-2">
+                        <form id="cancelForm" th:action="@{/account/orders/cancel}" method="post" class="w-100">
                             <input type="hidden" name="orderId" id="cancelOrderId">
-                            <button type="submit" class="btn btn-danger px-4">Xác nhận hủy</button>
+                            <input type="hidden" name="cancelReason" id="cancelReasonInput">
+                            <button type="submit" id="cancelSubmitBtn" class="btn w-100 py-2 fw-bold" disabled
+                                style="border-radius: 24px; background: #ffb3ba; color: #c0392b; border: none; font-size: 1rem; transition: background 0.2s;">
+                                Xong
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -215,6 +253,27 @@
                 transform: translateY(-2px);
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             }
+
+            /* Cancel reason modal */
+            .cancel-reason-item {
+                cursor: pointer;
+                transition: background 0.15s;
+                border-radius: 6px;
+                padding-left: 4px;
+                padding-right: 4px;
+            }
+
+            .cancel-reason-item:hover {
+                background: #f8f8f8;
+            }
+
+            .cancel-reason-item input.reason-radio {
+                width: 20px;
+                height: 20px;
+                accent-color: #e74c3c;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
         </style>
 
         <script>
@@ -242,13 +301,115 @@
             // Initial filter for "all" tab
             document.querySelector('.order-tabs .nav-link[data-status="all"]').click();
 
-            // Function to open cancel modal
+            // Function to open cancel reason modal
             function confirmCancel(orderId) {
                 document.getElementById('cancelOrderId').value = orderId;
+                // Reset radio buttons and disable Xong button
+                document.querySelectorAll('input[name="cancelReason"]').forEach(r => r.checked = false);
+                document.getElementById('cancelReasonInput').value = '';
+                const submitBtn = document.getElementById('cancelSubmitBtn');
+                submitBtn.disabled = true;
+                submitBtn.style.background = '#ffb3ba';
+                submitBtn.style.color = '#c0392b';
                 const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
                 modal.show();
             }
 
+            // Enable Xong when a reason is selected
+            document.querySelectorAll('input[name="cancelReason"]').forEach(radio => {
+                radio.addEventListener('change', function () {
+                    document.getElementById('cancelReasonInput').value = this.value;
+                    const submitBtn = document.getElementById('cancelSubmitBtn');
+                    submitBtn.disabled = false;
+                    submitBtn.style.background = '#e74c3c';
+                    submitBtn.style.color = '#fff';
+                });
+            });
+
+            // ===== AUTO-REFRESH POLLING =====
+            // Mapping status code → { label, badgeClass }
+            const STATUS_MAP = {
+                'PENDING': { label: 'CHỜ XÁC NHẬN', cls: 'bg-warning text-dark' },
+                'CONFIRMED': { label: 'ĐÃ XÁC NHẬN', cls: 'bg-info' },
+                'SHIPPING': { label: 'ĐANG GIAO', cls: 'bg-primary' },
+                'COMPLETED': { label: 'HOÀN THÀNH', cls: 'bg-success' },
+                'CANCELLED': { label: 'ĐÃ HỦY', cls: 'bg-danger' }
+            };
+
+            function showUpdateToast(count) {
+                let toast = document.getElementById('statusUpdateToast');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.id = 'statusUpdateToast';
+                    toast.style.cssText = `
+                        position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+                        background: #212529; color: #fff; padding: 12px 20px;
+                        border-radius: 8px; font-size: 0.9rem;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        display: flex; align-items: center; gap: 10px;
+                        animation: fadeInUp 0.3s ease;
+                    `;
+                    document.body.appendChild(toast);
+                }
+                toast.innerHTML = `<i class="fas fa-sync-alt"></i> ${count} đơn hàng vừa được cập nhật trạng thái`;
+                toast.style.display = 'flex';
+                clearTimeout(toast._hideTimer);
+                toast._hideTimer = setTimeout(() => toast.style.display = 'none', 5000);
+            }
+
+            function reapplyCurrentTab() {
+                const activeTab = document.querySelector('.order-tabs .nav-link.active');
+                if (activeTab) activeTab.click();
+            }
+
+            function pollOrderStatuses() {
+                fetch('/account/orders/statuses')
+                    .then(res => {
+                        if (!res.ok) return; // ignore auth errors silently
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (!data) return;
+                        let updatedCount = 0;
+
+                        data.forEach(({ orderId, status }) => {
+                            const card = document.querySelector(`.order-card[data-order-id="${orderId}"]`);
+                            if (!card) return;
+
+                            const currentStatus = card.getAttribute('data-status');
+                            if (currentStatus === status) return; // no change
+
+                            // Update data-status
+                            card.setAttribute('data-status', status);
+                            updatedCount++;
+
+                            // Update badge
+                            const badge = card.querySelector('.badge');
+                            const info = STATUS_MAP[status];
+                            if (badge && info) {
+                                badge.className = 'badge ' + info.cls;
+                                badge.textContent = info.label;
+                            }
+
+                            // Update shipping info bar
+                            const shippingBar = card.querySelector('.shipping-status-bar');
+                            if (shippingBar) {
+                                shippingBar.style.display = status === 'SHIPPING' ? '' : 'none';
+                            }
+                        });
+
+                        if (updatedCount > 0) {
+                            reapplyCurrentTab();
+                            showUpdateToast(updatedCount);
+                        }
+                    })
+                    .catch(() => { }); // fail silently
+            }
+
+            // Start polling every 30 seconds
+            setInterval(pollOrderStatuses, 30000);
+
+            // ===== SUCCESS/ERROR POPUPS =====
             // Success/Error Popups using Modal
             window.onload = function () {
                 const successMsg = "[[${success}]]";

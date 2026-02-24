@@ -1,6 +1,7 @@
 package poly.edu.controller.user;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,6 +21,7 @@ import jakarta.validation.Valid;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -160,6 +162,34 @@ public class AccountProfileController {
         model.addAttribute("orders", orders);
         model.addAttribute("activePage", "orders");
         return "user/account-orders";
+    }
+
+    /**
+     * API endpoint for polling: returns [{orderId, status}] for current user's
+     * orders.
+     * Used by JavaScript polling to auto-refresh order statuses without page
+     * reload.
+     */
+    @GetMapping("/orders/statuses")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getOrderStatuses(Principal principal) {
+        Account acc = getAuthenticatedAccount(principal);
+        if (acc == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        List<Order> orders = orderRepository
+                .findByAccountIdOrderByOrderDateDesc(acc.getId(),
+                        org.springframework.data.domain.Pageable.unpaged())
+                .getContent();
+
+        List<Map<String, Object>> result = orders.stream()
+                .map(o -> Map.<String, Object>of(
+                        "orderId", o.getId(),
+                        "status", o.getStatus()))
+                .toList();
+
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/reviews")

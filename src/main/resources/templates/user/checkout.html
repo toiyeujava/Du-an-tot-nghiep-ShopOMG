@@ -116,7 +116,34 @@
                         <h5 class="fw-bold mb-3">Đơn hàng của bạn</h5>
 
                         <div id="orderItemsContainer">
-                            <!-- Order items will be loaded from sessionStorage via JavaScript -->
+                            <!-- CART mode: render from server -->
+                            <div th:if="${checkoutMode == 'CART'}">
+                                <div th:each="item : ${cartItems}" class="border-bottom pb-3 mb-3">
+                                    <div class="d-flex gap-3 mb-2">
+                                        <img th:src="@{${item.productVariant.product.image}}" alt="Product"
+                                            class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <span class="fw-bold small"
+                                                        th:text="${item.productVariant.product.name}"></span>
+                                                    <span class="text-muted small"
+                                                        th:text="'x' + ${item.quantity}"></span>
+                                                    <div class="text-muted small"
+                                                        th:text="${item.productVariant.color} + ' / ' + ${item.productVariant.size}">
+                                                    </div>
+                                                </div>
+                                                <span class="fw-bold small"
+                                                    th:text="${#numbers.formatInteger(item.productVariant.product.price * (100 - (item.productVariant.product.discount ?: 0)) / 100 * item.quantity, 0, 'COMMA') + 'đ'}"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- BUY_NOW mode: filled by JavaScript from sessionStorage -->
+                            <div th:if="${checkoutMode != 'CART'}" id="buyNowItemsContainer">
+                                <!-- populated by loadBuyNowProduct() -->
+                            </div>
                         </div>
 
                         <div class="input-group mb-3">
@@ -126,7 +153,9 @@
 
                         <div class="d-flex justify-content-between mb-1 small">
                             <span class="text-muted">Tạm tính:</span>
-                            <span id="subtotalDisplay">0đ</span>
+                            <span id="subtotalDisplay" th:if="${checkoutMode == 'CART'}"
+                                th:text="${#numbers.formatInteger(cartTotal, 0, 'COMMA') + 'đ'}">0đ</span>
+                            <span id="subtotalDisplay" th:unless="${checkoutMode == 'CART'}">0đ</span>
                         </div>
                         <div class="d-flex justify-content-between mb-1 small">
                             <span class="text-muted">Phí vận chuyển:</span> <span>30.000đ</span>
@@ -136,7 +165,10 @@
                         </div>
                         <div class="d-flex justify-content-between border-top pt-3 align-items-center">
                             <span class="fw-bold fs-5">Tổng cộng</span>
-                            <span class="fw-bold fs-4 text-danger" id="totalDisplay">30.000đ</span>
+                            <span class="fw-bold fs-4 text-danger" id="totalDisplay" th:if="${checkoutMode == 'CART'}"
+                                th:text="${#numbers.formatInteger(cartTotal + 30000, 0, 'COMMA') + 'đ'}">30.000đ</span>
+                            <span class="fw-bold fs-4 text-danger" id="totalDisplay"
+                                th:unless="${checkoutMode == 'CART'}">30.000đ</span>
                         </div>
 
                         <button type="submit" class="btn btn-dark w-100 py-3 mt-4 fw-bold fs-5 shadow-sm">
@@ -151,9 +183,13 @@
             <input type="hidden" name="selectedPhone" id="selectedPhone">
             <input type="hidden" name="selectedAddress" id="selectedAddress">
 
-            <!-- Hidden inputs for Buy Now flow -->
+            <!-- Hidden inputs for Buy Now flow (optional) -->
             <input type="hidden" name="buyNowVariantId" id="buyNowVariantId">
             <input type="hidden" name="buyNowQuantity" id="buyNowQuantity">
+
+            <!-- Hidden inputs for selected Cart items -->
+            <input type="hidden" name="cartItemIds"
+                th:value="${selectedCartItemIds != null ? #strings.listJoin(selectedCartItemIds, ',') : ''}">
         </form>
 
         <!-- Add Address Modal -->
@@ -1048,12 +1084,25 @@
                 }
             }
 
-            // Load Buy Now product from sessionStorage
+            // Load Buy Now product from sessionStorage (only in BUY_NOW mode)
             function loadBuyNowProduct() {
-                const buyNowItem = sessionStorage.getItem('buyNowItem');
-                const container = document.getElementById('orderItemsContainer');
+                const checkoutMode = /*[[${checkoutMode}]]*/ 'BUY_NOW';
 
-                if (buyNowItem) {
+                // If checkout mode is CART, clear any leftover sessionStorage to prevent
+                // the buyNowVariantId from being set on the form (which would cause the wrong
+                // product to be ordered).
+                if (checkoutMode === 'CART') {
+                    sessionStorage.removeItem('buyNowItem');
+                    // buyNowVariantId and buyNowQuantity are already empty in the HTML.
+                    // No need to do anything more - server-side Thymeleaf already rendered cart items.
+                    return;
+                }
+
+                // BUY_NOW mode: load from sessionStorage
+                const buyNowItem = sessionStorage.getItem('buyNowItem');
+                const container = document.getElementById('buyNowItemsContainer');
+
+                if (buyNowItem && container) {
                     const item = JSON.parse(buyNowItem);
                     const subtotal = item.price * item.quantity;
 
@@ -1093,11 +1142,9 @@
                     const backLinkText = document.getElementById('backLinkText');
                     if (backLink && backLinkText) {
                         backLinkText.innerText = "Quay lại sản phẩm";
-                        // If we had a product ID we'd use it, for now just history back or /products
-                        // But we can extract it from the image URL or just use window.history.back()
                         backLink.href = "javascript:window.history.back()";
                     }
-                } else {
+                } else if (container) {
                     container.innerHTML = '<div class="text-center text-muted py-3">Chưa có sản phẩm nào</div>';
                     document.getElementById('buyNowVariantId').value = '';
                     document.getElementById('buyNowQuantity').value = '';

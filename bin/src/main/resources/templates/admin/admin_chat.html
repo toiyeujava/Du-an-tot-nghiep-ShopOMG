@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::.chat-container})}">
+<head>
+    <title>Hỗ trợ khách hàng - Admin</title>
+</head>
+<body>
+    <div class="chat-container container-fluid p-0">
+<style>
+    /* 1. Layout chính */
+    .chat-layout { display: flex; height: 85vh; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #ddd; margin-top: 10px; }
+    
+    /* 2. Cột trái: Danh sách User */
+    .user-list { width: 320px; border-right: 1px solid #ddd; overflow-y: auto; background: #f8f9fa; }
+    
+    .user-item { 
+        padding: 15px; 
+        cursor: pointer; 
+        border-bottom: 1px solid #eee; 
+        transition: 0.2s; 
+        display: flex; 
+        align-items: center; 
+        position: relative; /* Để căn chỉnh badge */
+    }
+    
+    .user-item:hover { background: #e9ecef; }
+    .user-item.active { background: #cfe2ff; border-left: 4px solid #0d6efd; }
+    
+    /* Avatar User */
+    .user-avatar { 
+        width: 45px; height: 45px; 
+        background: #6c757d; color: white; 
+        border-radius: 50%; 
+        display: flex; align-items: center; justify-content: center; 
+        margin-right: 12px; 
+        font-weight: bold; font-size: 18px; 
+        flex-shrink: 0; /* Không bị bóp méo */
+    }
+
+    /* --- PHẦN QUAN TRỌNG: XỬ LÝ EMAIL DÀI & BADGE --- */
+    
+    /* Khung chứa Tên + Badge */
+    .user-info {
+        flex: 1; /* Chiếm hết khoảng trống còn lại */
+        display: flex;
+        justify-content: space-between; /* Đẩy tên sang trái, badge sang phải */
+        align-items: center;
+        min-width: 0; /* Bắt buộc để text-overflow hoạt động trong Flexbox */
+    }
+
+    /* Tên Email (Tự động cắt nếu dài) */
+    .user-info span:first-child {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; /* Hiện dấu ... */
+        display: block;
+        font-weight: 500;
+        font-size: 14px;
+        color: #333;
+        max-width: 180px; /* Giới hạn độ dài, quá thì cắt */
+    }
+
+    /* Số thông báo đỏ */
+    .notification-badge {
+        background-color: #ff3b30; /* Màu đỏ nổi bật */
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+        padding: 4px 8px;
+        border-radius: 12px;
+        margin-left: 8px;
+        min-width: 24px;
+        text-align: center;
+        display: none; /* Mặc định ẩn */
+        flex-shrink: 0; /* QUAN TRỌNG: Không bị ép nhỏ lại */
+        box-shadow: 0 2px 4px rgba(255, 59, 48, 0.4);
+    }
+
+    /* Hiệu ứng khi có tin mới */
+    .user-item.has-new-message {
+        background-color: #fff8e1; /* Màu vàng nhạt */
+    }
+
+    /* 3. Cột phải: Chat Area */
+    .chat-area { flex: 1; display: flex; flex-direction: column; background: #fff; }
+    .chat-header { padding: 15px; border-bottom: 1px solid #ddd; font-weight: bold; background: #fff; height: 60px; display: flex; align-items: center; }
+    
+    /* Khung tin nhắn */
+    .messages-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #fdfdfd; }
+    
+    .message { max-width: 75%; padding: 10px 16px; border-radius: 18px; font-size: 14px; word-wrap: break-word; line-height: 1.5; }
+    .message.received { background: #e4e6eb; color: #050505; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .message.sent { background: #0084ff; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+    
+    .input-area { padding: 15px; border-top: 1px solid #ddd; display: flex; gap: 10px; background: #fff; align-items: center; }
+</style>
+
+        <div class="chat-layout">
+            <div class="user-list" id="userList"></div>
+
+            <div class="chat-area">
+                <div class="chat-header" id="chatHeader">Chọn khách hàng để chat</div>
+                <div class="messages-box" id="messagesBox"></div>
+                <div class="input-area">
+                    <input type="text" id="adminInput" class="form-control" placeholder="Nhập tin nhắn..." disabled onkeypress="handleAdminEnter(event)">
+                    <button class="btn btn-primary" onclick="sendAdminMessage()" id="sendBtn" disabled>Gửi</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+        
+        <script>
+    var stompClient = null;
+    var currentRecipient = null; 
+    var unreadCounts = {}; // Bộ nhớ lưu số tin chưa đọc: { "khachA": 2, "khachB": 5 }
+
+    // 1. KẾT NỐI SOCKET
+    function connectAdmin() {
+        var socket = new SockJS('/ws-chat');
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null; // Tắt log rác
+
+        stompClient.connect({}, function (frame) {
+            console.log('Admin đã kết nối Chat!');
+            
+            // Lắng nghe tin nhắn từ khách
+            stompClient.subscribe('/user/queue/messages', function (messageOutput) {
+                var message = JSON.parse(messageOutput.body);
+                handleIncomingMessage(message);
+            });
+        }, function(error) {
+            console.error("Lỗi Socket: " + error);
+        });
+    }
+
+    // 2. XỬ LÝ KHI CÓ TIN NHẮN ĐẾN
+    function handleIncomingMessage(message) {
+        var sender = message.sender;
+        
+        // Luôn đảm bảo khách này hiện trong danh sách
+        renderUserInList(sender);
+
+        // TRƯỜNG HỢP 1: Đang mở chat với đúng người này
+        if (currentRecipient && currentRecipient === sender) {
+            renderMessage('received', message.content);
+        } 
+        // TRƯỜNG HỢP 2: Đang chat người khác hoặc đang bận -> Tăng số đỏ
+        else {
+            if (!unreadCounts[sender]) unreadCounts[sender] = 0;
+            unreadCounts[sender]++; // Tăng số lượng
+            
+            // Cập nhật giao diện chấm đỏ
+            updateBadge(sender, unreadCounts[sender]);
+            
+            // Đẩy user này lên đầu danh sách để admin dễ thấy
+            moveUserToTop(sender);
+        }
+    }
+
+    // 3. GỬI TIN NHẮN ĐI
+    function sendAdminMessage() {
+        var input = document.getElementById("adminInput");
+        var text = input.value.trim();
+        
+        if (text && currentRecipient) {
+            var chatMessage = {
+                sender: "Admin",
+                recipient: currentRecipient,
+                content: text
+            };
+            try {
+                stompClient.send("/app/chat.sendToUser", {}, JSON.stringify(chatMessage));
+                renderMessage('sent', text);
+                input.value = "";
+            } catch (e) { alert("Mất kết nối! Vui lòng F5 lại trang."); }
+        }
+    }
+
+    // --- CÁC HÀM HỖ TRỢ ---
+
+    function selectUser(username) {
+        currentRecipient = username;
+        
+        // 1. Xóa thông báo đỏ vì đã xem
+        unreadCounts[username] = 0;
+        updateBadge(username, 0); 
+
+        // 2. Reset giao diện nhập liệu
+        document.getElementById("chatHeader").innerText = "Chat với: " + username;
+        document.getElementById("adminInput").disabled = false;
+        document.getElementById("sendBtn").disabled = false;
+        document.getElementById("messagesBox").innerHTML = ""; 
+        setTimeout(() => document.getElementById("adminInput").focus(), 100);
+
+        // 3. Highlight dòng đang chọn
+        document.querySelectorAll('.user-item').forEach(el => {
+            el.classList.remove('active'); 
+            el.classList.remove('has-new-message'); // Bỏ màu vàng thông báo
+        });
+        
+        var row = document.getElementById("user-row-" + username);
+        if(row) row.classList.add('active');
+
+        // 4. Load lịch sử chat
+        fetch('/api/chat/history?user=' + username)
+            .then(res => res.json())
+            .then(messages => {
+                messages.forEach(msg => {
+                    let type = (msg.sender === username) ? "received" : "sent";
+                    renderMessage(type, msg.content);
+                });
+                scrollToBottom();
+            });
+    }
+
+    // Hàm cập nhật số đỏ trên giao diện
+    function updateBadge(username, count) {
+        var badge = document.getElementById("badge-" + username);
+        var row = document.getElementById("user-row-" + username);
+
+        if (badge && row) {
+            if (count > 0) {
+                badge.innerText = count > 9 ? "9+" : count; // Nếu nhiều quá thì hiện 9+
+                badge.style.display = "inline-block";
+                row.classList.add("has-new-message"); // Thêm class màu vàng
+            } else {
+                badge.style.display = "none";
+                row.classList.remove("has-new-message");
+            }
+        }
+    }
+
+    // Vẽ user vào danh sách (đã update thêm Badge HTML)
+    function renderUserInList(username) {
+        // Nếu đã có user này rồi thì thôi, không vẽ lại
+        if(document.getElementById("user-row-" + username)) return; 
+
+        var list = document.getElementById("userList");
+        var div = document.createElement("div");
+        div.className = "user-item";
+        div.id = "user-row-" + username;
+        div.onclick = function() { selectUser(username); };
+        
+        // Cấu trúc HTML mới có thêm Badge
+        div.innerHTML = `
+            <div class="user-avatar">${username.charAt(0).toUpperCase()}</div>
+            <div class="user-info">
+                <span class="fw-bold" style="overflow:hidden; text-overflow:ellipsis">${username}</span>
+                <span id="badge-${username}" class="notification-badge">0</span>
+            </div>
+        `;
+        
+        // Mới vẽ xong thì đẩy lên đầu luôn
+        list.prepend(div);
+    }
+    
+    // Đẩy user lên đầu danh sách
+    function moveUserToTop(username) {
+        var row = document.getElementById("user-row-" + username);
+        var list = document.getElementById("userList");
+        if (row && list) {
+            // Hiệu ứng nháy nhẹ
+            row.style.transition = "all 0.3s";
+            list.prepend(row);
+        }
+    }
+
+    function renderMessage(type, content) {
+        var box = document.getElementById("messagesBox");
+        var div = document.createElement("div");
+        div.className = "message " + type;
+        div.innerText = content;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+    
+    function scrollToBottom() {
+        var box = document.getElementById("messagesBox");
+        box.scrollTop = box.scrollHeight;
+    }
+    
+    function loadActiveUsers() {
+        fetch('/api/chat/users').then(res => res.json()).then(users => {
+            users.forEach(user => renderUserInList(user));
+        });
+    }
+    
+    function handleAdminEnter(event) {
+        if (event.key === "Enter") sendAdminMessage();
+    }
+
+    // Chạy khi trang load xong
+    connectAdmin();
+    loadActiveUsers();
+</script>
+    </div>
+</body>
+</html>

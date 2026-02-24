@@ -52,24 +52,31 @@ public class CheckoutController {
      * Display checkout page with cart summary.
      */
     @GetMapping("/checkout")
-    public String checkout(Model model) {
+    public String checkout(@RequestParam(value = "source", required = false) String source,
+            Model model, Principal principal) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             return "redirect:/login";
         }
 
-        String username = auth.getName();
-        Account account = accountRepository.findByUsername(username).orElse(null);
+        Account account = getAuthenticatedAccount(auth);
+
         if (account == null) {
             return "redirect:/login";
         }
 
-        List<Cart> cartItems = cartService.getCartItems(account.getId());
-        Double cartTotal = cartService.getCartTotal(account.getId());
+        // "buynow" source = Buy Now flow (single product from sessionStorage).
+        // Anything else = Cart checkout flow.
+        boolean isBuyNow = "buynow".equals(source);
+
+        List<Cart> cartItems = isBuyNow ? java.util.Collections.emptyList()
+                : cartService.getCartItems(account.getId());
+        Double cartTotal = isBuyNow ? 0.0 : cartService.getCartTotal(account.getId());
 
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("cartTotal", cartTotal);
         model.addAttribute("pageTitle", "Thanh toán");
+        model.addAttribute("checkoutMode", isBuyNow ? "BUY_NOW" : "CART");
         return "user/checkout";
     }
 

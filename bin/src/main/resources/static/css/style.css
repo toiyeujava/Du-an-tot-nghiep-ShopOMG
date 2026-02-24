@@ -406,3 +406,28 @@ body {
 		    width: 24px;
 		    height: 24px;
 		}
+		
+/* Chấm xanh Online */
+.status-dot {
+    width: 10px; height: 10px; background: #ccc; border-radius: 50%;
+    position: absolute; bottom: 0; right: 0; border: 2px solid white;
+}
+.status-dot.online { background: #28a745; } /* Màu xanh lá */
+
+/* Hiệu ứng bong bóng "..." đang gõ */
+.typing-indicator {
+    display: none; background: #e9ecef; padding: 10px 15px; border-radius: 20px;
+    font-size: 12px; color: #666; width: fit-content; margin-bottom: 10px;
+}
+.typing-dots span {
+    display: inline-block; width: 6px; height: 6px; background: #666; border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out both; margin: 0 2px;
+}
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+@keyframes typing {
+    0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); }
+}
+
+/* Chữ "Đã gửi" nhỏ xíu */
+.msg-status { font-size: 10px; color: #999; text-align: right; margin-top: -5px; margin-bottom: 5px; }

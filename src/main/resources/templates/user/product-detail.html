@@ -433,8 +433,8 @@
                 // Save to sessionStorage
                 sessionStorage.setItem('buyNowItem', JSON.stringify(buyNowItem));
 
-                // Redirect to checkout
-                window.location.href = '/checkout';
+                // Redirect to checkout with source flag so the server knows this is Buy Now flow
+                window.location.href = '/checkout?source=buynow';
             }
 
 

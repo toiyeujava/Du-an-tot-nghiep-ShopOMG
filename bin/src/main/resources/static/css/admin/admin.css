@@ -1,0 +1,276 @@
+/**
+ * Admin Dashboard Styles
+ * Separated from main style.css for better organization
+ * ==================================================
+ */
+
+/* ===== ADMIN LAYOUT ===== */
+.admin-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 250px;
+    height: 100vh;
+    background: #fff;
+    border-right: 1px solid #f0f0f0;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.admin-content {
+    margin-left: 250px;
+    padding: 30px;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+/* ===== SIDEBAR BRAND ===== */
+.sidebar-brand {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+    color: #000;
+}
+
+/* ===== ADMIN MENU ===== */
+.admin-menu a {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-radius: 8px;
+    color: #7e8299;
+    font-weight: 500;
+    margin-bottom: 5px;
+    transition: all 0.2s;
+}
+
+.admin-menu a:hover {
+    background-color: #f3f6f9;
+    color: #3699ff;
+}
+
+.admin-menu a.active {
+    background-color: #e8f0fe;
+    color: #3699ff;
+    font-weight: 600;
+}
+
+.admin-menu a i {
+    width: 25px;
+    font-size: 1rem;
+}
+
+/* ===== STAT CARDS ===== */
+.stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+/* ===== ICON BOX ===== */
+.icon-box {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* Icon Colors - Pastel */
+.bg-primary-soft { background-color: #e1f0ff; color: #3699ff; }
+.bg-success-soft { background-color: #c9f7f5; color: #1bc5bd; }
+.bg-warning-soft { background-color: #fff4de; color: #ffa800; }
+.bg-danger-soft { background-color: #ffe2e5; color: #f64e60; }
+
+/* ===== CARD BOX ===== */
+.card-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.03);
+}
+
+/* ===== TABLE STYLES ===== */
+.table-custom {
+    width: 100%;
+    margin-bottom: 0;
+    color: #3f4254;
+}
+
+.table-custom thead th {
+    background-color: #f3f6f9;
+    color: #b5b5c3;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    border: none;
+    padding: 15px 20px;
+}
+
+.table-custom thead th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+.table-custom thead th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+.table-custom tbody td {
+    padding: 15px 20px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f3f6f9;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.table-custom tr:last-child td { border-bottom: none; }
+
+/* ===== BADGES ===== */
+.badge-light-success { background-color: #c9f7f5; color: #1bc5bd; padding: 5px 12px; border-radius: 6px; }
+.badge-light-danger { background-color: #ffe2e5; color: #f64e60; padding: 5px 12px; border-radius: 6px; }
+.badge-light-warning { background-color: #fff4de; color: #ffa800; padding: 5px 12px; border-radius: 6px; }
+.badge-light-info { background-color: #e1f0ff; color: #3699ff; padding: 5px 12px; border-radius: 6px; }
+.badge-light-primary { background-color: #eee5ff; color: #8950fc; padding: 5px 12px; border-radius: 6px; }
+
+/* ===== ACTION BUTTONS ===== */
+.btn-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-icon-edit {
+    background-color: #e1f0ff;
+    color: #3699ff;
+}
+
+.btn-icon-edit:hover {
+    background-color: #3699ff;
+    color: white;
+}
+
+.btn-icon-delete {
+    background-color: #ffe2e5;
+    color: #f64e60;
+}
+
+.btn-icon-delete:hover {
+    background-color: #f64e60;
+    color: white;
+}
+
+.btn-icon-view {
+    background-color: #c9f7f5;
+    color: #1bc5bd;
+}
+
+.btn-icon-view:hover {
+    background-color: #1bc5bd;
+    color: white;
+}
+
+/* ===== PRODUCT IMAGE ===== */
+.product-thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* ===== FILTER BUTTONS ===== */
+.filter-btn {
+    padding: 8px 16px;
+    border: 1px solid #e4e6ef;
+    background: #fff;
+    border-radius: 6px;
+    font-weight: 500;
+    color: #7e8299;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover,
+.filter-btn.active {
+    background-color: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+/* ===== ORDER STATUS ===== */
+.status-pending { background-color: #fff4de; color: #ffa800; }
+.status-confirmed { background-color: #e1f0ff; color: #3699ff; }
+.status-shipping { background-color: #eee5ff; color: #8950fc; }
+.status-completed { background-color: #c9f7f5; color: #1bc5bd; }
+.status-cancelled { background-color: #ffe2e5; color: #f64e60; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 991px) {
+    .admin-sidebar {
+        width: 80px;
+        padding: 15px;
+    }
+    
+    .admin-sidebar .sidebar-brand,
+    .admin-sidebar small,
+    .admin-menu a span {
+        display: none;
+    }
+    
+    .admin-menu a {
+        justify-content: center;
+        padding: 12px;
+    }
+    
+    .admin-menu a i {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+    
+    .admin-content {
+        margin-left: 80px;
+    }
+}
+
+/* --- Code thêm cho Chat Badge --- */
+
+/* Cái chấm đỏ */
+.notification-badge {
+    background-color: #dc3545; /* Màu đỏ chuẩn bootstrap */
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: auto; /* Đẩy sang phải cùng */
+    display: none; /* Mặc định ẩn, có tin mới mới hiện */
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.4);
+    min-width: 18px;
+    text-align: center;
+}
+
+/* Chỉnh lại khung chứa tên user để nó dàn ngang */
+.user-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 5px;
+}
+
+/* Khi có tin mới thì dòng user sáng lên tí */
+.user-item.has-new-message {
+    background-color: #fff3cd; /* Màu vàng nhạt */
+    font-weight: bold;
+}

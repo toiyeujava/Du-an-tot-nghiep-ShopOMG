@@ -1,57 +1,69 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+
 <head>
     <title>Thanh toán - ShopOMG</title>
 </head>
+
 <body>
     <article class="container py-5">
-        
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="fw-bold m-0">Thanh toán</h4>
-            <a href="/cart" class="text-muted small text-decoration-none">
-                <i class="fas fa-arrow-left me-1"></i> Quay lại giỏ hàng
+            <a href="/cart" id="backLink" class="text-muted small text-decoration-none">
+                <i class="fas fa-arrow-left me-1"></i> <span id="backLinkText">Quay lại đơn hàng</span>
             </a>
         </div>
 
-        <div class="steps">
-            <div class="step-item completed"><div class="step-circle"><i class="fas fa-check"></i></div> Giỏ hàng</div>
-            <div class="step-line active"></div>
-            <div class="step-item active"><div class="step-circle">2</div> Thanh toán</div>
-            <div class="step-line"></div>
-            <div class="step-item"><div class="step-circle">3</div> Hoàn tất</div>
+        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:if="${param.error[0] == 'stock'}">Lỗi: Một số sản phẩm trong đơn hàng không đủ số lượng tồn
+                kho.</span>
+            <span th:if="${param.error[0] == 'empty'}">Lỗi: Không tìm thấy thông tin sản phẩm để thanh toán.</span>
+            <span th:unless="${param.error[0] == 'stock' || param.error[0] == 'empty'}">Lỗi hệ thống khi xử lý thanh
+                toán. Vui lòng thử lại.</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <form action="/checkout/process" method="post">
+        <div class="steps">
+            <div class="step-item completed">
+                <div class="step-circle"><i class="fas fa-check"></i></div> Đơn hàng
+            </div>
+            <div class="step-line active"></div>
+            <div class="step-item active">
+                <div class="step-circle">2</div> Thanh toán
+            </div>
+            <div class="step-line"></div>
+            <div class="step-item">
+                <div class="step-circle">3</div> Hoàn tất
+            </div>
+        </div>
+
+        <form action="/checkout/process" method="post" id="checkoutForm">
             <div class="row">
                 <div class="col-lg-7 mb-4">
                     <div class="card-box">
                         <h5 class="fw-bold mb-4">Địa chỉ nhận hàng</h5>
-                        
-                        <div class="mb-3">
-                            <div class="form-check card p-3 mb-2 border bg-light">
-                                <input class="form-check-input" type="radio" name="addressId" id="addr1" checked>
-                                <label class="form-check-label w-100" for="addr1">
-                                    <span class="fw-bold">Nguyễn Văn A</span> <span class="badge bg-dark ms-2">Mặc định</span><br>
-                                    <small class="text-muted">0909123456</small><br>
-                                    <small>123 Đường Nguyễn Huệ, P. Bến Nghé, Quận 1, TP.HCM</small>
-                                </label>
+
+                        <div class="address-scroll-container mb-3">
+                            <div id="addressList">
+                                <!-- Addresses will be loaded here dynamically -->
+                                <div class="text-center py-4" id="addressLoading">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Đang tải...</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="form-check card p-3 border">
-                                <input class="form-check-input" type="radio" name="addressId" id="addr2">
-                                <label class="form-check-label w-100" for="addr2">
-                                    <span class="fw-bold">Công ty (Văn phòng)</span><br>
-                                    <small class="text-muted">0909123456</small><br>
-                                    <small>Tòa nhà Bitexco, Quận 1, TP.HCM</small>
-                                </label>
-                            </div>
-                            <button type="button" class="btn btn-link text-decoration-none p-0 mt-2 text-dark fw-bold small">+ Thêm địa chỉ mới</button>
                         </div>
+
+                        <button type="button" class="btn btn-link text-decoration-none p-0 mt-2 text-dark fw-bold small"
+                            onclick="openAddressModal()">+ Thêm địa chỉ mới</button>
 
                         <h5 class="fw-bold mb-3 mt-4">Phương thức thanh toán</h5>
                         <div class="list-group">
                             <label class="list-group-item d-flex gap-3 align-items-center p-3">
-                                <input class="form-check-input flex-shrink-0" type="radio" name="payment" checked>
+                                <input class="form-check-input flex-shrink-0" type="radio" name="payment" value="COD"
+                                    checked onclick="hideQRCode()">
                                 <i class="fas fa-money-bill-wave fs-4 text-success"></i>
                                 <div>
                                     <strong class="d-block">Thanh toán khi nhận hàng (COD)</strong>
@@ -59,13 +71,42 @@
                                 </div>
                             </label>
                             <label class="list-group-item d-flex gap-3 align-items-center p-3">
-                                <input class="form-check-input flex-shrink-0" type="radio" name="payment">
+                                <input class="form-check-input flex-shrink-0" type="radio" name="payment" value="QR"
+                                    onclick="showQRCode()">
                                 <i class="fas fa-qrcode fs-4 text-primary"></i>
                                 <div>
-                                    <strong class="d-block">VNPAY / QR Code</strong>
+                                    <strong class="d-block">QR CODE</strong>
                                     <small class="text-muted">Quét mã QR qua ứng dụng ngân hàng</small>
                                 </div>
                             </label>
+                        </div>
+
+                        <!-- QR Code Details (Hidden by default) -->
+                        <div id="qrCodeDetails" class="mt-4 p-4 border rounded bg-light" style="display: none;">
+                            <div class="text-center mb-3">
+                                <img src="/images/qr-code.jpg" alt="QR Code" class="img-fluid"
+                                    style="max-width: 300px;">
+                            </div>
+                            <div class="row">
+                                <div class="col-12 mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Ngân hàng:</strong>
+                                        <span class="text-end">NGÂN HÀNG THƯƠNG MẠI CỔ PHẦN QUÂN ĐỘI</span>
+                                    </div>
+                                </div>
+                                <div class="col-12 mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Chủ tài khoản:</strong>
+                                        <span>NGUYỄN MINH HÙNG</span>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Số tài khoản:</strong>
+                                        <span>0961342609</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -73,15 +114,9 @@
                 <div class="col-lg-5">
                     <div class="card-box bg-light border-0">
                         <h5 class="fw-bold mb-3">Đơn hàng của bạn</h5>
-                        
-                        <div class="border-bottom pb-3 mb-3">
-                            <div class="d-flex justify-content-between mb-2">
-                                <div>
-                                    <span class="fw-bold small">Áo Thun Nam Basic</span> <span class="text-muted small">x1</span>
-                                    <div class="text-muted small">Xanh / M</div>
-                                </div>
-                                <span class="fw-bold small">200.000đ</span>
-                            </div>
+
+                        <div id="orderItemsContainer">
+                            <!-- Order items will be loaded from sessionStorage via JavaScript -->
                         </div>
 
                         <div class="input-group mb-3">
@@ -90,7 +125,8 @@
                         </div>
 
                         <div class="d-flex justify-content-between mb-1 small">
-                            <span class="text-muted">Tạm tính:</span> <span>200.000đ</span>
+                            <span class="text-muted">Tạm tính:</span>
+                            <span id="subtotalDisplay">0đ</span>
                         </div>
                         <div class="d-flex justify-content-between mb-1 small">
                             <span class="text-muted">Phí vận chuyển:</span> <span>30.000đ</span>
@@ -100,7 +136,7 @@
                         </div>
                         <div class="d-flex justify-content-between border-top pt-3 align-items-center">
                             <span class="fw-bold fs-5">Tổng cộng</span>
-                            <span class="fw-bold fs-4 text-danger">230.000đ</span>
+                            <span class="fw-bold fs-4 text-danger" id="totalDisplay">30.000đ</span>
                         </div>
 
                         <button type="submit" class="btn btn-dark w-100 py-3 mt-4 fw-bold fs-5 shadow-sm">
@@ -109,7 +145,969 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Hidden inputs to store selected address -->
+            <input type="hidden" name="selectedRecipientName" id="selectedRecipientName">
+            <input type="hidden" name="selectedPhone" id="selectedPhone">
+            <input type="hidden" name="selectedAddress" id="selectedAddress">
+
+            <!-- Hidden inputs for Buy Now flow -->
+            <input type="hidden" name="buyNowVariantId" id="buyNowVariantId">
+            <input type="hidden" name="buyNowQuantity" id="buyNowQuantity">
         </form>
+
+        <!-- Add Address Modal -->
+        <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content shadow-lg border-0">
+                    <div class="modal-header bg-primary text-white border-0">
+                        <h5 class="modal-title fw-bold" id="addAddressModalLabel">
+                            <i class="fas fa-map-marker-alt me-2"></i>Thêm địa chỉ mới
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <form id="addressForm">
+                            <input type="hidden" id="addressId">
+
+                            <div class="mb-3">
+                                <label for="recipientName" class="form-label small fw-bold">Họ và tên người nhận <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="recipientName" placeholder="Nhập họ tên...">
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="phone" class="form-label small fw-bold">Số điện thoại <span
+                                        class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phone" placeholder="Nhập số điện thoại...">
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="city" class="form-label small fw-bold">Tỉnh/Thành phố <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" id="city">
+                                        <option value="">Chọn Tỉnh/Thành phố</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="district" class="form-label small fw-bold">Quận/Huyện <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" id="district" disabled>
+                                        <option value="">Chọn Quận/Huyện</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="detailAddress" class="form-label small fw-bold">Địa chỉ chi tiết <span
+                                        class="text-danger">*</span></label>
+                                <textarea class="form-control" id="detailAddress" rows="2"
+                                    placeholder="Số nhà, tên đường..."></textarea>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isDefault">
+                                <label class="form-check-label" for="isDefault">
+                                    Đặt làm địa chỉ mặc định
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer border-0 bg-light px-4 py-3">
+                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-primary px-4" onclick="saveAddress()">
+                            <i class="fas fa-save me-2"></i>Lưu địa chỉ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Address Modal -->
+        <div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content shadow-lg border-0">
+                    <div class="modal-header bg-primary text-white border-0">
+                        <h5 class="modal-title fw-bold" id="editAddressModalLabel">
+                            <i class="fas fa-edit me-2"></i>Chỉnh sửa địa chỉ
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <form id="editAddressForm">
+                            <input type="hidden" id="editAddressId">
+
+                            <div class="mb-3">
+                                <label for="editRecipientName" class="form-label small fw-bold">Họ và tên người nhận
+                                    <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editRecipientName"
+                                    placeholder="Nhập họ tên...">
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="editPhone" class="form-label small fw-bold">Số điện thoại <span
+                                        class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="editPhone"
+                                    placeholder="Nhập số điện thoại...">
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="editCity" class="form-label small fw-bold">Tỉnh/Thành phố <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" id="editCity">
+                                        <option value="">Chọn Tỉnh/Thành phố</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="editDistrict" class="form-label small fw-bold">Quận/Huyện <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" id="editDistrict" disabled>
+                                        <option value="">Chọn Quận/Huyện</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="editDetailAddress" class="form-label small fw-bold">Địa chỉ chi tiết <span
+                                        class="text-danger">*</span></label>
+                                <textarea class="form-control" id="editDetailAddress" rows="2"
+                                    placeholder="Số nhà, tên đường..."></textarea>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="editIsDefault">
+                                <label class="form-check-label" for="editIsDefault">
+                                    Đặt làm địa chỉ mặc định
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer border-0 bg-light px-4 py-3">
+                        <button type="button" class="btn btn-danger px-4" onclick="deleteAddress()">
+                            <i class="fas fa-trash-alt me-2"></i>Xóa địa chỉ
+                        </button>
+                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-primary px-4" onclick="updateAddress()">
+                            <i class="fas fa-save me-2"></i>Lưu thay đổi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content shadow-lg border-0">
+                    <div class="modal-header bg-danger text-white border-0">
+                        <h5 class="modal-title fw-bold" id="deleteConfirmModalLabel">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa địa chỉ
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4 text-center">
+                        <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                        <h5 class="mb-3">Bạn có chắc chắn muốn xóa địa chỉ này?</h5>
+                        <p class="text-muted">Hành động này không thể hoàn tác!</p>
+                    </div>
+                    <div class="modal-footer border-0 bg-light px-4 py-3">
+                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-danger px-4" onclick="confirmDeleteAddress()">
+                            <i class="fas fa-trash-alt me-2"></i>Xóa địa chỉ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            /* Address card styling */
+            .address-card {
+                cursor: pointer;
+                transition: all 0.2s;
+                position: relative;
+            }
+
+            .address-card:hover {
+                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            }
+
+            .address-card.selected {
+                border-color: #000 !important;
+                background-color: #f8f9fa !important;
+            }
+
+            .address-edit-icon {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                cursor: pointer;
+                color: #adb5bd;
+                font-size: 18px;
+                transition: all 0.3s ease;
+                padding: 5px;
+            }
+
+            .address-edit-icon:hover {
+                color: #0d6efd;
+                transform: translateX(3px);
+            }
+
+            /* Custom radio button styling - blue filled circle */
+            .address-card .form-check-input[type="radio"] {
+                width: 20px;
+                height: 20px;
+                border: 2px solid #0d6efd;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+
+            .address-card .form-check-input[type="radio"]:checked {
+                background-color: #0d6efd;
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            }
+
+            .address-card .form-check-input[type="radio"]:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            }
+
+
+            /* Dropdown select styling */
+            .form-select {
+                cursor: pointer;
+            }
+
+            /* Enhanced Modal Styling */
+            .modal-content {
+                border-radius: 12px;
+                overflow: hidden;
+            }
+
+            .modal-header.bg-primary {
+                padding: 1.25rem 1.5rem;
+            }
+
+            .modal-header .modal-title {
+                font-size: 1.25rem;
+            }
+
+            .modal-body {
+                background-color: #fafbfc;
+            }
+
+            /* Enhanced Form Inputs */
+            .modal-body .form-control,
+            .modal-body .form-select {
+                border-radius: 8px;
+                border: 1.5px solid #dee2e6;
+                padding: 0.625rem 0.875rem;
+                transition: all 0.2s ease;
+                font-size: 0.95rem;
+            }
+
+            .modal-body .form-control:focus,
+            .modal-body .form-select:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+            }
+
+            .modal-body .form-label {
+                font-size: 0.875rem;
+                margin-bottom: 0.5rem;
+                color: #495057;
+            }
+
+            .modal-body textarea.form-control {
+                resize: vertical;
+                min-height: 80px;
+            }
+
+            /* Enhanced Buttons */
+            .modal-footer .btn {
+                border-radius: 8px;
+                font-weight: 500;
+                transition: all 0.2s ease;
+            }
+
+            .modal-footer .btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            }
+
+
+            /* Custom dropdown size - approximately 7 items */
+            select.form-select {
+                overflow-y: auto;
+            }
+
+            select.form-select option {
+                padding: 8px 12px;
+            }
+
+            /* Address scroll container - max 3 addresses visible */
+            .address-scroll-container {
+                max-height: 330px;
+                /* Approximately 3 address cards */
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+
+            .address-scroll-container::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .address-scroll-container::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+
+            .address-scroll-container::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 10px;
+            }
+
+            .address-scroll-container::-webkit-scrollbar-thumb:hover {
+                background: #555;
+            }
+
+            /* Dropdown styling */
+            select#city[size],
+            select#district[size],
+            select#editCity[size],
+            select#editDistrict[size] {
+                height: auto !important;
+                max-height: 300px;
+                overflow-y: auto;
+                padding: 0;
+                position: absolute !important;
+                z-index: 1050 !important;
+                background: white;
+                border: 1px solid #ced4da;
+                border-radius: 0.25rem;
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            }
+
+            select#city[size] option,
+            select#district[size] option,
+            select#editCity[size] option,
+            select#editDistrict[size] option {
+                padding: 8px 12px;
+            }
+
+            .modal-dialog {
+                margin-top: 2rem !important;
+                margin-bottom: auto;
+            }
+        </style>
+
+        <script>
+            // Vietnam Provinces and Districts Data (2026) - All 63 Provinces
+            const vietnamData = {
+                "An Giang": ["Long Xuyên", "Châu Đốc", "An Phú", "Tân Châu", "Phú Tân", "Châu Phú", "Tịnh Biên", "Tri Tôn", "Châu Thành", "Chợ Mới", "Thoại Sơn"],
+                "Bà Rịa - Vũng Tàu": ["Vũng Tàu", "Bà Rịa", "Châu Đức", "Xuyên Mộc", "Long Điền", "Đất Đỏ", "Côn Đảo", "Tân Thành"],
+                "Bắc Giang": ["Bắc Giang", "Hiệp Hòa", "Lạng Giang", "Lục Nam", "Lục Ngạn", "Sơn Động", "Tân Yên", "Việt Yên", "Yên Dũng", "Yên Thế"],
+                "Bắc Kạn": ["Bắc Kạn", "Ba Bể", "Bạch Thông", "Chợ Đồn", "Chợ Mới", "Na Rì", "Ngân Sơn", "Pác Nặm"],
+                "Bạc Liêu": ["Bạc Liêu", "Giá Rai", "Hòa Bình", "Hồng Dân", "Phước Long", "Vĩnh Lợi", "Đông Hải"],
+                "Bắc Ninh": ["Bắc Ninh", "Từ Sơn", "Thuận Thành", "Gia Bình", "Lương Tài", "Quế Võ", "Tiên Du", "Yên Phong"],
+                "Bến Tre": ["Bến Tre", "Ba Tri", "Bình Đại", "Châu Thành", "Chợ Lách", "Giồng Trôm", "Mỏ Cày Bắc", "Mỏ Cày Nam", "Thạnh Phú"],
+                "Bình Định": ["Quy Nhơn", "An Lão", "An Nhơn", "Hoài Ân", "Hoài Nhơn", "Phù Cát", "Phù Mỹ", "Tây Sơn", "Tuy Phước", "Vân Canh", "Vĩnh Thạnh"],
+                "Bình Dương": ["Thủ Dầu Một", "Dĩ An", "Thuận An", "Bến Cát", "Tân Uyên", "Bàu Bàng", "Dầu Tiếng", "Phú Giáo", "Bắc Tân Uyên"],
+                "Bình Phước": ["Đồng Xoài", "Phước Long", "Bình Long", "Bù Đăng", "Bù Đốp", "Chơn Thành", "Đồng Phú", "Hớn Quản", "Lộc Ninh", "Phú Riềng"],
+                "Bình Thuận": ["Phan Thiết", "La Gi", "Bắc Bình", "Đức Linh", "Hàm Tân", "Hàm Thuận Bắc", "Hàm Thuận Nam", "Phú Quý", "Tánh Linh", "Tuy Phong"],
+                "Cà Mau": ["Cà Mau", "Cái Nước", "Đầm Dơi", "Năm Căn", "Ngọc Hiển", "Phú Tân", "Thới Bình", "Trần Văn Thời", "U Minh"],
+                "Cần Thơ": ["Ninh Kiều", "Ô Môn", "Bình Thuỷ", "Cái Răng", "Thốt Nốt", "Phong Điền", "Cờ Đỏ", "Vĩnh Thạnh", "Thới Lai"],
+                "Cao Bằng": ["Cao Bằng", "Bảo Lạc", "Bảo Lâm", "Hà Quảng", "Hạ Lang", "Hòa An", "Nguyên Bình", "Phục Hòa", "Quảng Hòa", "Thạch An", "Thông Nông", "Trà Lĩnh", "Trùng Khánh"],
+                "Đà Nẵng": ["Hải Châu", "Thanh Khê", "Sơn Trà", "Ngũ Hành Sơn", "Liên Chiểu", "Cẩm Lệ", "Hòa Vang", "Hoàng Sa"],
+                "Đắk Lắk": ["Buôn Ma Thuột", "Buôn Hồ", "Cư Kuin", "Cư M'gar", "Ea H'leo", "Ea Kar", "Ea Súp", "Krông Ana", "Krông Bông", "Krông Búk", "Krông Năng", "Krông Pắc", "Lắk", "M'Đrắk"],
+                "Đắk Nông": ["Gia Nghĩa", "Cư Jút", "Đắk Glong", "Đắk Mil", "Đắk R'Lấp", "Đắk Song", "Krông Nô", "Tuy Đức"],
+                "Điện Biên": ["Điện Biên Phủ", "Mường Lay", "Điện Biên", "Điện Biên Đông", "Mường Ảng", "Mường Chà", "Mường Nhé", "Nậm Pồ", "Tủa Chùa", "Tuần Giáo"],
+                "Đồng Nai": ["Biên Hòa", "Long Khánh", "Nhơn Trạch", "Vĩnh Cửu", "Trảng Bom", "Thống Nhất", "Cẩm Mỹ", "Long Thành", "Định Quán", "Tân Phú", "Xuân Lộc"],
+                "Đồng Tháp": ["Cao Lãnh", "Sa Đéc", "Hồng Ngự", "Cao Lãnh", "Châu Thành", "Hồng Ngự", "Lai Vung", "Lấp Vò", "Tam Nông", "Tân Hồng", "Thanh Bình", "Tháp Mười"],
+                "Gia Lai": ["Pleiku", "An Khê", "Ayun Pa", "Chư Păh", "Chư Prông", "Chư Pưh", "Chư Sê", "Đắk Đoa", "Đắk Pơ", "Đức Cơ", "Ia Grai", "Ia Pa", "Kbang", "Kông Chro", "Krông Pa", "Mang Yang", "Phú Thiện"],
+                "Hà Giang": ["Hà Giang", "Bắc Mê", "Bắc Quang", "Đồng Văn", "Hoàng Su Phì", "Mèo Vạc", "Quản Bạ", "Quảng Bình", "Vị Xuyên", "Xín Mần", "Yên Minh"],
+                "Hà Nam": ["Phủ Lý", "Bình Lục", "Duy Tiên", "Kim Bảng", "Lý Nhân", "Thanh Liêm"],
+                "Hà Nội": ["Ba Đình", "Hoàn Kiếm", "Tây Hồ", "Long Biên", "Cầu Giấy", "Đống Đa", "Hai Bà Trưng", "Hoàng Mai", "Thanh Xuân", "Nam Từ Liêm", "Bắc Từ Liêm", "Hà Đông", "Sơn Tây", "Ba Vì", "Chương Mỹ", "Đan Phượng", "Đông Anh", "Gia Lâm", "Hoài Đức", "Mê Linh", "Mỹ Đức", "Phú Xuyên", "Phúc Thọ", "Quốc Oai", "Sóc Sơn", "Thạch Thất", "Thanh Oai", "Thanh Trì", "Thường Tín", "Ứng Hòa"],
+                "Hà Tĩnh": ["Hà Tĩnh", "Hồng Lĩnh", "Cẩm Xuyên", "Can Lộc", "Đức Thọ", "Hương Khê", "Hương Sơn", "Kỳ Anh", "Lộc Hà", "Nghi Xuân", "Thạch Hà", "Vũ Quang"],
+                "Hải Dương": ["Hải Dương", "Chí Linh", "Bình Giang", "Cẩm Giàng", "Gia Lộc", "Kim Thành", "Kinh Môn", "Nam Sách", "Ninh Giang", "Thanh Hà", "Thanh Miện", "Tứ Kỳ"],
+                "Hải Phòng": ["Hồng Bàng", "Ngô Quyền", "Lê Chân", "Hải An", "Kiến An", "Đồ Sơn", "Dương Kinh", "An Dương", "An Lão", "Bạch Long Vĩ", "Cát Hải", "Kiến Thụy", "Thủy Nguyên", "Tiên Lãng", "Vĩnh Bảo"],
+                "Hậu Giang": ["Vị Thanh", "Ngã Bảy", "Châu Thành", "Châu Thành A", "Long Mỹ", "Phụng Hiệp", "Vị Thủy"],
+                "Hòa Bình": ["Hòa Bình", "Cao Phong", "Đà Bắc", "Kim Bôi", "Kỳ Sơn", "Lạc Sơn", "Lạc Thủy", "Lương Sơn", "Mai Châu", "Tân Lạc", "Yên Thủy"],
+                "Hưng Yên": ["Hưng Yên", "Ân Thi", "Khoái Châu", "Kim Động", "Mỹ Hào", "Phù Cừ", "Tiên Lữ", "Văn Giang", "Văn Lâm", "Yên Mỹ"],
+                "Khánh Hòa": ["Nha Trang", "Cam Ranh", "Ninh Hòa", "Vạn Ninh", "Diên Khánh", "Khánh Vĩnh", "Khánh Sơn", "Cam Lâm", "Trường Sa"],
+                "Kiên Giang": ["Rạch Giá", "Hà Tiên", "Phú Quốc", "An Biên", "An Minh", "Châu Thành", "Giang Thành", "Giồng Riềng", "Gò Quao", "Hòn Đất", "Kiên Hải", "Kiên Lương", "Tân Hiệp", "U Minh Thượng", "Vĩnh Thuận"],
+                "Kon Tum": ["Kon Tum", "Đắk Glei", "Đắk Hà", "Đắk Tô", "Ia H' Drai", "Kon Plông", "Kon Rẫy", "Ngọc Hồi", "Sa Thầy", "Tu Mơ Rông"],
+                "Lai Châu": ["Lai Châu", "Mường Tè", "Nậm Nhùn", "Phong Thổ", "Sìn Hồ", "Tam Đường", "Tân Uyên", "Than Uyên"],
+                "Lâm Đồng": ["Đà Lạt", "Bảo Lộc", "Đơn Dương", "Đức Trọng", "Lạc Dương", "Lâm Hà", "Di Linh", "Bảo Lâm", "Cát Tiên", "Đạ Huoai", "Đạ Tẻh", "Đam Rông"],
+                "Lạng Sơn": ["Lạng Sơn", "Bắc Sơn", "Bình Gia", "Cao Lộc", "Chi Lăng", "Đình Lập", "Hữu Lũng", "Lộc Bình", "Trang Định", "Văn Lãng", "Văn Quan"],
+                "Lào Cai": ["Lào Cai", "Sa Pa", "Bảo Thắng", "Bảo Yên", "Bát Xát", "Mường Khương", "Si Ma Cai", "Văn Bàn", "Bắc Hà"],
+                "Long An": ["Tân An", "Kiến Tường", "Bến Lức", "Cần Đước", "Cần Giuộc", "Châu Thành", "Đức Hòa", "Đức Huệ", "Mộc Hóa", "Tân Hưng", "Tân Thạnh", "Tân Trụ", "Thạnh Hóa", "Thủ Thừa", "Vĩnh Hưng"],
+                "Nam Định": ["Nam Định", "Giao Thủy", "Hải Hậu", "Mỹ Lộc", "Nam Trực", "Nghĩa Hưng", "Trực Ninh", "Vụ Bản", "Xuân Trường", "Ý Yên"],
+                "Nghệ An": ["Vinh", "Cửa Lò", "Thái Hòa", "Anh Sơn", "Con Cuông", "Diễn Châu", "Đô Lương", "Hưng Nguyên", "Kỳ Sơn", "Nam Đàn", "Nghi Lộc", "Nghĩa Đàn", "Quế Phong", "Quỳ Châu", "Quỳ Hợp", "Quỳnh Lưu", "Tân Kỳ", "Thanh Chương", "Tương Dương", "Yên Thành"],
+                "Ninh Bình": ["Ninh Bình", "Tam Điệp", "Gia Viễn", "Hoa Lư", "Kim Sơn", "Nho Quan", "Yên Khánh", "Yên Mô"],
+                "Ninh Thuận": ["Phan Rang-Tháp Chàm", "Bác Ái", "Ninh Hải", "Ninh Phước", "Ninh Sơn", "Thuận Bắc", "Thuận Nam"],
+                "Phú Thọ": ["Việt Trì", "Phú Thọ", "Cẩm Khê", "Đoan Hùng", "Hạ Hòa", "Lâm Thao", "Phù Ninh", "Tam Nông", "Tân Sơn", "Thanh Ba", "Thanh Sơn", "Thanh Thủy", "Yên Lập"],
+                "Phú Yên": ["Tuy Hòa", "Sông Cầu", "Đông Hòa", "Phú Hòa", "Sơn Hòa", "Sông Hinh", "Tây Hòa", "Tuy An", "Đồng Xuân"],
+                "Quảng Bình": ["Đồng Hới", "Ba Đồn", "Bố Trạch", "Lệ Thủy", "Minh Hóa", "Quảng Ninh", "Quảng Trạch", "Tuyên Hóa"],
+                "Quảng Nam": ["Tam Kỳ", "Hội An", "Bắc Trà My", "Đại Lộc", "Điện Bàn", "Đông Giang", "Duy Xuyên", "Hiệp Đức", "Nam Giang", "Nam Trà My", "Núi Thành", "Phú Ninh", "Phước Sơn", "Quế Sơn", "Tây Giang", "Thăng Bình", "Tiên Phước"],
+                "Quảng Ngãi": ["Quảng Ngãi", "Ba Tơ", "Bình Sơn", "Đức Phổ", "Lý Sơn", "Minh Long", "Mộ Đức", "Nghĩa Hành", "Sơn Hà", "Sơn Tây", "Sơn Tịnh", "Tây Trà", "Trà Bồng", "Tư Nghĩa"],
+                "Quảng Ninh": ["Hạ Long", "Móng Cái", "Cẩm Phả", "Uông Bí", "Đông Triều", "Quảng Yên", "Ba Chẽ", "Bình Liêu", "Cô Tô", "Đầm Hà", "Hải Hà", "Hoành Bồ", "Tiên Yên", "Vân Đồn"],
+                "Quảng Trị": ["Đông Hà", "Quảng Trị", "Cam Lộ", "Gio Linh", "Hải Lăng", "Hướng Hóa", "Triệu Phong", "Vĩnh Linh", "Đa Krông", "Cồn Cỏ"],
+                "Sóc Trăng": ["Sóc Trăng", "Vĩnh Châu", "Ngã Năm", "Châu Thành", "Cù Lao Dung", "Kế Sách", "Long Phú", "Mỹ Tú", "Mỹ Xuyên", "Thạnh Trị", "Trần Đề"],
+                "Sơn La": ["Sơn La", "Mộc Châu", "Bắc Yên", "Mai Sơn", "Mường La", "Phù Yên", "Quỳnh Nhai", "Sông Mã", "Sốp Cộp", "Thuận Châu", "Vân Hồ", "Yên Châu"],
+                "Tây Ninh": ["Tây Ninh", "Hòa Thành", "Bến Cầu", "Châu Thành", "Dương Minh Châu", "Gò Dầu", "Tân Biên", "Tân Châu", "Trảng Bàng"],
+                "Thái Bình": ["Thái Bình", "Đông Hưng", "Hưng Hà", "Kiến Xương", "Quỳnh Phụ", "Thái Thụy", "Tiền Hải", "Vũ Thư"],
+                "Thái Nguyên": ["Thái Nguyên", "Sông Công", "Phổ Yên", "Phú Bình", "Đại Từ", "Định Hóa", "Đồng Hỷ", "Phú Lương", "Võ Nhai"],
+                "Thanh Hóa": ["Thanh Hóa", "Bỉm Sơn", "Sầm Sơn", "Bá Thước", "Cẩm Thủy", "Đông Sơn", "Hà Trung", "Hậu Lộc", "Hoằng Hóa", "Lang Chánh", "Mường Lát", "Nga Sơn", "Ngọc Lặc", "Như Thanh", "Như Xuân", "Nông Cống", "Quan Hóa", "Quan Sơn", "Quảng Xương", "Thạch Thành", "Thiệu Hóa", "Thọ Xuân", "Thường Xuân", "Tĩnh Gia", "Triệu Sơn", "Vĩnh Lộc", "Yên Định"],
+                "Thừa Thiên Huế": ["Huế", "Phong Điền", "Phú Lộc", "Phú Vang", "Quảng Điền", "A Lưới", "Hương Thủy", "Hương Trà", "Nam Đông"],
+                "Tiền Giang": ["Mỹ Tho", "Gò Công", "Cai Lậy", "Cái Bè", "Châu Thành", "Chợ Gạo", "Gò Công Đông", "Gò Công Tây", "Tân Phú Đông", "Tân Phước"],
+                "TP. Hồ Chí Minh": ["Quận 1", "Quận 2", "Quận 3", "Quận 4", "Quận 5", "Quận 6", "Quận 7", "Quận 8", "Quận 9", "Quận 10", "Quận 11", "Quận 12", "Bình Thạnh", "Gò Vấp", "Phú Nhuận", "Tân Bình", "Tân Phú", "Thủ Đức", "Bình Tân", "Bình Chánh", "Cần Giờ", "Củ Chi", "Hóc Môn", "Nhà Bè"],
+                "Trà Vinh": ["Trà Vinh", "Càng Long", "Cầu Kè", "Cầu Ngang", "Châu Thành", "Duyên Hải", "Tiểu Cần", "Trà Cú"],
+                "Tuyên Quang": ["Tuyên Quang", "Chiêm Hóa", "Hàm Yên", "Lâm Bình", "Na Hang", "Sơn Dương", "Yên Sơn"],
+                "Vĩnh Long": ["Vĩnh Long", "Bình Minh", "Bình Tân", "Long Hồ", "Mang Thít", "Tam Bình", "Trà Ôn", "Vũng Liêm"],
+                "Vĩnh Phúc": ["Vĩnh Yên", "Phúc Yên", "Bình Xuyên", "Lập Thạch", "Sông Lô", "Tam Dương", "Tam Đảo", "Vĩnh Tường", "Yên Lạc"],
+                "Yên Bái": ["Yên Bái", "Nghĩa Lộ", "Lục Yên", "Mù Cang Chải", "Trạm Tấu", "Trấn Yên", "Văn Chấn", "Văn Yên", "Yên Bình"]
+            };
+
+            // Initialize province dropdowns
+            function initializeProvinceDropdowns() {
+                const citySelects = [document.getElementById('city'), document.getElementById('editCity')];
+                const provinces = Object.keys(vietnamData).sort();
+
+                citySelects.forEach(citySelect => {
+                    if (citySelect) {
+                        provinces.forEach(province => {
+                            const option = document.createElement('option');
+                            option.value = province;
+                            option.textContent = province;
+                            citySelect.appendChild(option);
+                        });
+                    }
+                });
+            }
+
+            // Handle province selection for add modal
+            document.addEventListener('DOMContentLoaded', function () {
+                initializeProvinceDropdowns();
+                loadAddresses();
+
+                // Setup dropdown limit for all select elements
+                ['city', 'district', 'editCity', 'editDistrict'].forEach(id => {
+                    const select = document.getElementById(id);
+                    if (select) setupDropdownLimit(select);
+                });
+
+                // Province change handler for add modal
+                const citySelect = document.getElementById('city');
+                if (citySelect) {
+                    citySelect.addEventListener('change', function () {
+                        const districtSelect = document.getElementById('district');
+                        const selectedProvince = this.value;
+
+                        districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+
+                        if (selectedProvince) {
+                            districtSelect.disabled = false;
+                            const districts = vietnamData[selectedProvince];
+                            if (districts) {
+                                districts.forEach(district => {
+                                    const option = document.createElement('option');
+                                    option.value = district;
+                                    option.textContent = district;
+                                    districtSelect.appendChild(option);
+                                });
+                            }
+                            this.classList.remove('is-invalid');
+                        } else {
+                            districtSelect.disabled = true;
+                        }
+                    });
+                }
+
+                // Province change handler for edit modal
+                const editCitySelect = document.getElementById('editCity');
+                if (editCitySelect) {
+                    editCitySelect.addEventListener('change', function () {
+                        const districtSelect = document.getElementById('editDistrict');
+                        const selectedProvince = this.value;
+
+                        districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+
+                        if (selectedProvince) {
+                            districtSelect.disabled = false;
+                            const districts = vietnamData[selectedProvince];
+                            if (districts) {
+                                districts.forEach(district => {
+                                    const option = document.createElement('option');
+                                    option.value = district;
+                                    option.textContent = district;
+                                    districtSelect.appendChild(option);
+                                });
+                            }
+                            this.classList.remove('is-invalid');
+                        } else {
+                            districtSelect.disabled = true;
+                        }
+                    });
+                }
+            });
+
+            // District validation
+            document.getElementById('district').addEventListener('click', function () {
+                const citySelect = document.getElementById('city');
+                if (!citySelect.value) {
+                    citySelect.classList.add('is-invalid');
+                    const feedback = citySelect.nextElementSibling;
+                    if (feedback) {
+                        feedback.textContent = 'ShopOMG! xin thông báo: Vui lòng chọn địa chỉ Tỉnh/Thành phố của bạn trước. Xin cảm ơn';
+                    }
+                    citySelect.focus();
+                }
+            });
+
+            document.getElementById('editDistrict').addEventListener('click', function () {
+                const citySelect = document.getElementById('editCity');
+                if (!citySelect.value) {
+                    citySelect.classList.add('is-invalid');
+                    const feedback = citySelect.nextElementSibling;
+                    if (feedback) {
+                        feedback.textContent = 'ShopOMG! xin thông báo: Vui lòng chọn địa chỉ Tỉnh/Thành phố của bạn trước. Xin cảm ơn';
+                    }
+                    citySelect.focus();
+                }
+            });
+
+            // Limit dropdown height
+            function setupDropdownLimit(selectElement) {
+                let isExpanded = false;
+
+                selectElement.addEventListener('mousedown', function (e) {
+                    if (!isExpanded) {
+                        this.setAttribute('size', '10');
+                        isExpanded = true;
+                        e.preventDefault();
+                        this.focus();
+                    }
+                });
+
+                selectElement.addEventListener('blur', function () {
+                    this.removeAttribute('size');
+                    isExpanded = false;
+                });
+
+                selectElement.addEventListener('change', function () {
+                    this.removeAttribute('size');
+                    isExpanded = false;
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (e.target !== selectElement && isExpanded) {
+                        selectElement.removeAttribute('size');
+                        isExpanded = false;
+                    }
+                });
+            }
+
+            // Global addresses array - Load from localStorage or use default
+            let addressesData = JSON.parse(localStorage.getItem('checkoutAddresses')) || [
+                {
+                    id: 1,
+                    recipientName: 'Nguyễn Văn A',
+                    phone: '0909123456',
+                    city: 'TP. Hồ Chí Minh',
+                    district: 'Quận 1',
+                    detailAddress: '123 Đường Nguyễn Huệ, P. Bến Nghé',
+                    isDefault: true
+                }
+            ];
+
+            // Save addresses to localStorage
+            function saveAddressesToStorage() {
+                localStorage.setItem('checkoutAddresses', JSON.stringify(addressesData));
+            }
+
+            // Load addresses from storage
+            function loadAddresses() {
+                // Load from localStorage
+                const stored = localStorage.getItem('checkoutAddresses');
+                if (stored) {
+                    addressesData = JSON.parse(stored);
+                }
+                displayAddresses(addressesData);
+            }
+
+            // Display addresses
+            function displayAddresses(addresses) {
+                const addressList = document.getElementById('addressList');
+                const addressLoading = document.getElementById('addressLoading');
+
+                if (addressLoading) addressLoading.style.display = 'none';
+
+                if (addresses.length === 0) {
+                    addressList.innerHTML = '<div class="text-center text-muted py-3">Chưa có địa chỉ nào</div>';
+                    return;
+                }
+
+                let html = '';
+                addresses.forEach((addr, index) => {
+                    const fullAddress = `${addr.detailAddress}, ${addr.district}, ${addr.city}`;
+                    html += `
+                        <label class="card p-3 mb-2 border address-card d-flex gap-3 align-items-start ${addr.isDefault ? 'bg-light selected' : ''}" 
+                            onclick="selectAddress(${addr.id}, '${addr.recipientName}', '${addr.phone}', '${fullAddress}')">
+                            <input class="form-check-input flex-shrink-0 mt-1" type="radio" name="addressId" id="addr${addr.id}" 
+                                ${addr.isDefault ? 'checked' : ''} value="${addr.id}">
+                            <div class="flex-grow-1">
+                                <span class="fw-bold">${addr.recipientName}</span> 
+                                ${addr.isDefault ? '<span class="badge bg-dark ms-2">Mặc định</span>' : ''}
+                                <br>
+                                <small class="text-muted">${addr.phone}</small><br>
+                                <small>${fullAddress}</small>
+                            </div>
+                            <i class="fas fa-chevron-right address-edit-icon" onclick="event.stopPropagation(); openEditModal(${addr.id}, '${addr.recipientName}', '${addr.phone}', '${addr.city}', '${addr.district}', '${addr.detailAddress}', ${addr.isDefault})"></i>
+                        </label>
+                    `;
+                });
+
+                addressList.innerHTML = html;
+
+                // Set default address in hidden fields
+                if (addresses.length > 0) {
+                    const defaultAddr = addresses.find(a => a.isDefault) || addresses[0];
+                    selectAddress(defaultAddr.id, defaultAddr.recipientName, defaultAddr.phone,
+                        `${defaultAddr.detailAddress}, ${defaultAddr.district}, ${defaultAddr.city}`);
+                }
+            }
+
+            // Select address
+            function selectAddress(id, name, phone, address) {
+                document.getElementById('selectedRecipientName').value = name;
+                document.getElementById('selectedPhone').value = phone;
+                document.getElementById('selectedAddress').value = address;
+
+                // Update UI - remove selected from all cards
+                document.querySelectorAll('.address-card').forEach(card => {
+                    card.classList.remove('selected', 'bg-light');
+                });
+
+                // Add selected to the clicked card (find by radio button)
+                const radioButton = document.getElementById('addr' + id);
+                if (radioButton && radioButton.closest('.address-card')) {
+                    radioButton.closest('.address-card').classList.add('selected', 'bg-light');
+                }
+            }
+
+            // Open address modal
+            function openAddressModal() {
+                document.getElementById('addressForm').reset();
+                document.getElementById('addressId').value = '';
+                document.getElementById('district').disabled = true;
+                const modal = new bootstrap.Modal(document.getElementById('addAddressModal'));
+                modal.show();
+            }
+
+            // Open edit modal
+            function openEditModal(id, name, phone, city, district, detailAddress, isDefault) {
+                document.getElementById('editAddressId').value = id;
+                document.getElementById('editRecipientName').value = name;
+                document.getElementById('editPhone').value = phone;
+                document.getElementById('editCity').value = city;
+                document.getElementById('editDetailAddress').value = detailAddress;
+                document.getElementById('editIsDefault').checked = isDefault;
+
+                // Trigger province change to load districts
+                const event = new Event('change');
+                document.getElementById('editCity').dispatchEvent(event);
+
+                // Set district after districts are loaded
+                setTimeout(() => {
+                    document.getElementById('editDistrict').value = district;
+                }, 100);
+
+                const modal = new bootstrap.Modal(document.getElementById('editAddressModal'));
+                modal.show();
+            }
+
+            // Save address
+            function saveAddress() {
+                const name = document.getElementById('recipientName').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                const city = document.getElementById('city').value;
+                const district = document.getElementById('district').value;
+                const detailAddress = document.getElementById('detailAddress').value.trim();
+                const isDefault = document.getElementById('isDefault').checked;
+
+                // Validation
+                let isValid = true;
+
+                if (!name) {
+                    document.getElementById('recipientName').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                if (!phone) {
+                    document.getElementById('phone').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                if (!city) {
+                    document.getElementById('city').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                if (!district) {
+                    document.getElementById('district').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                if (!detailAddress) {
+                    document.getElementById('detailAddress').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                if (!isValid) return;
+
+                // Generate new ID
+                const maxId = addressesData.length > 0 ? Math.max(...addressesData.map(a => a.id)) : 0;
+
+                // Create new address object
+                const newAddress = {
+                    id: maxId + 1,
+                    recipientName: name,
+                    phone: phone,
+                    city: city,
+                    district: district,
+                    detailAddress: detailAddress,
+                    isDefault: isDefault
+                };
+
+                // If this is default, remove default from others
+                if (isDefault) {
+                    addressesData.forEach(addr => addr.isDefault = false);
+                }
+
+                // Add to array
+                addressesData.push(newAddress);
+
+                // Save to localStorage
+                saveAddressesToStorage();
+
+                // Close modal and reload addresses
+                const addModal = bootstrap.Modal.getInstance(document.getElementById('addAddressModal'));
+                if (addModal) {
+                    addModal.hide();
+                }
+                loadAddresses();
+
+                // Reset form
+                document.getElementById('addressForm').reset();
+            }
+
+            // Update address
+            function updateAddress() {
+                const id = document.getElementById('editAddressId').value;
+                const name = document.getElementById('editRecipientName').value.trim();
+                const phone = document.getElementById('editPhone').value.trim();
+                const city = document.getElementById('editCity').value;
+                const district = document.getElementById('editDistrict').value;
+                const detailAddress = document.getElementById('editDetailAddress').value.trim();
+                const isDefault = document.getElementById('editIsDefault').checked;
+
+                // Validation
+                let isValid = true;
+
+                if (!name) {
+                    document.getElementById('editRecipientName').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                if (!phone) {
+                    document.getElementById('editPhone').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                if (!city) {
+                    document.getElementById('editCity').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                if (!district) {
+                    document.getElementById('editDistrict').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                if (!detailAddress) {
+                    document.getElementById('editDetailAddress').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                if (!isValid) return;
+
+                // Find and update address in array
+                const addressIndex = addressesData.findIndex(addr => addr.id == id);
+                if (addressIndex !== -1) {
+                    // If this is default, remove default from others
+                    if (isDefault) {
+                        addressesData.forEach(addr => addr.isDefault = false);
+                    }
+
+                    // Update address
+                    addressesData[addressIndex] = {
+                        id: parseInt(id),
+                        recipientName: name,
+                        phone: phone,
+                        city: city,
+                        district: district,
+                        detailAddress: detailAddress,
+                        isDefault: isDefault
+                    };
+
+                    // Save to localStorage
+                    saveAddressesToStorage();
+                }
+
+                // Close modal and reload addresses
+                bootstrap.Modal.getInstance(document.getElementById('editAddressModal')).hide();
+                loadAddresses();
+            }
+
+            // Delete address
+            function deleteAddress() {
+                const id = document.getElementById('editAddressId').value;
+
+                // Show delete confirmation modal
+                const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+                deleteModal.show();
+
+                // Store ID for confirmation
+                document.getElementById('deleteConfirmModal').setAttribute('data-address-id', id);
+            }
+
+            // Confirm delete address
+            function confirmDeleteAddress() {
+                const id = document.getElementById('deleteConfirmModal').getAttribute('data-address-id');
+
+                // Remove from array
+                addressesData = addressesData.filter(addr => addr.id != id);
+
+                // Save to localStorage
+                saveAddressesToStorage();
+
+                // Close both modals
+                const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editAddressModal'));
+
+                if (deleteModal) deleteModal.hide();
+                if (editModal) editModal.hide();
+
+                // Reload addresses
+                loadAddresses();
+            }
+
+            // Show/Hide QR Code
+            function showQRCode() {
+                document.getElementById('qrCodeDetails').style.display = 'block';
+            }
+
+            function hideQRCode() {
+                document.getElementById('qrCodeDetails').style.display = 'none';
+            }
+
+            // Filter select options based on search input
+            function filterSelect(selectId, searchId) {
+                const searchInput = document.getElementById(searchId);
+                const selectElement = document.getElementById(selectId);
+                const filter = searchInput.value.toLowerCase();
+                const options = selectElement.options;
+
+                for (let i = 0; i < options.length; i++) {
+                    const optionText = options[i].text.toLowerCase();
+                    if (optionText.includes(filter) || options[i].value === '') {
+                        options[i].style.display = '';
+                    } else {
+                        options[i].style.display = 'none';
+                    }
+                }
+            }
+
+            // Load Buy Now product from sessionStorage
+            function loadBuyNowProduct() {
+                const buyNowItem = sessionStorage.getItem('buyNowItem');
+                const container = document.getElementById('orderItemsContainer');
+
+                if (buyNowItem) {
+                    const item = JSON.parse(buyNowItem);
+                    const subtotal = item.price * item.quantity;
+
+                    // Display product
+                    container.innerHTML = `
+                        <div class="border-bottom pb-3 mb-3">
+                            <div class="d-flex gap-3 mb-2">
+                                <img src="${item.productImage}" alt="Product" class="rounded" 
+                                    style="width: 60px; height: 60px; object-fit: cover;">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <span class="fw-bold small">${item.productName}</span>
+                                            <span class="text-muted small">x${item.quantity}</span>
+                                            <div class="text-muted small">${item.color} / ${item.size}</div>
+                                        </div>
+                                        <span class="fw-bold small">${subtotal.toLocaleString('vi-VN')}đ</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Update totals
+                    const shippingFee = 30000;
+                    const total = subtotal + shippingFee;
+
+                    document.getElementById('subtotalDisplay').textContent = subtotal.toLocaleString('vi-VN') + 'đ';
+                    document.getElementById('totalDisplay').textContent = total.toLocaleString('vi-VN') + 'đ';
+
+                    // Populate hidden inputs for form submission
+                    document.getElementById('buyNowVariantId').value = item.variantId || '';
+                    document.getElementById('buyNowQuantity').value = item.quantity || '';
+
+                    // Update Back link to go to product page instead of cart
+                    const backLink = document.getElementById('backLink');
+                    const backLinkText = document.getElementById('backLinkText');
+                    if (backLink && backLinkText) {
+                        backLinkText.innerText = "Quay lại sản phẩm";
+                        // If we had a product ID we'd use it, for now just history back or /products
+                        // But we can extract it from the image URL or just use window.history.back()
+                        backLink.href = "javascript:window.history.back()";
+                    }
+                } else {
+                    container.innerHTML = '<div class="text-center text-muted py-3">Chưa có sản phẩm nào</div>';
+                    document.getElementById('buyNowVariantId').value = '';
+                    document.getElementById('buyNowQuantity').value = '';
+                }
+            }
+
+            // Load product when page loads
+            loadBuyNowProduct();
+        </script>
     </article>
 </body>
+
 </html>

@@ -124,7 +124,35 @@ public class CartServiceImpl implements CartService {
     @Override
     public Double getCartTotal(Integer accountId) {
         List<Cart> cartItems = cartRepository.findByAccountId(accountId);
+        return calculateTotal(cartItems);
+    }
 
+    @Override
+    public List<Cart> getCartItemsByIds(List<Integer> ids) {
+        if (ids == null || ids.isEmpty())
+            return java.util.Collections.emptyList();
+        return cartRepository.findAllById(ids);
+    }
+
+    @Override
+    public Double getCartTotalByIds(List<Integer> ids) {
+        List<Cart> items = getCartItemsByIds(ids);
+        return calculateTotal(items);
+    }
+
+    @Override
+    @Transactional
+    public void removeItemsFromCart(List<Integer> ids, Integer accountId) {
+        if (ids == null || ids.isEmpty())
+            return;
+        List<Cart> items = cartRepository.findAllById(ids);
+        // Verify ownership and delete
+        items.stream()
+                .filter(item -> item.getAccount().getId().equals(accountId))
+                .forEach(cartRepository::delete);
+    }
+
+    private Double calculateTotal(List<Cart> cartItems) {
         return cartItems.stream()
                 .mapToDouble(cart -> {
                     ProductVariant variant = cart.getProductVariant();

@@ -183,9 +183,13 @@
             <input type="hidden" name="selectedPhone" id="selectedPhone">
             <input type="hidden" name="selectedAddress" id="selectedAddress">
 
-            <!-- Hidden inputs for Buy Now flow -->
+            <!-- Hidden inputs for Buy Now flow (optional) -->
             <input type="hidden" name="buyNowVariantId" id="buyNowVariantId">
             <input type="hidden" name="buyNowQuantity" id="buyNowQuantity">
+
+            <!-- Hidden inputs for selected Cart items -->
+            <input type="hidden" name="cartItemIds"
+                th:value="${selectedCartItemIds != null ? #strings.listJoin(selectedCartItemIds, ',') : ''}">
         </form>
 
         <!-- Add Address Modal -->

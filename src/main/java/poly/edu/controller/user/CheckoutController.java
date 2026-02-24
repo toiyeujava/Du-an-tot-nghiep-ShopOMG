@@ -53,6 +53,7 @@ public class CheckoutController {
      */
     @GetMapping("/checkout")
     public String checkout(@RequestParam(value = "source", required = false) String source,
+            @RequestParam(value = "ids", required = false) List<Integer> ids,
             Model model, Principal principal) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
@@ -69,14 +70,25 @@ public class CheckoutController {
         // Anything else = Cart checkout flow.
         boolean isBuyNow = "buynow".equals(source);
 
-        List<Cart> cartItems = isBuyNow ? java.util.Collections.emptyList()
-                : cartService.getCartItems(account.getId());
-        Double cartTotal = isBuyNow ? 0.0 : cartService.getCartTotal(account.getId());
+        List<Cart> cartItems;
+        Double cartTotal;
+
+        if (isBuyNow) {
+            cartItems = java.util.Collections.emptyList();
+            cartTotal = 0.0;
+        } else if (ids != null && !ids.isEmpty()) {
+            cartItems = cartService.getCartItemsByIds(ids);
+            cartTotal = cartService.getCartTotalByIds(ids);
+        } else {
+            cartItems = cartService.getCartItems(account.getId());
+            cartTotal = cartService.getCartTotal(account.getId());
+        }
 
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("cartTotal", cartTotal);
         model.addAttribute("pageTitle", "Thanh toán");
         model.addAttribute("checkoutMode", isBuyNow ? "BUY_NOW" : "CART");
+        model.addAttribute("selectedCartItemIds", ids);
         return "user/checkout";
     }
 
@@ -102,6 +114,7 @@ public class CheckoutController {
             @RequestParam(value = "selectedAddress", required = false) String address,
             @RequestParam(value = "buyNowVariantId", required = false) Integer buyNowVariantId,
             @RequestParam(value = "buyNowQuantity", required = false) Integer buyNowQuantity,
+            @RequestParam(value = "cartItemIds", required = false) String cartItemIdsStr,
             Principal principal,
             Model model) {
 
@@ -116,12 +129,30 @@ public class CheckoutController {
                 order = orderCommandService.createOrderFromVariant(account, buyNowVariantId, buyNowQuantity,
                         recipientName, phone, address);
             } else {
-                List<Cart> cartItems = cartService.getCartItems(account.getId());
+                List<Integer> cartItemIds = null;
+                if (cartItemIdsStr != null && !cartItemIdsStr.isEmpty()) {
+                    cartItemIds = java.util.Arrays.stream(cartItemIdsStr.split(","))
+                            .map(Integer::parseInt)
+                            .collect(java.util.stream.Collectors.toList());
+                }
+
+                List<Cart> cartItems;
+                if (cartItemIds != null && !cartItemIds.isEmpty()) {
+                    cartItems = cartService.getCartItemsByIds(cartItemIds);
+                } else {
+                    cartItems = cartService.getCartItems(account.getId());
+                }
+
                 if (cartItems == null || cartItems.isEmpty()) {
                     return "redirect:/checkout?error=empty";
                 }
                 order = orderCommandService.createOrder(account, cartItems, recipientName, phone, address);
-                cartService.clearCart(account.getId());
+
+                if (cartItemIds != null && !cartItemIds.isEmpty()) {
+                    cartService.removeItemsFromCart(cartItemIds, account.getId());
+                } else {
+                    cartService.clearCart(account.getId());
+                }
             }
 
             String maskedPhone = maskPhoneNumber(phone);

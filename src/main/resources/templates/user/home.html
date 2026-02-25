@@ -1,411 +1,251 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
 
 <head>
     <title th:text="${pageTitle}">Trang chủ</title>
 </head>
 
 <body>
-    <article class="container py-5">
+    <article class="container py-4">
+        
         <style>
-            /* Copy Style từ product-list */
-            .filter-section {
-                position: sticky;
-                top: 20px;
-            }
+            /* --- CÁC STYLE CŨ --- */
+            .filter-section { position: sticky; top: 80px; z-index: 900; }
+            .transition-icon { transition: transform 0.3s ease; transform: rotate(0deg); }
+            [data-bs-toggle="collapse"][aria-expanded="true"] .transition-icon { transform: rotate(180deg); }
+            .color-dot { width: 25px; height: 25px; border-radius: 50%; display: inline-block; border: 1px solid #ddd; transition: transform 0.2s, border-color 0.2s; cursor: pointer; }
+            .color-dot:hover, .color-dot.active { transform: scale(1.1); border-color: #000; }
+            .img-wrapper { position: relative; overflow: hidden; border-radius: 8px 8px 0 0; padding-top: 100%; }
+            .img-wrapper img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+            .product-card:hover .img-wrapper img { transform: scale(1.1); }
 
-            .color-dot {
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                display: inline-block;
-                border: 1px solid #ddd;
-                transition: 0.2s;
+            /* --- [FIX] INPUT GROUP KHÔNG BỊ RỚT DÒNG --- */
+            .input-group {
+                flex-wrap: nowrap !important; /* Bắt buộc nằm trên 1 dòng */
             }
-
-            .color-dot:hover {
-                transform: scale(1.2);
-            }
-
-            .img-wrapper {
-                position: relative;
-                overflow: hidden;
-                border-radius: 5px 5px 0 0;
-            }
-
-            .img-wrapper img {
-                transition: transform 0.5s ease;
-                width: 100%;
-                height: 250px;
-                object-fit: cover;
-                display: block;
-            }
-
-            .product-card:hover .img-wrapper img {
-                transform: scale(1.1);
-            }
-
-            .quick-add-btn {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                background: rgba(0, 0, 0, 0.7);
-                padding: 10px;
+            .qty-input {
+                min-width: 40px; /* Đảm bảo ô nhập số không bị bóp quá nhỏ */
                 text-align: center;
-                transition: all 0.3s ease;
-                transform: translateY(100%);
+            }
+
+            /* --- ACTION BUTTONS --- */
+            .action-buttons {
+                position: absolute; 
+                bottom: 10px; left: 10px; right: 10px;
+                display: flex; gap: 8px;
+                transform: translateY(150%);
+                transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 opacity: 0;
             }
+            .product-card:hover .action-buttons { transform: translateY(0); opacity: 1; }
 
-            .product-card:hover .quick-add-btn {
-                transform: translateY(0);
-                opacity: 1;
+            .btn-action {
+                height: 40px; border-radius: 20px; border: none;
+                display: flex; align-items: center; justify-content: center;
+                overflow: hidden; white-space: nowrap;
+                transition: all 0.4s ease;
+                font-weight: 600; font-size: 0.85rem;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+                text-decoration: none !important; cursor: pointer;
             }
+            .btn-action i { font-size: 1.1rem; flex-shrink: 0; }
+            .btn-action span { max-width: 0; opacity: 0; margin-left: 0; transition: all 0.3s ease; display: inline-block; }
 
-            /* Chat Box CSS giữ nguyên */
-            .chat-btn-toggle {
-                position: fixed;
-                bottom: 30px;
-                right: 30px;
-                width: 60px;
-                height: 60px;
-                background-color: #0d6efd;
-                color: white;
-                border-radius: 50%;
-                text-align: center;
-                line-height: 60px;
-                font-size: 24px;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-                cursor: pointer;
-                z-index: 9999;
-            }
+            /* Nút Giỏ hàng (Trái) */
+            .btn-cart-hover { width: 40px; background: #fff; color: #000; z-index: 2; }
+            /* Nút Mua ngay (Phải) */
+            .btn-buy-hover { flex: 1; background: #000; color: #fff; }
+            .btn-buy-hover span { max-width: 100px; opacity: 1; margin-left: 8px; }
 
-            .chat-box-container {
-                position: fixed;
-                bottom: 100px;
-                right: 30px;
-                width: 350px;
-                height: 450px;
-                background: white;
-                border-radius: 10px;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-                z-index: 9999;
-                display: none;
-                flex-direction: column;
-                overflow: hidden;
-                border: 1px solid #ddd;
-            }
+            /* Hover Logic */
+            .btn-cart-hover:hover { width: 140px; background: #000; color: #fff; }
+            .btn-cart-hover:hover span { max-width: 100px; opacity: 1; margin-left: 8px; }
+            .btn-cart-hover:hover ~ .btn-buy-hover { flex: none; width: 40px; background: #fff; color: #dc3545; }
+            .btn-cart-hover:hover ~ .btn-buy-hover span { max-width: 0; opacity: 0; margin-left: 0; }
+            .btn-buy-hover:hover { background: #dc3545; }
 
-            .chat-header {
-                background-color: #0d6efd;
-                color: white;
-                padding: 15px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .chat-body {
-                flex: 1;
-                padding: 15px;
-                overflow-y: auto;
-                background-color: #f8f9fa;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .chat-footer {
-                padding: 10px;
-                border-top: 1px solid #eee;
-                display: flex;
-                gap: 10px;
-            }
-
-            .message {
-                max-width: 80%;
-                padding: 8px 12px;
-                border-radius: 15px;
-                font-size: 14px;
-            }
-
-            .message.bot {
-                background-color: #e9ecef;
-                align-self: flex-start;
-            }
-
-            .message.user {
-                background-color: #0d6efd;
-                color: white;
-                align-self: flex-end;
-            }
-
-            .message.bot {
-                background-color: #e9ecef;
-                align-self: flex-start;
-            }
-
-            .message.user {
-                background-color: #0d6efd;
-                color: white;
-                align-self: flex-end;
-            }
-
-            /* Remove arrows/spinners from number input */
-            /* Chrome, Safari, Edge, Opera */
-            input::-webkit-outer-spin-button,
-            input::-webkit-inner-spin-button {
-                -webkit-appearance: none;
-                margin: 0;
-            }
-
-            /* Firefox */
-            input[type=number] {
-                -moz-appearance: textfield;
-            }
+            /* Chat Box & Others */
+            .chat-btn-toggle { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: #000; color: white; border-radius: 50%; text-align: center; line-height: 60px; font-size: 24px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); cursor: pointer; z-index: 1050; transition: transform 0.3s; }
+            .chat-btn-toggle:hover { transform: scale(1.1); }
+            .chat-box-container { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 450px; background: white; border-radius: 12px; box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15); z-index: 1050; display: none; flex-direction: column; overflow: hidden; border: 1px solid #f0f0f0; }
+            .chat-header { background-color: #000; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+            .chat-body { flex: 1; padding: 15px; overflow-y: auto; background-color: #f8f9fa; display: flex; flex-direction: column; gap: 10px; }
+            .chat-footer { padding: 10px; border-top: 1px solid #eee; background: #fff; }
+            .message { max-width: 80%; padding: 8px 12px; border-radius: 15px; font-size: 14px; line-height: 1.4; }
+            .message.bot { background-color: #e9ecef; align-self: flex-start; border-bottom-left-radius: 2px; }
+            .message.user { background-color: #000; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+            input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         </style>
 
         <div class="row">
             <aside class="col-lg-3 d-none d-lg-block">
-                <div class="filter-section p-3 border rounded bg-white shadow-sm">
-                    <h5 class="fw-bold mb-4"><i class="fas fa-filter me-2"></i>Bộ lọc</h5>
+                <div class="filter-section p-4 border rounded-3 bg-white shadow-sm"
+                     th:with="isFiltering=${(selectedGender != null and selectedGender != '') 
+                                         or (selectedCategory != null) 
+                                         or (selectedColor != null and selectedColor != '') 
+                                         or (minPrice != null) 
+                                         or (maxPrice != null) 
+                                         or (isSale == true) 
+                                         or (keyword != null and keyword != '')}">
 
-                    <div class="mb-4">
-                        <h6 class="fw-bold mb-3">Đối tượng</h6>
-                        <div class="list-group list-group-flush">
-                            <a th:href="@{/home(gender='', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                class="list-group-item list-group-item-action border-0 px-0 py-1"
-                                th:classappend="${selectedGender == null or selectedGender == ''} ? 'fw-bold text-primary' : ''">Tất
-                                cả</a>
-                            <a th:href="@{/home(gender='Nam', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                class="list-group-item list-group-item-action border-0 px-0 py-1"
-                                th:classappend="${selectedGender == 'Nam'} ? 'fw-bold text-primary' : ''">Nam</a>
-                            <a th:href="@{/home(gender='Nữ', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                class="list-group-item list-group-item-action border-0 px-0 py-1"
-                                th:classappend="${selectedGender == 'Nữ'} ? 'fw-bold text-primary' : ''">Nữ</a>
-                            <a th:href="@{/home(gender='Unisex', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                class="list-group-item list-group-item-action border-0 px-0 py-1"
-                                th:classappend="${selectedGender == 'Unisex'} ? 'fw-bold text-primary' : ''">Unisex</a>
-                        </div>
+                    <div class="d-flex justify-content-between align-items-center" 
+                         style="cursor: pointer;" 
+                         data-bs-toggle="collapse" 
+                         data-bs-target="#filterContent" 
+                         th:attr="aria-expanded=${isFiltering} ? 'true' : 'false'"
+                         aria-controls="filterContent">
+                        <h5 class="fw-bold mb-0 text-uppercase ls-1"><i class="fas fa-filter me-2"></i>Bộ lọc</h5>
+                        <i class="fas fa-chevron-down transition-icon"></i>
                     </div>
 
-                    <div class="mb-4">
-                        <a th:href="@{/home(sale=${isSale == true ? false : true}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                            class="btn w-100 fw-bold" th:classappend="${isSale} ? 'btn-danger' : 'btn-outline-danger'">
-                            <i class="fas fa-fire me-2"></i>SĂN SALE SỐC
-                        </a>
-                    </div>
-
-                    <div class="mb-4">
-                        <h6 class="fw-bold mb-3">Danh mục</h6>
-                        <div class="list-group list-group-flush">
-                            <a th:href="@{/home(category='', gender=${selectedGender}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                class="list-group-item list-group-item-action border-0 px-0 py-1"
-                                th:classappend="${selectedCategory == null} ? 'fw-bold text-primary' : ''">Tất cả</a>
-                            <a th:each="cat : ${categories}"
-                                th:href="@{/home(category=${cat.id}, gender=${selectedGender}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                class="list-group-item list-group-item-action border-0 px-0 py-1 d-flex justify-content-between align-items-center"
-                                th:classappend="${selectedCategory == cat.id} ? 'fw-bold text-primary' : ''">
-                                <span th:text="${cat.name}"></span>
-                                <span class="badge rounded-pill bg-light text-dark border"
-                                    th:text="${cat.count}">0</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <h6 class="fw-bold mb-3">Khoảng giá (đ)</h6>
-                        <form th:action="@{/home}" method="get">
-                            <input type="hidden" name="gender" th:value="${selectedGender}">
-                            <input type="hidden" name="category" th:value="${selectedCategory}">
-                            <input type="hidden" name="color" th:value="${selectedColor}">
-                            <input type="hidden" name="sort" th:value="${selectedSort}">
-                            <input type="hidden" name="keyword" th:value="${keyword}">
-                            <input type="hidden" name="sale" th:value="${isSale}">
-
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <input type="number" name="min" class="form-control form-control-sm" placeholder="Từ"
-                                    th:value="${minPrice}">
-                                <span>-</span>
-                                <input type="number" name="max" class="form-control form-control-sm" placeholder="Đến"
-                                    th:value="${maxPrice}">
+                    <div class="collapse mt-4" id="filterContent" th:classappend="${isFiltering} ? 'show'">
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3 small text-uppercase text-muted">Đối tượng</h6>
+                            <div class="list-group list-group-flush">
+                                <a th:href="@{/home(gender='', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" class="list-group-item list-group-item-action border-0 px-0 py-2" th:classappend="${selectedGender == null or selectedGender == ''} ? 'fw-bold text-dark' : 'text-secondary'">Tất cả</a>
+                                <a th:href="@{/home(gender='Nam', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" class="list-group-item list-group-item-action border-0 px-0 py-2" th:classappend="${selectedGender == 'Nam'} ? 'fw-bold text-dark' : 'text-secondary'">Nam</a>
+                                <a th:href="@{/home(gender='Nữ', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" class="list-group-item list-group-item-action border-0 px-0 py-2" th:classappend="${selectedGender == 'Nữ'} ? 'fw-bold text-dark' : 'text-secondary'">Nữ</a>
+                                <a th:href="@{/home(gender='Unisex', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" class="list-group-item list-group-item-action border-0 px-0 py-2" th:classappend="${selectedGender == 'Unisex'} ? 'fw-bold text-dark' : 'text-secondary'">Unisex</a>
                             </div>
-                            <button type="submit" class="btn btn-dark btn-sm w-100">Áp dụng</button>
-                        </form>
-                    </div>
-
-                    <div>
-                        <h6 class="fw-bold mb-3">Màu sắc</h6>
-                        <div class="d-flex flex-wrap gap-2">
-                            <a th:href="@{/home(color='', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                class="btn btn-sm btn-outline-secondary"
-                                th:classappend="${selectedColor == null or selectedColor == ''} ? 'active' : ''">X</a>
-
-                            <a th:href="@{/home(color='Đen', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                class="color-dot" style="background: #000;" title="Đen"
-                                th:classappend="${selectedColor == 'Đen'} ? 'border-primary border-3' : ''"></a>
-                            <a th:href="@{/home(color='Trắng', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                class="color-dot" style="background: #fff;" title="Trắng"
-                                th:classappend="${selectedColor == 'Trắng'} ? 'border-primary border-3' : ''"></a>
-                            <a th:href="@{/home(color='Đỏ', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                class="color-dot" style="background: red;" title="Đỏ"
-                                th:classappend="${selectedColor == 'Đỏ'} ? 'border-primary border-3' : ''"></a>
-                            <a th:href="@{/home(color='Xanh', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                class="color-dot" style="background: blue;" title="Xanh"
-                                th:classappend="${selectedColor == 'Xanh'} ? 'border-primary border-3' : ''"></a>
+                        </div>
+                        <div class="mb-4">
+                            <a th:href="@{/home(sale=${isSale == true ? false : true}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" class="btn w-100 fw-bold py-2" th:classappend="${isSale} ? 'btn-danger' : 'btn-outline-danger'"><i class="fas fa-fire me-2"></i>SĂN SALE SỐC</a>
+                        </div>
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3 small text-uppercase text-muted">Danh mục</h6>
+                            <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                                <a th:href="@{/home(category='', gender=${selectedGender}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" class="list-group-item list-group-item-action border-0 px-0 py-2" th:classappend="${selectedCategory == null} ? 'fw-bold text-dark' : 'text-secondary'">Tất cả</a>
+                                <a th:each="cat : ${categories}" th:href="@{/home(category=${cat.id}, gender=${selectedGender}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" class="list-group-item list-group-item-action border-0 px-0 py-2 d-flex justify-content-between align-items-center" th:classappend="${selectedCategory == cat.id} ? 'fw-bold text-dark' : 'text-secondary'"> <span th:text="${cat.name}"></span> <span class="badge rounded-pill bg-light text-dark border" th:text="${cat.count}">0</span> </a>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3 small text-uppercase text-muted">Khoảng giá (đ)</h6>
+                            <form th:action="@{/home}" method="get">
+                                <input type="hidden" name="gender" th:value="${selectedGender}"> <input type="hidden" name="category" th:value="${selectedCategory}"> <input type="hidden" name="color" th:value="${selectedColor}"> <input type="hidden" name="sort" th:value="${selectedSort}"> <input type="hidden" name="keyword" th:value="${keyword}"> <input type="hidden" name="sale" th:value="${isSale}">
+                                <div class="d-flex align-items-center gap-2 mb-3"> <input type="number" name="min" class="form-control form-control-sm" placeholder="Từ" th:value="${minPrice}"> <span>-</span> <input type="number" name="max" class="form-control form-control-sm" placeholder="Đến" th:value="${maxPrice}"> </div> <button type="submit" class="btn btn-dark btn-sm w-100">Áp dụng</button>
+                            </form>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-3 small text-uppercase text-muted">Màu sắc</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a th:href="@{/home(color='', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" class="btn btn-sm btn-outline-secondary px-2 py-0 d-flex align-items-center" style="height: 25px;" th:classappend="${selectedColor == null or selectedColor == ''} ? 'active bg-dark text-white' : ''">All</a>
+                                <a th:href="@{/home(color='Đen', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" class="color-dot" style="background: #000;" title="Đen" th:classappend="${selectedColor == 'Đen'} ? 'border-primary border-2 active' : ''"></a>
+                                <a th:href="@{/home(color='Trắng', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" class="color-dot" style="background: #fff;" title="Trắng" th:classappend="${selectedColor == 'Trắng'} ? 'border-primary border-2 active' : ''"></a>
+                                <a th:href="@{/home(color='Đỏ', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" class="color-dot" style="background: red;" title="Đỏ" th:classappend="${selectedColor == 'Đỏ'} ? 'border-primary border-2 active' : ''"></a>
+                                <a th:href="@{/home(color='Xanh', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}" class="color-dot" style="background: blue;" title="Xanh" th:classappend="${selectedColor == 'Xanh'} ? 'border-primary border-2 active' : ''"></a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </aside>
 
             <main class="col-lg-9">
-                <div id="heroCarousel" class="carousel slide mb-4 shadow-sm rounded overflow-hidden"
-                    data-bs-ride="carousel">
+                <div th:replace="~{fragments/guest-banner :: guestBanner}"></div>
+
+                <div id="heroCarousel" class="carousel slide mb-5 shadow-sm rounded-3 overflow-hidden mt-4" data-bs-ride="carousel">
                     <div class="carousel-inner">
                         <div class="carousel-item active" style="height: 400px;">
-                            <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b"
-                                class="d-block w-100 h-100 object-fit-cover" alt="Banner">
-                            <div class="carousel-caption d-none d-md-block text-start" style="bottom: 20%; left: 10%;">
-                                <h1 class="display-4 fw-bold">BST Thu Đông 2025</h1>
-                                <a href="/products" class="btn btn-light btn-lg px-4 fw-bold shadow">Mua ngay</a>
+                            <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop" class="d-block w-100 h-100 object-fit-cover" alt="Banner">
+                            <div class="carousel-caption d-none d-md-block text-start p-5" style="background: linear-gradient(to right, rgba(0,0,0,0.6), transparent); top:0; bottom:0; left:0; right:0; display:flex !important; flex-direction: column; justify-content: center; align-items: flex-start;">
+                                <h1 class="display-4 fw-bold text-white mb-3">BST Thu Đông 2026</h1>
+                                <p class="lead text-white-50 mb-4">Phong cách thời thượng, đẳng cấp phái mạnh.</p>
+                                <a href="#productList" class="btn btn-light btn-lg px-5 fw-bold shadow-sm rounded-pill">Mua ngay</a>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mb-4 bg-light p-3 rounded">
-                    <div>
-                        <h4 class="fw-bold mb-0">
-                            <span th:if="${keyword != null and keyword != ''}"
-                                th:text="'Kết quả tìm kiếm: ' + ${keyword}"></span>
+                <div id="productList" class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border">
+                    <div class="mb-3 mb-md-0">
+                        <h4 class="fw-bold mb-1">
+                            <span th:if="${keyword != null and keyword != ''}" th:text="'Kết quả: ' + ${keyword}"></span>
                             <span th:unless="${keyword != null and keyword != ''}">Tất cả sản phẩm</span>
                         </h4>
-                        <small class="text-muted" th:text="${products.totalElements} + ' sản phẩm'">0 sản phẩm</small>
+                        <small class="text-muted" th:text="${products.totalElements} + ' sản phẩm tìm thấy'">0 sản phẩm</small>
                     </div>
-
                     <div class="d-flex align-items-center">
-                        <label class="me-2 text-nowrap">Sắp xếp:</label>
-                        <select class="form-select form-select-sm" style="width: 180px;"
-                            onchange="location = this.value;">
-                            <option
-                                th:value="@{/home(sort='newest', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}"
-                                th:selected="${selectedSort == 'newest'}">Mới nhất</option>
-                            <option
-                                th:value="@{/home(sort='price_asc', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}"
-                                th:selected="${selectedSort == 'price_asc'}">Giá tăng dần</option>
-                            <option
-                                th:value="@{/home(sort='price_desc', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}"
-                                th:selected="${selectedSort == 'price_desc'}">Giá giảm dần</option>
-                            <option
-                                th:value="@{/home(sort='name_asc', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}"
-                                th:selected="${selectedSort == 'name_asc'}">Tên A-Z</option>
+                        <label class="me-2 text-nowrap small fw-bold text-muted">Sắp xếp theo:</label>
+                        <select class="form-select form-select-sm border-0 bg-light fw-bold" style="width: 160px; cursor: pointer;" onchange="location = this.value;">
+                            <option th:value="@{/home(sort='newest', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}" th:selected="${selectedSort == 'newest'}">Mới nhất</option>
+                            <option th:value="@{/home(sort='price_asc', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}" th:selected="${selectedSort == 'price_asc'}">Giá tăng dần</option>
+                            <option th:value="@{/home(sort='price_desc', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}" th:selected="${selectedSort == 'price_desc'}">Giá giảm dần</option>
+                            <option th:value="@{/home(sort='name_asc', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}" th:selected="${selectedSort == 'name_asc'}">Tên A-Z</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="row g-4">
+                <div class="row g-3 g-md-4">
                     <div class="col-6 col-md-4" th:each="product : ${products.content}">
-                        <div class="card product-card h-100 border-0 shadow-sm overflow-hidden">
-                            <div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold"
-                                style="z-index: 10;" th:if="${product.discount > 0}"
-                                th:text="'-' + ${product.discount} + '%'"></div>
+                        <div class="card product-card h-100 border-0 shadow-sm">
+                            <div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold shadow-sm" style="z-index: 10;" th:if="${product.discount > 0}" th:text="'-' + ${product.discount} + '%'"></div>
 
-                            <div class="img-wrapper">
+                            <div class="img-wrapper bg-light">
                                 <a th:href="@{/product/{id}(id=${product.id})}" class="product-link">
-                                    <img th:src="${product.image}"
-                                        onerror="this.src='https://placehold.co/600x400?text=No+Image'" alt="Product">
+                                    <img th:src="${product.image}" onerror="this.src='https://placehold.co/600x600?text=No+Image'" alt="Product">
                                 </a>
-                                <div class="quick-add-btn p-2">
-                                    <button type="button" class="btn btn-dark w-100 fw-bold shadow-sm"
-                                        data-bs-toggle="modal" th:data-bs-target="'#quickViewModal-' + ${product.id}">
-                                        <i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
+                                
+                                <div class="action-buttons">
+                                    
+                                    <button type="button" class="btn-action btn-cart-hover shadow-sm" 
+                                            onclick="setModalAction(this, 'cart')"
+                                            data-bs-toggle="modal" th:data-bs-target="'#quickViewModal-' + ${product.id}">
+                                        <i class="fas fa-cart-plus"></i>
+                                        <span>Thêm giỏ</span>
+                                    </button>
+
+                                    <button type="button" class="btn-action btn-buy-hover shadow-sm"
+                                            onclick="setModalAction(this, 'buy')"
+                                            data-bs-toggle="modal" th:data-bs-target="'#quickViewModal-' + ${product.id}">
+                                        <i class="fas fa-bolt"></i>
+                                        <span>Mua ngay</span>
                                     </button>
                                 </div>
                             </div>
 
-                            <div class="card-body">
-                                <h6 class="card-title fw-bold text-truncate">
-                                    <a th:href="@{/product/{id}(id=${product.id})}"
-                                        class="text-dark text-decoration-none" th:text="${product.name}">Tên sản
-                                        phẩm</a>
+                            <div class="card-body p-3">
+                                <h6 class="card-title fw-bold text-truncate mb-2">
+                                    <a th:href="@{/product/{id}(id=${product.id})}" class="text-dark text-decoration-none" th:text="${product.name}">Tên sản phẩm</a>
                                 </h6>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold text-danger"
-                                        th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
-                                    </span>
-                                    <small class="text-muted text-decoration-line-through"
-                                        th:if="${product.discount > 0}"
-                                        th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">
-                                    </small>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-bold text-danger fs-5" th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                                    <small class="text-muted text-decoration-line-through" th:if="${product.discount > 0}" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Quick View Modal -->
-                        <div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}" tabindex="-1"
-                            aria-hidden="true">
+                        <div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow-lg rounded-3">
-                                    <div class="modal-header border-0 pb-0">
-                                        <h5 class="modal-title fw-bold text-truncate" style="max-width: 90%;"
-                                            th:text="${product.name}"></h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <div class="modal-header border-0 pb-0 position-absolute top-0 end-0 p-3" style="z-index: 20;">
+                                        <button type="button" class="btn-close bg-white shadow-sm" data-bs-dismiss="modal"></button>
                                     </div>
-                                    <div class="modal-body">
-                                        <div class="row g-3">
-                                            <div class="col-5">
-                                                <div class="ratio ratio-1x1 rounded overflow-hidden">
-                                                    <img th:src="${product.image}" class="object-fit-cover"
-                                                        onerror="this.src='https://placehold.co/300x300'">
-                                                </div>
+                                    <div class="modal-body p-0">
+                                        <div class="row g-0">
+                                            <div class="col-5 bg-light d-flex align-items-center justify-content-center">
+                                                <img th:src="${product.image}" class="img-fluid object-fit-cover w-100 h-100" style="min-height: 350px;" onerror="this.src='https://placehold.co/300x300'">
                                             </div>
-                                            <div class="col-7">
-                                                <div class="price text-danger fw-bold fs-4 mb-3"
-                                                    th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
-                                                </div>
-
-                                                <!-- Variant Logic Wrapper -->
-                                                <div class="variant-wrapper" th:data-product-id="${product.id}">
-                                                    <!-- Hidden Data -->
-                                                    <div class="d-none">
-                                                        <span th:each="v : ${product.variants}" class="variant-data"
-                                                            th:data-id="${v.id}" th:data-color="${v.color}"
-                                                            th:data-size="${v.size}" th:data-qty="${v.quantity}"></span>
-                                                    </div>
-
-                                                    <div class="mb-2">
-                                                        <label class="fw-bold small mb-1">Màu sắc:</label>
-                                                        <div class="color-options d-flex flex-wrap gap-2"></div>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label class="fw-bold small mb-1">Kích thước:</label>
-                                                        <div class="size-options d-flex flex-wrap gap-2"></div>
-                                                    </div>
-
-                                                    <div class="bg-light p-2 rounded mb-3">
-                                                        <div
-                                                            class="d-flex justify-content-between align-items-center mb-1">
-                                                            <span class="small fw-bold">Số lượng:</span>
-                                                            <span class="stock-msg small text-muted">Vui lòng chọn phân
-                                                                loại</span>
+                                            <div class="col-7 p-4">
+                                                <h5 class="modal-title fw-bold mb-2" th:text="${product.name}"></h5>
+                                                <div class="price text-danger fw-bold fs-4 mb-4" th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+                                                
+                                                <div class="variant-wrapper" th:data-product-id="${product.id}" data-action-mode="cart">
+                                                    <div class="d-none"><span th:each="v : ${product.variants}" class="variant-data" th:data-id="${v.id}" th:data-color="${v.color}" th:data-size="${v.size}" th:data-qty="${v.quantity}"></span></div>
+                                                    <div class="mb-3"><label class="fw-bold small mb-2 text-muted text-uppercase">Màu sắc</label><div class="color-options d-flex flex-wrap gap-2"></div></div>
+                                                    <div class="mb-4"><label class="fw-bold small mb-2 text-muted text-uppercase">Kích thước</label><div class="size-options d-flex flex-wrap gap-2"></div></div>
+                                                    
+                                                    <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded mb-3">
+                                                        <div class="input-group input-group-sm w-auto flex-nowrap">
+                                                            <button class="btn btn-white border" type="button" onclick="adjustModalQty(this, -1)">-</button>
+                                                            <input type="number" class="form-control text-center qty-input border-top border-bottom" value="1" min="1" style="width: 40px;" disabled>
+                                                            <button class="btn btn-white border" type="button" onclick="adjustModalQty(this, 1)">+</button>
                                                         </div>
-                                                        <div class="input-group input-group-sm">
-                                                            <button class="btn btn-outline-secondary" type="button"
-                                                                onclick="adjustModalQty(this, -1)">-</button>
-                                                            <input type="number"
-                                                                class="form-control text-center qty-input" value="1"
-                                                                min="1" disabled>
-                                                            <button class="btn btn-outline-secondary" type="button"
-                                                                onclick="adjustModalQty(this, 1)">+</button>
-                                                        </div>
+                                                        <span class="stock-msg small text-muted">Vui lòng chọn phân loại</span>
                                                     </div>
-
+                                                    
                                                     <input type="hidden" class="selected-variant-id">
-                                                    <button class="btn btn-dark w-100 fw-bold py-2 add-btn" disabled
-                                                        onclick="submitQuickAdd(this)">
-                                                        <i class="fas fa-check me-2"></i>Xác nhận thêm
+                                                    <button class="btn btn-dark w-100 fw-bold py-2 add-btn rounded-pill submit-action-btn" disabled onclick="submitQuickAdd(this)">
+                                                        Thêm vào giỏ hàng
                                                     </button>
                                                 </div>
                                             </div>
@@ -414,256 +254,202 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- End Modal -->
                     </div>
 
                     <div class="col-12 text-center py-5" th:if="${products.totalElements == 0}">
-                        <h5 class="text-muted">Không tìm thấy sản phẩm nào phù hợp!</h5>
-                        <a href="/home" class="btn btn-outline-dark mt-3">Xóa bộ lọc</a>
+                        <div class="mb-3"><i class="fas fa-search fa-3x text-muted opacity-50"></i></div>
+                        <h5 class="text-muted fw-bold">Không tìm thấy sản phẩm nào!</h5>
+                        <p class="text-muted small">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
+                        <a href="/home" class="btn btn-dark mt-2 rounded-pill px-4">Xóa bộ lọc</a>
                     </div>
                 </div>
 
                 <nav class="mt-5 d-flex justify-content-center" th:if="${products.totalPages > 1}">
                     <ul class="pagination">
-                        <li class="page-item" th:classappend="${products.first} ? 'disabled'">
-                            <a class="page-link text-dark border-0"
-                                th:href="@{/home(page=${products.number - 1}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}">
-                                <i class="fas fa-chevron-left"></i>
-                            </a>
-                        </li>
-
-                        <li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
-                            th:classappend="${i == products.number} ? 'active'">
-                            <a class="page-link rounded-circle mx-1 border-0"
-                                th:href="@{/home(page=${i}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}"
-                                th:text="${i + 1}"
-                                th:classappend="${i == products.number} ? 'bg-dark text-white' : 'text-dark bg-light'">
-                            </a>
-                        </li>
-
-                        <li class="page-item" th:classappend="${products.last} ? 'disabled'">
-                            <a class="page-link text-dark border-0"
-                                th:href="@{/home(page=${products.number + 1}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}">
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                        </li>
+                        <li class="page-item" th:classappend="${products.first} ? 'disabled'"><a class="page-link text-dark border-0 rounded-circle mx-1 shadow-sm" th:href="@{/home(page=${products.number - 1}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}"><i class="fas fa-chevron-left"></i></a></li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}" th:classappend="${i == products.number} ? 'active'"><a class="page-link rounded-circle mx-1 border-0 shadow-sm fw-bold" th:href="@{/home(page=${i}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}" th:text="${i + 1}" th:classappend="${i == products.number} ? 'bg-dark text-white' : 'text-dark bg-white'"></a></li>
+                        <li class="page-item" th:classappend="${products.last} ? 'disabled'"><a class="page-link text-dark border-0 rounded-circle mx-1 shadow-sm" th:href="@{/home(page=${products.number + 1}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}"><i class="fas fa-chevron-right"></i></a></li>
                     </ul>
                 </nav>
             </main>
         </div>
 
-       <div class="chat-btn-toggle" onclick="toggleChatBox()">
-
-			<i class="fas fa-comments"></i>
+        <div class="chat-btn-toggle" onclick="toggleChatBox()"><i class="fas fa-comment-dots"></i></div>
+        <div class="chat-box-container" id="chatBox">
+            <div class="chat-header"><span><i class="fas fa-headset me-2"></i>CSKH - ShopOMG</span><button type="button" class="btn-close btn-close-white" onclick="toggleChatBox()"></button></div>
+            <div class="chat-body" id="chatBody"><div class="message bot">Xin chào! ShopOMG có thể giúp gì cho bạn hôm nay?</div></div>
+            <div class="chat-footer">
+                <div th:if="${#authorization.expression('isAuthenticated()')}" class="w-100 d-flex gap-2"><input type="text" id="chatInput" class="form-control form-control-sm rounded-pill" placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)"><button class="btn btn-dark btn-sm rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="sendMessage()"><i class="fas fa-paper-plane small"></i></button></div>
+                <div th:unless="${#authorization.expression('isAuthenticated()')}" class="w-100 text-center"><p class="small text-muted mb-2">Vui lòng đăng nhập để chat</p><a href="/login" class="btn btn-sm btn-dark w-100 rounded-pill">Đăng nhập ngay</a></div>
+            </div>
+        </div>
+		<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;">
+		    <div id="liveToast" class="toast align-items-center text-white bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+		        <div class="d-flex">
+		            <div class="toast-body fw-bold">
+		                <i class="fas fa-check-circle text-success me-2"></i>
+		                <span id="toastMessage">Nội dung thông báo</span>
+		            </div>
+		            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+		        </div>
+		    </div>
 		</div>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+		<script th:inline="javascript">
+		    var authName = /*[[${#authentication.name}]]*/ null;
+		    if (authName === 'anonymousUser') { window.chatUser = null; } else { window.chatUser = authName; }
+		</script>
+		<script th:src="@{/js/chat.js}"></script>
 
-		<div class="chat-box-container" id="chatBox">
-			<div class="chat-header">
-				<span><i class="fas fa-headset me-2"></i>CSKH - ShopOMG</span>
-				<button type="button" class="btn-close btn-close-white"
-					onclick="toggleChatBox()"></button>
-			</div>
+		<script>
+		    // --- KHỞI TẠO POP-UP (TOAST) ---
+		    // Hàm này dùng để hiện thông báo đẹp thay cho alert()
+		    function showToast(message) {
+		        const toastEl = document.getElementById('liveToast');
+		        const toastBody = document.getElementById('toastMessage');
+		        
+		        if (toastEl && toastBody) {
+		            toastBody.innerText = message; // Gán nội dung
+		            const toast = new bootstrap.Toast(toastEl, { delay: 3000 }); // Tự tắt sau 3 giây
+		            toast.show();
+		        } else {
+		            console.warn("Không tìm thấy phần tử Toast trong HTML");
+		            alert(message); // Fallback nếu lỗi HTML
+		        }
+		    }
 
-			<div class="chat-body" id="chatBody">
-				<div class="message bot">Xin chào! ShopOMG có thể giúp gì cho
-					bạn hôm nay?</div>
-			</div>
+		    document.addEventListener("DOMContentLoaded", function () { 
+		        document.querySelectorAll('.variant-wrapper').forEach(wrapper => { initQuickView(wrapper); }); 
+		    });
+		    
+		    function initQuickView(wrapper) {
+		        const dataSpans = wrapper.querySelectorAll('.variant-data');
+		        const variants = Array.from(dataSpans).map(span => ({ id: span.getAttribute('data-id'), color: span.getAttribute('data-color'), size: span.getAttribute('data-size'), qty: parseInt(span.getAttribute('data-qty') || 0) }));
+		        wrapper.variantData = variants; wrapper.state = { color: null, size: null };
+		        const colorContainer = wrapper.querySelector('.color-options');
+		        const colors = [...new Set(variants.map(v => v.color))].filter(Boolean);
+		        colorContainer.innerHTML = colors.map(c => `<button type="button" class="btn btn-sm btn-outline-dark color-btn px-3" data-val="${c}">${c}</button>`).join('');
+		        wrapper.addEventListener('click', (e) => { const target = e.target; if (target.classList.contains('color-btn')) { handleColorSelect(wrapper, target.getAttribute('data-val'), target); } else if (target.classList.contains('size-btn')) { handleSizeSelect(wrapper, target.getAttribute('data-val'), target); } });
+		    }
 
-			<div class="chat-footer">
-				<div th:if="${#authorization.expression('isAuthenticated()')}"
-					class="w-100 d-flex gap-2">
-					<input type="text" id="chatInput" class="form-control"
-						placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)">
-					<button class="btn btn-primary" onclick="sendMessage()">
-						<i class="fas fa-paper-plane"></i>
-					</button>
-				</div>
+		    // Cài đặt chế độ cho modal (Mua ngay hoặc Thêm giỏ)
+		    function setModalAction(btn, action) {
+		        const modalId = btn.getAttribute('data-bs-target');
+		        const modalEl = document.querySelector(modalId);
+		        const wrapper = modalEl.querySelector('.variant-wrapper');
+		        const submitBtn = wrapper.querySelector('.submit-action-btn');
 
-				<div th:unless="${#authorization.expression('isAuthenticated()')}"
-					class="w-100 text-center">
-					<p class="small text-muted mb-2">Vui lòng đăng nhập để chat</p>
-					<a href="/login" class="btn btn-sm btn-primary w-100">Đăng nhập
-						ngay</a>
-				</div>
-			</div>
-		</div>
+		        wrapper.setAttribute('data-action-mode', action);
 
+		        if (action === 'buy') {
+		            submitBtn.innerHTML = '<i class="fas fa-bolt me-2"></i>Thanh toán ngay';
+		            submitBtn.classList.remove('btn-dark');
+		            submitBtn.classList.add('btn-danger');
+		        } else {
+		            submitBtn.innerHTML = '<i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ hàng';
+		            submitBtn.classList.remove('btn-danger');
+		            submitBtn.classList.add('btn-dark');
+		        }
+		    }
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+		    function handleColorSelect(wrapper, color, btn) {
+		        const variants = wrapper.variantData; wrapper.state.color = color; wrapper.state.size = null; 
+		        wrapper.querySelectorAll('.color-btn').forEach(b => { const isActive = b.dataset.val === color; b.classList.toggle('active', isActive); b.classList.toggle('bg-dark', isActive); b.classList.toggle('text-white', isActive); });
+		        const validVariants = variants.filter(v => v.color === color && v.qty > 0);
+		        const sizes = [...new Set(validVariants.map(v => v.size))];
+		        const sizeContainer = wrapper.querySelector('.size-options');
+		        if(sizes.length > 0) { sizeContainer.innerHTML = sizes.map(s => `<button type="button" class="btn btn-sm btn-outline-dark size-btn px-3" data-val="${s}">${s}</button>`).join(''); } else { sizeContainer.innerHTML = '<span class="text-muted small">Hết hàng</span>'; }
+		        updateModalState(wrapper);
+		    }
+		    
+		    function handleSizeSelect(wrapper, size, btn) { wrapper.state.size = size; wrapper.querySelectorAll('.size-btn').forEach(b => { const isActive = b.dataset.val === size; b.classList.toggle('active', isActive); b.classList.toggle('bg-dark', isActive); b.classList.toggle('text-white', isActive); }); updateModalState(wrapper); }
+		    
+		    function updateModalState(wrapper) {
+		        const { color, size } = wrapper.state; const variants = wrapper.variantData; const stockMsg = wrapper.querySelector('.stock-msg'); const qtyInput = wrapper.querySelector('.qty-input'); const addBtn = wrapper.querySelector('.add-btn'); const hiddenId = wrapper.querySelector('.selected-variant-id');
+		        if (color && size) { const variant = variants.find(v => v.color === color && v.size === size); if (variant) { stockMsg.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>Còn ${variant.qty} sản phẩm</span>`; qtyInput.max = variant.qty; qtyInput.value = 1; qtyInput.disabled = false; addBtn.disabled = false; hiddenId.value = variant.id; } else { stockMsg.innerHTML = '<span class="text-danger fw-bold">Hết hàng</span>'; addBtn.disabled = true; } } else { stockMsg.innerText = 'Vui lòng chọn phân loại'; stockMsg.className = 'stock-msg small text-muted'; qtyInput.disabled = true; addBtn.disabled = true; hiddenId.value = ''; }
+		    }
+		    
+		    window.adjustModalQty = function (btn, change) { const wrapper = btn.closest('.variant-wrapper'); const input = wrapper.querySelector('.qty-input'); if (input.disabled) return; const max = parseInt(input.max || 999); let val = parseInt(input.value || 1) + change; if (val >= 1 && val <= max) input.value = val; };
+		    
+		    // --- LOGIC GỬI DỮ LIỆU ĐÃ CẬP NHẬT ---
+		    window.submitQuickAdd = function (btn) {
+		        const wrapper = btn.closest('.variant-wrapper'); 
+		        const variantId = wrapper.querySelector('.selected-variant-id').value; 
+		        const qty = wrapper.querySelector('.qty-input').value; 
+		        const productId = wrapper.getAttribute('data-product-id'); 
+		        const actionMode = wrapper.getAttribute('data-action-mode'); // 'buy' hoặc 'cart'
 
-<script th:inline="javascript">
-    var authName = /*[[${#authentication.name}]]*/ null;
-    if (authName === 'anonymousUser') {
-        window.chatUser = null;
-    } else {
-        window.chatUser = authName;
-    }
-</script>
+		        if (!variantId) return;
 
-<script th:src="@{/js/chat.js}"></script>
+		        const formData = new FormData(); 
+		        formData.append('variantId', variantId); 
+		        formData.append('productId', productId); 
+		        formData.append('quantity', qty);
 
-        <!-- Quick View Logic -->
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                // Initialize all modals
-                document.querySelectorAll('.variant-wrapper').forEach(wrapper => {
-                    initQuickView(wrapper);
-                });
-            });
+		        const originalText = btn.innerHTML;
+		        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...'; 
+		        btn.disabled = true;
 
-            function initQuickView(wrapper) {
-                // 1. Parse Data Once
-                const dataSpans = wrapper.querySelectorAll('.variant-data');
-                const variants = Array.from(dataSpans).map(span => ({
-                    id: span.getAttribute('data-id'),
-                    color: span.getAttribute('data-color'),
-                    size: span.getAttribute('data-size'),
-                    qty: parseInt(span.getAttribute('data-qty') || 0)
-                }));
+		        let url;
+		        if (actionMode === 'buy') {
+		            url = '/cart/buy-now'; 
+		        } else {
+		            url = '/cart/add-ajax'; 
+		        }
 
-                // 2. Store State on Wrapper
-                wrapper.variantData = variants;
-                wrapper.state = { color: null, size: null };
+		        fetch(url, { method: 'POST', body: formData })
+		        .then(async res => {
+		            if (res.redirected && res.url.includes('/login')) {
+		                window.location.href = res.url;
+		                return;
+		            }
 
-                // 3. Render Colors (Initial)
-                const colorContainer = wrapper.querySelector('.color-options');
-                const sizesContainer = wrapper.querySelector('.size-options');
-                const colors = [...new Set(variants.map(v => v.color))].filter(Boolean);
+		            try {
+		                const data = await res.json();
+		                
+		                if (data.success) {
+		                    if (actionMode === 'buy') {
+		                        window.location.href = '/checkout?ids=' + data.cartId;
+		                    } else {
+		                        // --- ĐÓNG MODAL VÀ HIỆN TOAST ---
+		                        const modalEl = btn.closest('.modal');
+		                        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+		                        modalInstance.hide();
 
-                // Use event delegation for this wrapper
-                colorContainer.innerHTML = colors.map(c =>
-                    `<button type="button" class="btn btn-sm btn-outline-dark color-btn" data-val="${c}">${c}</button>`
-                ).join('');
+		                        // Gọi hàm hiện thông báo (Thay vì alert)
+		                        showToast(data.message);
 
-                // 4. Event Listeners
-                wrapper.addEventListener('click', (e) => {
-                    const target = e.target;
-                    if (target.classList.contains('color-btn')) {
-                        handleColorSelect(wrapper, target.getAttribute('data-val'), target);
-                    } else if (target.classList.contains('size-btn')) {
-                        handleSizeSelect(wrapper, target.getAttribute('data-val'), target);
-                    }
-                });
-            }
-
-            function handleColorSelect(wrapper, color, btn) {
-                const variants = wrapper.variantData;
-
-                // Update State
-                wrapper.state.color = color;
-                wrapper.state.size = null; // Reset size on color change
-
-                // Update UI - Colors
-                wrapper.querySelectorAll('.color-btn').forEach(b => {
-                    b.classList.toggle('active', b.dataset.val === color);
-                    b.classList.toggle('bg-dark', b.dataset.val === color);
-                    b.classList.toggle('text-white', b.dataset.val === color);
-                });
-
-                // Render Sizes for this Color
-                const validVariants = variants.filter(v => v.color === color && v.qty > 0);
-                const sizes = [...new Set(validVariants.map(v => v.size))];
-                const sizeContainer = wrapper.querySelector('.size-options');
-
-                sizeContainer.innerHTML = sizes.map(s =>
-                    `<button type="button" class="btn btn-sm btn-outline-dark size-btn" data-val="${s}">${s}</button>`
-                ).join('');
-
-                updateModalState(wrapper);
-            }
-
-            function handleSizeSelect(wrapper, size, btn) {
-                // Update State
-                wrapper.state.size = size;
-
-                // Update UI - Sizes
-                wrapper.querySelectorAll('.size-btn').forEach(b => {
-                    b.classList.toggle('active', b.dataset.val === size);
-                    b.classList.toggle('bg-dark', b.dataset.val === size);
-                    b.classList.toggle('text-white', b.dataset.val === size);
-                });
-
-                updateModalState(wrapper);
-            }
-
-            function updateModalState(wrapper) {
-                const { color, size } = wrapper.state;
-                const variants = wrapper.variantData;
-                const stockMsg = wrapper.querySelector('.stock-msg');
-                const qtyInput = wrapper.querySelector('.qty-input');
-                const addBtn = wrapper.querySelector('.add-btn');
-                const hiddenId = wrapper.querySelector('.selected-variant-id');
-
-                if (color && size) {
-                    const variant = variants.find(v => v.color === color && v.size === size);
-                    if (variant) {
-                        // Success State
-                        stockMsg.innerText = `Còn hàng: ${variant.qty}`;
-                        stockMsg.className = 'small text-success fw-bold stock-msg';
-                        qtyInput.max = variant.qty;
-                        qtyInput.value = 1;
-                        qtyInput.disabled = false;
-                        addBtn.disabled = false;
-                        hiddenId.value = variant.id;
-                    } else {
-                        // Should not happen if logic is correct
-                        stockMsg.innerText = 'Hết hàng';
-                        stockMsg.className = 'small text-danger';
-                        addBtn.disabled = true;
-                    }
-                } else {
-                    // Incomplete State
-                    stockMsg.innerText = 'Vui lòng chọn phân loại';
-                    stockMsg.className = 'small text-muted stock-msg';
-                    qtyInput.disabled = true;
-                    addBtn.disabled = true;
-                    hiddenId.value = '';
-                }
-            }
-
-            // Quantity Adjust Logic (Global but tied to DOM)
-            window.adjustModalQty = function (btn, change) {
-                const wrapper = btn.closest('.variant-wrapper');
-                const input = wrapper.querySelector('.qty-input');
-
-                // Prevent change if input is disabled (no variant selected)
-                if (input.disabled) return;
-
-                const max = parseInt(input.max || 999);
-                let val = parseInt(input.value || 1) + change;
-                if (val >= 1 && val <= max) {
-                    input.value = val;
-                }
-            };
-
-            // Submit Logic
-            window.submitQuickAdd = function (btn) {
-                const wrapper = btn.closest('.variant-wrapper');
-                const variantId = wrapper.querySelector('.selected-variant-id').value;
-                const qty = wrapper.querySelector('.qty-input').value;
-                const productId = wrapper.getAttribute('data-product-id');
-
-                if (!variantId) return;
-
-                const formData = new FormData();
-                formData.append('variantId', variantId);
-                formData.append('productId', productId);
-                formData.append('quantity', qty);
-
-                fetch('/cart/add', {
-                    method: 'POST',
-                    body: formData
-                }).then(res => {
-                    if (res.redirected) {
-                        window.location.href = res.url;
-                    } else {
-                        window.location.href = '/cart';
-                    }
-                });
-            };
-        </script>
-</body>
-
+		                        btn.innerHTML = originalText;
+		                        btn.disabled = false;
+		                        
+		                        // Nếu muốn cập nhật số lượng trên icon giỏ hàng ngay lập tức:
+		                        // if(data.cartCount) document.querySelector('.cart-count-badge').innerText = data.cartCount;
+		                    }
+		                } else {
+		                    if (data.redirect) {
+		                        window.location.href = data.redirect;
+		                    } else {
+		                        showToast(data.message || 'Có lỗi xảy ra'); // Dùng toast báo lỗi luôn
+		                        btn.innerHTML = originalText;
+		                        btn.disabled = false;
+		                    }
+		                }
+		            } catch (e) {
+		                console.error(e);
+		                alert("Lỗi phản hồi từ server");
+		                btn.innerHTML = originalText;
+		                btn.disabled = false;
+		            }
+		        })
+		        .catch(err => { 
+		            console.error(err);
+		            alert('Có lỗi kết nối, vui lòng thử lại!'); 
+		            btn.innerHTML = originalText; 
+		            btn.disabled = false; 
+		        });
+		    };
+		</script>
+    </article>
+	</body>
 </html>
-```

@@ -222,4 +222,110 @@ public class CartController {
                 .findByProductIdAndColorAndSize(productId, color, size);
         return variant.map(ProductVariant::getId).orElse(null);
     }
+    /**
+     * API thêm vào giỏ hàng dành riêng cho chức năng Mua Ngay (AJAX).
+     * Trả về Cart ID để redirect sang trang thanh toán cụ thể.
+     */
+    @PostMapping("/buy-now")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> buyNow(
+            @RequestParam("productId") Integer productId,
+            @RequestParam(value = "color", required = false) String color,
+            @RequestParam(value = "size", required = false) String size,
+            @RequestParam(value = "variantId", required = false) Integer variantId,
+            @RequestParam(value = "quantity", defaultValue = "1") Integer quantity) {
+
+        Integer accountId = getCurrentAccountId();
+        Map<String, Object> response = new HashMap<>();
+
+        if (accountId == null) {
+            response.put("success", false);
+            response.put("redirect", "/login");
+            return ResponseEntity.ok(response);
+        }
+
+        try {
+            Integer finalVariantId = null;
+            if (variantId != null) {
+                finalVariantId = variantId;
+            } else if (color != null && size != null) {
+                finalVariantId = findVariantId(productId, color, size);
+            }
+
+            if (finalVariantId == null) {
+                response.put("success", false);
+                response.put("message", "Vui lòng chọn phân loại hợp lệ");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Gọi service và nhận về đối tượng Cart vừa tạo
+            // LƯU Ý: Bạn cần chắc chắn cartService.addToCart trả về đối tượng Cart
+            Cart newCartItem = cartService.addToCart(accountId, finalVariantId, quantity); 
+            
+            response.put("success", true);
+            response.put("cartId", newCartItem.getId()); // Trả về ID dòng giỏ hàng
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    /**
+     * API Thêm vào giỏ hàng (AJAX) - Không chuyển hướng trang.
+     * Chỉ trả về JSON để Frontend xử lý (đóng modal, hiện thông báo).
+     */
+    @PostMapping("/add-ajax")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> addToCartAjax(
+            @RequestParam("productId") Integer productId,
+            @RequestParam(value = "color", required = false) String color,
+            @RequestParam(value = "size", required = false) String size,
+            @RequestParam(value = "variantId", required = false) Integer variantId,
+            @RequestParam(value = "quantity", defaultValue = "1") Integer quantity,
+            HttpSession session) {
+
+        Integer accountId = getCurrentAccountId();
+        Map<String, Object> response = new HashMap<>();
+
+        if (accountId == null) {
+            // Lưu hành động vào session để sau khi login có thể xử lý lại (nếu cần)
+            // Ở đây trả về link redirect để JS chuyển hướng sang login
+            response.put("success", false);
+            response.put("redirect", "/login");
+            return ResponseEntity.ok(response);
+        }
+
+        try {
+            Integer finalVariantId = null;
+            if (variantId != null) {
+                finalVariantId = variantId;
+            } else if (color != null && size != null) {
+                finalVariantId = findVariantId(productId, color, size);
+            }
+
+            if (finalVariantId == null) {
+                response.put("success", false);
+                response.put("message", "Vui lòng chọn màu sắc và kích thước hợp lệ");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Gọi service thêm vào giỏ
+            cartService.addToCart(accountId, finalVariantId, quantity);
+            
+            // Lấy số lượng mới để cập nhật icon giỏ hàng (nếu cần)
+            Long currentCount = cartService.getCartItemCount(accountId);
+
+            response.put("success", true);
+            response.put("message", "Đã thêm sản phẩm vào giỏ hàng!");
+            response.put("cartCount", currentCount); 
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 }

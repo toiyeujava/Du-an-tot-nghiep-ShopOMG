@@ -431,3 +431,49 @@ body {
 
 /* Chữ "Đã gửi" nhỏ xíu */
 .msg-status { font-size: 10px; color: #999; text-align: right; margin-top: -5px; margin-bottom: 5px; }
+
+/* 1. Thiết lập chiều cao tối thiểu cho toàn trang để đẩy footer xuống */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Đảm bảo body luôn cao ít nhất bằng màn hình */
+}
+
+/* 2. Phần nội dung chính sẽ giãn ra để lấp đầy khoảng trống */
+/* Lưu ý: Bạn cần đảm bảo thẻ bao quanh nội dung trong home.html có class này */
+.main-content, .container, section.content { 
+    flex: 1; 
+}
+
+/* 3. Mở rộng chiều ngang container (Thu hẹp khoảng cách 2 bên lề) */
+/* Nếu bạn đang dùng Bootstrap, class mặc định là .container */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1600px !important; /* Tăng độ rộng tối đa lên (mặc định thường là 1140px hoặc 1320px) */
+        width: 95% !important; /* Hoặc dùng % để căn lề nhỏ lại */
+    }
+}
+
+/* --- HIỆU ỨNG COLLAPSE FILTER --- */
+
+/* Mũi tên mặc định (khi đóng) */
+.transition-icon {
+    transition: transform 0.3s ease;
+    transform: rotate(0deg); /* Mũi tên chỉ xuống */
+}
+
+/* Khi mở ra (Bootstrap tự thêm class 'collapsed' vào nút trigger khi nó ĐÓNG) 
+   Logic của Bootstrap hơi ngược:
+   - Nút có class 'collapsed' -> Nội dung đang ẨN -> Mũi tên xoay về 0 (chỉ xuống hoặc ngang tuỳ ý)
+   - Nút KHÔNG có class 'collapsed' -> Nội dung đang HIỆN -> Mũi tên xoay 180 độ (chỉ lên)
+*/
+
+/* Trạng thái mở (Đang xổ xuống) -> Xoay lên */
+[data-bs-toggle="collapse"][aria-expanded="true"] .transition-icon {
+    transform: rotate(180deg);
+}

@@ -1,251 +1,227 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
 
 <head>
-	<title>Đăng ký - ShopOMG</title>
-	<style>
-		/* Override ảnh riêng cho trang đăng ký */
-		.auth-image-register {
-			background-image:
-				url('https://pos.nvncdn.com/312d68-57499/art/artCT/20210113_yshSULHZWwO4JtJRgvt762bn.jpg');
-			background-size: cover;
-			background-position: center;
-			height: 100%;
-			min-height: 600px;
-			/* Cao hơn chút vì form dài */
-		}
-	</style>
+    <title>Đăng ký tài khoản</title>
 </head>
 
 <body>
-	<article class="py-5" style="background-color: #f8f9fa;">
-		<div class="container">
-			<div class="row justify-content-center">
-				<div class="col-lg-10">
-					<div class="auth-container row g-0">
+    <article class="container py-5">
+        <style>
+            /* Style cho form đăng ký */
+            .register-card {
+                max-width: 500px;
+                margin: 0 auto;
+                border: none;
+                box-shadow: 0 0 20px rgba(0,0,0,0.05);
+                border-radius: 12px;
+                overflow: hidden;
+            }
+            .register-header {
+                background: #000;
+                color: #fff;
+                padding: 30px 20px;
+                text-align: center;
+            }
+            .form-control:focus {
+                box-shadow: none;
+                border-color: #000;
+            }
+            
+            /* Style cho các điều kiện mật khẩu */
+            .validation-item {
+                font-size: 0.85rem;
+                color: #6c757d;
+                transition: all 0.3s;
+                margin-bottom: 4px;
+                display: flex;
+                align-items: center;
+            }
+            .validation-item i {
+                font-size: 0.6rem;
+                margin-right: 8px;
+                transition: all 0.3s;
+            }
+            /* Khi thoả mãn điều kiện */
+            .validation-item.valid {
+                color: #198754; /* Màu xanh lá */
+                font-weight: 500;
+            }
+            .validation-item.valid i {
+                color: #198754;
+                transform: scale(1.2);
+            }
+            
+            /* Nút mắt ẩn/hiện */
+            .btn-toggle-pass {
+                border-color: #ced4da;
+                border-left: none;
+                background: #fff;
+                color: #6c757d;
+            }
+            .btn-toggle-pass:hover {
+                background: #f8f9fa;
+                color: #000;
+            }
+            .form-control-pass {
+                border-right: none;
+            }
+        </style>
 
-						<div class="col-lg-6 auth-form-wrapper order-2 order-lg-1">
-							<div class="text-center mb-4">
-								<h3 class="fw-bold">Tạo tài khoản mới</h3>
-								<p class="text-muted small">Trở thành thành viên để nhận ưu
-									đãi riêng</p>
-							</div>
+        <div class="card register-card">
+            <div class="register-header">
+                <h3 class="fw-bold mb-1">Đăng ký tài khoản</h3>
+                <p class="small opacity-75 mb-0">Trở thành thành viên của ShopOMG ngay hôm nay</p>
+            </div>
+            
+            <div class="card-body p-4">
+                <div th:if="${error}" class="alert alert-danger text-center small py-2 mb-3" role="alert">
+                    <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
+                </div>
 
-							<form th:action="@{/account/sign-up}" th:object="${form}" method="post">
+                <form th:action="@{/account/sign-up}" th:object="${form}" method="post" id="registerForm">
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Họ và tên</label>
+                        <input type="text" class="form-control" th:field="*{fullName}" placeholder="Nhập họ tên của bạn">
+                        <small class="text-danger" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></small>
+                    </div>
 
-								<div class="form-floating mb-3">
-									<input type="text" class="form-control" id="fullName" th:field="*{fullName}"
-										placeholder="Họ tên"> <label for="fullName">Họ và tên</label> <small
-										th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"
-										class="text-danger"></small>
-								</div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Email</label>
+                        <input type="email" class="form-control" th:field="*{email}" placeholder="example@email.com">
+                        <small class="text-danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></small>
+                    </div>
 
-								<div class="form-floating mb-3">
-									<input type="text" class="form-control" id="username" th:field="*{username}"
-										placeholder="Tên đăng nhập"> <label for="username">Tên đăng nhập</label> <small
-										th:if="${#fields.hasErrors('username')}" th:errors="*{username}"
-										class="text-danger"></small>
-								</div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Tên đăng nhập</label>
+                        <input type="text" class="form-control" th:field="*{username}" placeholder="Chọn tên đăng nhập">
+                        <small class="text-danger" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></small>
+                    </div>
 
-								<div class="form-floating mb-3">
-									<input type="email" class="form-control" id="email" th:field="*{email}"
-										placeholder="name@example.com"> <label for="email">Địa chỉ Email</label> <small
-										th:if="${#fields.hasErrors('email')}" th:errors="*{email}"
-										class="text-danger"></small>
-								</div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Mật khẩu</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control form-control-pass" id="password" th:field="*{password}" placeholder="Nhập mật khẩu" onkeyup="checkPasswordStrength()">
+                            <button class="btn btn-toggle-pass" type="button" onclick="togglePassword('password', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="mt-2 ps-1" id="password-rules">
+                            <div class="validation-item" id="rule-length">
+                                <i class="fas fa-circle"></i> Tối thiểu 8 ký tự
+                            </div>
+                            <div class="validation-item" id="rule-case">
+                                <i class="fas fa-circle"></i> Chữ hoa & chữ thường
+                            </div>
+                            <div class="validation-item" id="rule-special">
+                                <i class="fas fa-circle"></i> Số và ký tự đặc biệt (@$!%*?&)
+                            </div>
+                        </div>
+                        
+                        <small class="text-danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></small>
+                    </div>
 
-								<div class="form-floating mb-3">
-									<input type="password" class="form-control" id="password" th:field="*{password}"
-										placeholder="Password" oninput="checkPasswordStrength()">
-									<label for="password">Mật khẩu *</label>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Xác nhận mật khẩu</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control form-control-pass" id="confirmPassword" th:field="*{confirmPassword}" placeholder="Nhập lại mật khẩu" onkeyup="checkConfirmPassword()">
+                            <button class="btn btn-toggle-pass" type="button" onclick="togglePassword('confirmPassword', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="validation-item mt-1 ps-1 d-none" id="rule-match">
+                            <i class="fas fa-circle"></i> Mật khẩu khớp
+                        </div>
+                        <small class="text-danger" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></small>
+                    </div>
 
-									<!-- Password Strength Bar -->
-									<div class="password-strength-bar mt-2">
-										<div id="strengthBar" class="strength-bar-fill"></div>
-									</div>
-									<small id="strengthText" class="text-muted"></small>
+                    <button type="submit" class="btn btn-dark w-100 fw-bold py-2 mb-3">ĐĂNG KÝ NGAY</button>
 
-									<!-- Password Requirements Checklist -->
-									<div class="password-requirements mt-2">
-										<small>
-											<div id="req-length" class="requirement">
-												<i class="bi bi-x-circle text-danger"></i>
-												Tối thiểu 8 ký tự
-											</div>
-											<div id="req-uppercase" class="requirement">
-												<i class="bi bi-x-circle text-danger"></i>
-												Ít nhất 1 chữ hoa (A-Z)
-											</div>
-											<div id="req-lowercase" class="requirement">
-												<i class="bi bi-x-circle text-danger"></i>
-												Ít nhất 1 chữ thường (a-z)
-											</div>
-											<div id="req-number" class="requirement">
-												<i class="bi bi-x-circle text-danger"></i>
-												Ít nhất 1 số (0-9)
-											</div>
-											<div id="req-special" class="requirement">
-												<i class="bi bi-x-circle text-danger"></i>
-												Ít nhất 1 ký tự đặc biệt (@#$%^&+=!)
-											</div>
-										</small>
-									</div>
+                    <div class="text-center small">
+                        <span class="text-muted">Đã có tài khoản?</span> 
+                        <a href="/login" class="text-dark fw-bold ms-1">Đăng nhập</a>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-									<small th:if="${#fields.hasErrors('password')}" th:errors="*{password}"
-										class="text-danger"></small>
-								</div>
+        <script>
+            // 1. Hàm ẩn/hiện mật khẩu
+            function togglePassword(fieldId, btn) {
+                const input = document.getElementById(fieldId);
+                const icon = btn.querySelector('i');
+                
+                if (input.type === "password") {
+                    input.type = "text";
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = "password";
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
 
-								<div class="form-floating mb-3">
-									<input type="password" class="form-control" id="confirmPassword"
-										th:field="*{confirmPassword}" placeholder="Confirm Password"> <label
-										for="confirmPassword">Nhập lại mật khẩu</label> <small
-										th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"
-										class="text-danger"></small>
-								</div>
+            // 2. Hàm kiểm tra độ mạnh mật khẩu Real-time
+            function checkPasswordStrength() {
+                const password = document.getElementById("password").value;
+                
+                // Các quy tắc (Regex)
+                const minLength = password.length >= 8;
+                const hasCase = /[a-z]/.test(password) && /[A-Z]/.test(password);
+                
+                // [ĐÃ SỬA]: Điều kiện VÀ (&&) thay vì HOẶC (||)
+                // Phải có ít nhất 1 số VÀ 1 ký tự đặc biệt
+                const hasSpecialAndNumber = /[0-9]/.test(password) && /[@$!%*?&]/.test(password);
 
-								<div class="d-grid mb-4">
-									<button type="submit" class="btn btn-dark py-3 fw-bold rounded-3">ĐĂNG KÝ
-										NGAY</button>
-								</div>
+                // Cập nhật giao diện
+                updateRuleStatus("rule-length", minLength);
+                updateRuleStatus("rule-case", hasCase);
+                updateRuleStatus("rule-special", hasSpecialAndNumber);
 
-								<div class="text-center">
-									<p class="small text-muted">
-										Đã có tài khoản? <a href="/login"
-											class="text-dark fw-bold text-decoration-none">Đăng nhập
-											tại đây</a>
-									</p>
-								</div>
-							</form>
-						</div>
+                // Kiểm tra lại confirm password nếu đang nhập
+                checkConfirmPassword();
+            }
 
-						<div class="col-lg-6 d-none d-lg-block order-1 order-lg-2">
-							<div class="auth-image-register"></div>
-						</div>
+            // Helper để đổi màu xanh/xám
+            function updateRuleStatus(elementId, isValid) {
+                const el = document.getElementById(elementId);
+                const icon = el.querySelector('i');
+                
+                if (isValid) {
+                    el.classList.add("valid");
+                    icon.classList.remove("fa-circle");
+                    icon.classList.add("fa-check-circle");
+                } else {
+                    el.classList.remove("valid");
+                    icon.classList.remove("fa-check-circle");
+                    icon.classList.add("fa-circle");
+                }
+            }
 
-					</div>
-				</div>
-			</div>
-		</div>
-	</article>
+            // 3. Hàm kiểm tra mật khẩu xác nhận
+            function checkConfirmPassword() {
+                const password = document.getElementById("password").value;
+                const confirm = document.getElementById("confirmPassword").value;
+                const ruleMatch = document.getElementById("rule-match");
 
-	<style>
-		/* Password Strength Indicator Styles */
-		.password-strength-bar {
-			height: 5px;
-			background-color: #e0e0e0;
-			border-radius: 3px;
-			overflow: hidden;
-			margin-top: 8px;
-		}
-
-		.strength-bar-fill {
-			height: 100%;
-			width: 0%;
-			transition: width 0.3s ease, background-color 0.3s ease;
-		}
-
-		.strength-weak {
-			background-color: #dc3545;
-		}
-
-		.strength-medium {
-			background-color: #ffc107;
-		}
-
-		.strength-strong {
-			background-color: #28a745;
-		}
-
-		.password-requirements {
-			font-size: 0.875rem;
-			margin-top: 8px;
-		}
-
-		.requirement {
-			margin: 4px 0;
-			transition: color 0.3s ease;
-		}
-
-		.requirement i {
-			margin-right: 5px;
-			font-size: 0.9rem;
-			transition: color 0.3s ease;
-		}
-	</style>
-
-	<script>
-		function checkPasswordStrength() {
-			const password = document.getElementById('password').value;
-
-			// Check requirements
-			const hasLength = password.length >= 8;
-			const hasUppercase = /[A-Z]/.test(password);
-			const hasLowercase = /[a-z]/.test(password);
-			const hasNumber = /[0-9]/.test(password);
-			const hasSpecial = /[@#$%^&+=!]/.test(password);
-
-			// Update UI for each requirement
-			updateRequirement('req-length', hasLength);
-			updateRequirement('req-uppercase', hasUppercase);
-			updateRequirement('req-lowercase', hasLowercase);
-			updateRequirement('req-number', hasNumber);
-			updateRequirement('req-special', hasSpecial);
-
-			// Calculate strength
-			let strength = 0;
-			if (hasLength) strength++;
-			if (hasUppercase) strength++;
-			if (hasLowercase) strength++;
-			if (hasNumber) strength++;
-			if (hasSpecial) strength++;
-
-			// Update strength bar
-			updateStrengthBar(strength);
-		}
-
-		function updateRequirement(id, passed) {
-			const element = document.getElementById(id);
-			const icon = element.querySelector('i');
-
-			if (passed) {
-				icon.className = 'bi bi-check-circle text-success';
-				element.classList.add('text-success');
-				element.classList.remove('text-danger');
-			} else {
-				icon.className = 'bi bi-x-circle text-danger';
-				element.classList.add('text-danger');
-				element.classList.remove('text-success');
-			}
-		}
-
-		function updateStrengthBar(strength) {
-			const bar = document.getElementById('strengthBar');
-			const text = document.getElementById('strengthText');
-
-			if (strength === 0) {
-				bar.style.width = '0%';
-				text.textContent = '';
-				return;
-			}
-
-			const percentage = (strength / 5) * 100;
-			bar.style.width = percentage + '%';
-
-			if (strength <= 2) {
-				bar.className = 'strength-bar-fill strength-weak';
-				text.textContent = 'Yếu';
-				text.className = 'text-danger fw-bold';
-			} else if (strength <= 4) {
-				bar.className = 'strength-bar-fill strength-medium';
-				text.textContent = 'Trung bình';
-				text.className = 'text-warning fw-bold';
-			} else {
-				bar.className = 'strength-bar-fill strength-strong';
-				text.textContent = 'Mạnh';
-				text.className = 'text-success fw-bold';
-			}
-		}
-	</script>
+                if (confirm.length > 0) {
+                    ruleMatch.classList.remove("d-none");
+                    if (password === confirm) {
+                        ruleMatch.classList.add("valid");
+                        ruleMatch.innerHTML = '<i class="fas fa-check-circle me-2"></i>Mật khẩu trùng khớp';
+                    } else {
+                        ruleMatch.classList.remove("valid");
+                        ruleMatch.innerHTML = '<i class="fas fa-times-circle me-2 text-danger"></i>Chưa khớp';
+                    }
+                } else {
+                    ruleMatch.classList.add("d-none");
+                }
+            }
+        </script>
+    </article>
 </body>
-
 </html>

@@ -2,122 +2,168 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
 
 <head>
-	<title>Đăng nhập - ShopOMG</title>
+    <title>Đăng nhập - ShopOMG</title>
 </head>
 
 <body>
-	<article class="py-5" style="background-color: #f8f9fa;">
-		<div class="container">
-			<div class="row justify-content-center">
-				<div class="col-lg-10">
-					<div class="auth-container row g-0">
-						<div class="col-lg-6 d-none d-lg-block">
-							<div class="auth-image"></div>
-						</div>
+    <article class="container py-5">
+        <style>
+            /* --- COPY STYLE TỪ TRANG REGISTER --- */
+            .register-card {
+                max-width: 500px;
+                margin: 0 auto;
+                border: none;
+                box-shadow: 0 0 20px rgba(0,0,0,0.05);
+                border-radius: 12px;
+                overflow: hidden;
+            }
+            .register-header {
+                background: #000;
+                color: #fff;
+                padding: 30px 20px;
+                text-align: center;
+            }
+            .form-control:focus {
+                box-shadow: none;
+                border-color: #000;
+            }
+            
+            /* Nút mắt ẩn/hiện */
+            .btn-toggle-pass {
+                border-color: #ced4da;
+                border-left: none;
+                background: #fff;
+                color: #6c757d;
+                border-top-right-radius: 0.375rem !important;
+                border-bottom-right-radius: 0.375rem !important;
+            }
+            .btn-toggle-pass:hover {
+                background: #f8f9fa;
+                color: #000;
+            }
+            .form-control-pass {
+                border-right: none;
+            }
 
-						<div class="col-lg-6 auth-form-wrapper">
-							<div class="text-center mb-4">
-								<h3 class="fw-bold">Chào mừng trở lại!</h3>
-								<p class="text-muted small">Vui lòng đăng nhập để tiếp tục
-									mua sắm</p>
-							</div>
+            /* Style nút Social cho đồng bộ */
+            .btn-google, .btn-facebook {
+                display: flex; align-items: center; justify-content: center; gap: 10px;
+                padding: 10px; border: 1px solid #ddd; border-radius: 8px;
+                text-decoration: none; color: #333; font-weight: 600; transition: 0.2s;
+            }
+            .btn-google:hover, .btn-facebook:hover { background: #f8f9fa; transform: translateY(-2px); }
+            .btn-google img, .btn-facebook img { width: 20px; }
+        </style>
 
-							<form th:action="@{/login}" method="post">
+        <div class="card register-card">
+            <div class="register-header">
+                <h3 class="fw-bold mb-1">Chào mừng trở lại!</h3>
+                <p class="small opacity-75 mb-0">Vui lòng đăng nhập để tiếp tục mua sắm</p>
+            </div>
 
-								<div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+            <div class="card-body p-4">
+                <form th:action="@{/login}" method="post">
 
-								<!-- Đăng nhập sai - hiển thị số lần còn lại -->
-								<div th:if="${param.error}" class="alert alert-danger">
-									<i class="bi bi-exclamation-triangle-fill"></i>
-									<strong>Email hoặc mật khẩu không đúng!</strong>
-									<span th:if="${remainingAttempts != null and remainingAttempts > 0}">
-										<br>Còn <strong th:text="${remainingAttempts}">X</strong> lần thử.
-										Sau 5 lần sai, tài khoản sẽ bị khóa 15 phút.
-									</span>
-								</div>
+                    <div th:if="${message}" class="alert alert-success text-center small py-2" th:text="${message}"></div>
 
-								<div th:if="${param.logout}" class="alert alert-success">
-									Đã đăng xuất thành công!</div>
+                    <div th:if="${param.error}" class="alert alert-danger small py-2">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <strong>Email hoặc mật khẩu sai!</strong>
+                        <span th:if="${remainingAttempts != null and remainingAttempts > 0}">
+                            <br>Còn <strong th:text="${remainingAttempts}">X</strong> lần thử.
+                        </span>
+                    </div>
 
-								<div th:if="${param.notVerified}" class="alert alert-warning">
-									<i class="bi bi-exclamation-triangle-fill"></i>
-									<strong>Email chưa được xác thực!</strong><br>
-									Vui lòng kiểm tra email và click vào link xác thực.
-									<a th:href="@{/resend-verification}" class="alert-link">Gửi lại email xác thực</a>
-								</div>
+                    <div th:if="${param.logout}" class="alert alert-success text-center small py-2">
+                        <i class="fas fa-check-circle me-1"></i> Đã đăng xuất!
+                    </div>
 
-								<!-- Tài khoản bị khóa -->
-								<div th:if="${param.locked}" class="alert alert-danger">
-									<i class="bi bi-lock-fill"></i>
-									<strong>Tài khoản đã bị khóa!</strong><br>
-									Bạn đã nhập sai mật khẩu quá nhiều lần.
-									<span th:if="${minutesUntilUnlock != null and minutesUntilUnlock > 0}">
-										Vui lòng thử lại sau <strong th:text="${minutesUntilUnlock}">15</strong> phút
-									</span>
-									<span th:unless="${minutesUntilUnlock != null and minutesUntilUnlock > 0}">
-										Vui lòng thử lại sau <strong>15 phút</strong>
-									</span>
-									hoặc <a th:href="@{/forgot-password}" class="alert-link">đặt lại mật khẩu</a>.
-								</div>
+                    <div th:if="${param.notVerified}" class="alert alert-warning small py-2">
+                        <i class="fas fa-envelope me-1"></i> Email chưa xác thực.
+                        <a th:href="@{/resend-verification}" class="fw-bold text-dark">Gửi lại ngay</a>
+                    </div>
 
-								<div class="form-floating mb-3">
-									<input type="text" class="form-control" id="email" name="email"
-										placeholder="Email hoặc tên đăng nhập" required>
-									<label for="email">Email hoặc tên đăng nhập</label>
-								</div>
+                    <div th:if="${param.locked}" class="alert alert-danger small py-2">
+                        <i class="fas fa-lock me-1"></i>
+                        <strong>Tài khoản bị khóa!</strong><br>
+                        Thử lại sau: 
+                        <strong th:text="${minutesUntilUnlock != null ? minutesUntilUnlock + ' phút' : '15 phút'}"></strong>
+                    </div>
 
-								<div class="form-floating mb-3">
-									<input type="password" class="form-control" id="password" name="password"
-										placeholder="Password" required> <label for="password">Mật khẩu</label>
-								</div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label small fw-bold text-uppercase text-muted">Email / Tên đăng nhập</label>
+                        <input type="text" class="form-control" id="email" name="email"
+                            placeholder="example@email.com" th:value="${email}" required>
+                    </div>
 
-								<div class="d-flex justify-content-between align-items-center mb-4">
-									<div class="form-check">
-										<input class="form-check-input" type="checkbox" id="rememberMe"
-											name="remember-me"> <label class="form-check-label small"
-											for="rememberMe">Ghi
-											nhớ đăng nhập</label>
-									</div>
-									<a th:href="@{/forgot-password}" class="text-decoration-none small text-muted">Quên
-										mật khẩu?</a>
-								</div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label small fw-bold text-uppercase text-muted">Mật khẩu</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control form-control-pass" id="password" name="password"
+                                placeholder="Nhập mật khẩu" required>
+                            <button class="btn btn-toggle-pass" type="button" onclick="togglePassword()">
+                                <i class="fas fa-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
 
-								<div class="d-grid mb-4">
-									<button type="submit" class="btn btn-dark py-3 fw-bold rounded-3">ĐĂNG NHẬP</button>
-								</div>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="rememberMe" name="remember-me">
+                            <label class="form-check-label small text-muted" for="rememberMe">Ghi nhớ tôi</label>
+                        </div>
+                        <a th:href="@{/forgot-password}" class="text-decoration-none small text-dark fw-bold">Quên mật khẩu?</a>
+                    </div>
 
-								<div class="text-center">
-									<p class="small text-muted">
-										Chưa có tài khoản? <a th:href="@{/register}"
-											class="text-dark fw-bold text-decoration-none">Đăng ký
-											ngay</a>
-									</p>
-								</div>
-								
-								<div class="text-center mb-3">
-								    <span class="text-muted small">—— Hoặc ——</span>
-								</div>
+                    <div class="d-grid mb-4">
+                        <button type="submit" class="btn btn-dark py-2 fw-bold">ĐĂNG NHẬP</button>
+                    </div>
 
-								<div class="d-grid mb-2">
-										<a href="/oauth2/authorization/google" class="btn-google">
-					                        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="Google">
-					                        <span>Google</span>
-					                    </a>
-								</div>
-								
-								<div class="d-grid">
-								    <a href="/oauth2/authorization/facebook" class="btn-facebook">
-								        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="Facebook">
-								        <span>Facebook</span>
-								    </a>
-								</div>
-							</form>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</article>
+                    <div class="text-center mb-4">
+                        <span class="small text-muted">Chưa có tài khoản?</span>
+                        <a th:href="@{/register}" class="text-dark fw-bold small ms-1">Đăng ký ngay</a>
+                    </div>
+
+                    <div class="position-relative text-center mb-3">
+                        <hr class="text-muted opacity-25">
+                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-2 small text-muted">Hoặc đăng nhập bằng</span>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <a href="/oauth2/authorization/google" class="btn-google w-100">
+                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="G">
+                                <span class="small">Google</span>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/oauth2/authorization/facebook" class="btn-facebook w-100">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="F">
+                                <span class="small">Facebook</span>
+                            </a>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function togglePassword() {
+                const passwordInput = document.getElementById('password');
+                const eyeIcon = document.getElementById('eyeIcon');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    eyeIcon.classList.remove('fa-eye');
+                    eyeIcon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    eyeIcon.classList.remove('fa-eye-slash');
+                    eyeIcon.classList.add('fa-eye');
+                }
+            }
+        </script>
+    </article>
 </body>
-
 </html>

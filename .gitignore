@@ -1,38 +1,73 @@
-HELP.md
+# ==========================================
+# Java & Maven Build Outputs
+# ==========================================
 target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.log
+logs/
 
-### STS ###
-.apt_generated
+# ==========================================
+# IDE Specific Files
+# ==========================================
+# Eclipse / Spring Tool Suite
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
 .classpath
-.factorypath
 .project
-.settings
+.factorypath
 .springBeans
-.sts4-cache
 
-### IntelliJ IDEA ###
-.idea
+# IntelliJ IDEA
+.idea/
 *.iws
 *.iml
 *.ipr
+out/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
+# VS Code / Antigravity IDE
 .vscode/
 
+# ==========================================
+# OS Generated Files
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-### md files ###
-# *.md
-# !README.md
+# ==========================================
+# Secrets & Environment Variables
+# ==========================================
+.env
+.env.*
+*.secret
+application-dev.properties
+application-dev.yml
+application-prod.properties
+application-prod.yml
+# (Note: Standard application.properties is usually pushed, 
+# but be sure to remove real passwords from it first!)
+
+# ==========================================
+# Antigravity Agent State (Local Only)
+# ==========================================
+.agent/cache/
+.agent/memory/
+.agent/keys.json
+.agent/*.local.md

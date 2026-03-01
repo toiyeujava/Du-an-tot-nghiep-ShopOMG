@@ -1,109 +1,109 @@
-# 🚀 Antigravity Agent - Start Here
+# 🚀 Antigravity Agent - Bắt đầu tại đây
 
-**Welcome to your AI-powered development workspace!**
+**Chào mừng bạn đến với không gian phát triển được hỗ trợ bởi AI!**
 
-This project is configured with **550+ AI skills** and intelligent agent routing.
-
----
-
-## 🎯 First-Time Setup
-
-### Step 1: Verify AI Can See This File
-
-If you're reading this in an AI chat (Claude, Gemini, etc.), **you're good to go!** ✅
-
-### Step 2: Activate the Agent System
-
-Type this in your AI chat:
-
-```
-Read .agent/rules/GEMINI.md and activate all rules and skills
-```
-
-The AI will:
-- ✅ Load GEMINI.md (master ruleset)
-- ✅ Enable intelligent agent routing
-- ✅ Activate Socratic Gate for better decisions
-- ✅ Load 550+ specialized skills
+Dự án này đã được trang bị **550+ kỹ năng AI** và hệ thống điều phối Agent thông minh.
 
 ---
 
-## 🤖 How It Works
+## 🎯 Thiết lập lần đầu
 
-### **Automatic Skill Activation**
+### Bước 1: Xác minh AI có thể đọc file này
 
-The AI will automatically:
-1. Analyze your requests
-2. Select the best specialist agent(s)
-3. Ask clarifying questions when needed
-4. Apply best practices from loaded skills
+Nếu bạn đang đọc nội dung này trong khung chat AI (Claude, Gemini, v.v.), **mọi thứ đã sẵn sàng!** ✅
 
-### **Example:**
+### Bước 2: Kích hoạt hệ thống Agent
+
+Gõ lệnh sau vào khung chat AI:
 
 ```
-You: "Create a login page"
-
-AI: 🤖 Applying knowledge of @security-auditor + @frontend-specialist...
-
-Before I start, let me ask:
-1. OAuth or traditional email/password?
-2. Need 2FA support?
-3. Dark mode required?
+Đọc .agent/rules/GEMINI.md và kích hoạt toàn bộ quy tắc cũng như kỹ năng.
 ```
+
+AI sẽ thực hiện:
+- ✅ Tải GEMINI.md (Bộ quy tắc chủ chốt)
+- ✅ Kích hoạt điều phối Agent thông minh dựa trên lĩnh vực
+- ✅ Kích hoạt Socratic Gate (Cổng nghi vấn) để đưa ra quyết định tốt hơn
+- ✅ Sẵn sàng 550+ kỹ năng chuyên dụng
 
 ---
 
-## 📋 Available Resources
+## 🤖 Cơ chế vận hành
 
-### Core Files:
-- `GEMINI.md` - Master ruleset (ALWAYS active)
-- `ARCHITECTURE.md` - System architecture
-- `SKILLS.md` - Complete skills inventory (550+)
+### **Tự động kích hoạt kỹ năng**
 
-### Workflows:
-- `/create` - Create new features
-- `/brainstorm` - Design before coding
-- `/debug` - Systematic debugging
-- `/test` - Generate and run tests
+AI sẽ tự động:
+1. Phân tích yêu cầu của bạn.
+2. Lựa chọn Agent chuyên gia phù hợp nhất (Frontend, Backend, Security, v.v.).
+3. Đặt các câu hỏi làm rõ (Socratic Questions) khi cần thiết.
+4. Áp dụng các mẫu thiết kế tốt nhất (Best Practices) từ kho kỹ năng.
 
----
+### **Ví dụ:**
 
-## ✅ Verification Checklist
-
-**Type these questions to verify AI is working correctly:**
-
-1. **"What skills do you have?"** → Should list categories
-2. **"How do you handle new feature requests?"** → Should mention Socratic Gate
-3. **"Create a button component"** → Should auto-select frontend-specialist
-
----
-
-## 🆘 Troubleshooting
-
-### AI Doesn't Seem to Follow Rules?
-
-**Try this:**
 ```
-Please read and apply rules from .agent/rules/GEMINI.md
-```
+Bạn: "Tạo cho tôi một trang đăng nhập"
 
-### AI Asks Too Many/Few Questions?
+AI: 🤖 Đang áp dụng tri thức của @security-auditor + @frontend-specialist...
 
-**Check if Socratic Gate is active:**
-```
-Are you using the Socratic Gate from GEMINI.md?
+Trước khi bắt đầu, tôi cần làm rõ một vài điểm:
+1. Sử dụng OAuth hay Email/Password truyền thống?
+2. Có cần hỗ trợ xác thực 2 lớp (2FA) không?
+3. Bạn có yêu cầu về giao diện Dark mode không?
 ```
 
 ---
 
-## 🎓 Learn More
+## 📋 Tài nguyên sẵn có
 
-- **Skills Inventory**: See `SKILLS.md` for all 550+ skills
-- **Gemini Guide**: See `GEMINI.md` for Gemini-specific setup
-- **Architecture**: See `ARCHITECTURE.md` for system overview
+### File cốt lõi:
+- `GEMINI.md` - Bộ quy tắc chủ chốt (Luôn luôn kích hoạt).
+- `ARCHITECTURE.md` - Tài liệu kiến trúc hệ thống.
+- `SKILLS.md` - Danh mục 550+ kỹ năng.
+
+### Lệnh tắt (Slash Commands):
+- `/create` - Tạo tính năng mới.
+- `/brainstorm` - Thiết kế ý tưởng trước khi code.
+- `/debug` - Gỡ lỗi có hệ thống.
+- `/test` - Tạo và chạy kiểm thử.
 
 ---
 
-**Ready to build? Just start chatting with the AI!** 🚀
+## ✅ Kiểm tra vận hành
 
-The agent system is always listening and will automatically route your requests to the right specialists.
+**Hãy thử hỏi AI các câu sau để xác nhận hệ thống hoạt động đúng:**
+
+1. **"Bạn có những kỹ năng gì?"** → AI phải liệt kê các danh mục kỹ năng.
+2. **"Bạn xử lý yêu cầu tạo tính năng mới như thế nào?"** → AI phải nhắc đến Socratic Gate hoặc quy trình lập kế hoạch.
+3. **"Tạo cho tôi một nút bấm (button)"** → AI phải tự động chọn @frontend-specialist.
+
+---
+
+## 🆘 Giải quyết sự cố
+
+### AI có vẻ không tuân thủ quy tắc?
+
+**Hãy thử lệnh này:**
+```
+Hãy đọc và áp dụng nghiêm ngặt các quy tắc từ .agent/rules/GEMINI.md
+```
+
+### AI hỏi quá nhiều hoặc quá ít?
+
+**Kiểm tra xem Socratic Gate có đang hoạt động không:**
+```
+Bạn có đang sử dụng Socratic Gate từ GEMINI.md không?
+```
+
+---
+
+## 🎓 Tìm hiểu thêm
+
+- **Danh mục kỹ năng**: Xem `SKILLS.md` để biết toàn bộ 550+ kỹ năng.
+- **Hướng dẫn Gemini**: Xem `GEMINI.md` để biết cấu hình riêng cho Gemini.
+- **Kiến trúc**: Xem `ARCHITECTURE.md` để hiểu tổng quan hệ thống.
+
+---
+
+**Sẵn sàng tác chiến? Hãy bắt đầu trò chuyện với AI ngay!** 🚀
+
+Hệ thống Agent luôn lắng nghe và sẽ tự động điều phối yêu cầu của bạn đến đúng chuyên gia phù hợp.

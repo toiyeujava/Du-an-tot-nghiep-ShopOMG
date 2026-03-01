@@ -61,6 +61,8 @@ application-dev.properties
 application-dev.yml
 application-prod.properties
 application-prod.yml
+application-local.properties
+*.local.properties
 # (Note: Standard application.properties is usually pushed, 
 # but be sure to remove real passwords from it first!)
 

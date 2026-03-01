@@ -1,6 +1,7 @@
 package poly.edu.controller.user;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -49,6 +50,9 @@ public class ShopController {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+
+    @Value("${gemini.api.key:}")
+    private String geminiApiKey;
 
     /**
      * Product listing page with filters and pagination.
@@ -145,6 +149,7 @@ public class ShopController {
             model.addAttribute("uniqueColors", uniqueColors);
             model.addAttribute("uniqueSizes", uniqueSizes);
             model.addAttribute("jsonVariants", json.toString());
+            model.addAttribute("geminiApiKey", geminiApiKey);
 
             return "user/product-detail";
         } else {

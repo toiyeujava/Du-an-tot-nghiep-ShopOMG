@@ -56,6 +56,179 @@
                 border-color: #000;
                 opacity: 1;
             }
+
+            /* ===== VIRTUAL TRY-ON STYLES ===== */
+            #tryOnModal .modal-dialog {
+                max-width: 860px;
+            }
+
+            #tryon-drop-zone {
+                border: 2px dashed #ccc;
+                border-radius: 12px;
+                padding: 30px 20px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.25s;
+                background: #f9f9f9;
+                min-height: 160px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+            }
+
+            #tryon-drop-zone:hover,
+            #tryon-drop-zone.dragover {
+                border-color: #000;
+                background: #f0f0f0;
+            }
+
+            #tryon-drop-zone img.preview {
+                max-height: 150px;
+                border-radius: 8px;
+                object-fit: contain;
+            }
+
+            #tryon-result-area {
+                border-radius: 12px;
+                overflow: hidden;
+                background: #f9f9f9;
+                min-height: 200px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+            }
+
+            #tryon-result-area img {
+                max-width: 100%;
+                border-radius: 10px;
+            }
+
+            .tryon-step-badge {
+                background: #000;
+                color: #fff;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: bold;
+                margin-right: 8px;
+                flex-shrink: 0;
+            }
+
+            .tryon-loading-spinner {
+                width: 48px;
+                height: 48px;
+                border: 4px solid #e0e0e0;
+                border-top-color: #000;
+                border-radius: 50%;
+                animation: tryon-spin 0.8s linear infinite;
+            }
+
+            @keyframes tryon-spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .btn-tryon-main {
+                background: linear-gradient(135deg, #1a1a1a 0%, #3d3d3d 100%);
+                color: #fff;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 22px;
+                font-weight: 600;
+                font-size: 14px;
+                letter-spacing: 0.5px;
+                transition: all 0.2s;
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+            }
+
+            .btn-tryon-main:hover {
+                background: linear-gradient(135deg, #000 0%, #222 100%);
+                transform: translateY(-1px);
+                color: #fff;
+            }
+
+            .btn-tryon-main:disabled {
+                opacity: 0.55;
+                transform: none;
+                cursor: not-allowed;
+            }
+
+            .btn-tryon-open {
+                background: #fff;
+                color: #000;
+                border: 2px solid #000;
+                border-radius: 6px;
+                padding: 9px 18px;
+                font-weight: 600;
+                font-size: 14px;
+                transition: all 0.2s;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                white-space: nowrap;
+            }
+
+            .btn-tryon-open:hover {
+                background: #000;
+                color: #fff;
+            }
+
+            .tryon-color-chip {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                border: 2px solid #ddd;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 10px;
+                font-weight: bold;
+            }
+
+            .tryon-color-chip.active {
+                border: 2px solid #000;
+                box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000;
+            }
+
+            .tryon-variant-label {
+                border: 1.5px solid #ddd;
+                border-radius: 6px;
+                padding: 4px 12px;
+                font-size: 13px;
+                cursor: pointer;
+                transition: all 0.2s;
+                user-select: none;
+            }
+
+            .tryon-variant-label.active {
+                border-color: #000;
+                background: #000;
+                color: #fff;
+                font-weight: 600;
+            }
+
+            .tryon-ai-badge {
+                background: linear-gradient(90deg, #6c47ff 0%, #a855f7 100%);
+                color: #fff;
+                font-size: 10px;
+                padding: 2px 7px;
+                border-radius: 20px;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                vertical-align: middle;
+            }
         </style>
 
         <div class="row" th:if="${product}">
@@ -135,6 +308,11 @@
                                     style="background-color: #dc3545; color: white; border: none;">MUA NGAY</button>
                             </div>
                         </div>
+                        <!-- Try-On Button -->
+                        <button type="button" class="btn-tryon-open w-100 mt-2" onclick="tryOnModule.openModal()">
+                            <i class="fas fa-tshirt"></i>
+                            Thử Đồ <span class="tryon-ai-badge ms-1">AI</span>
+                        </button>
                     </div>
                 </form>
 
@@ -185,6 +363,11 @@
                         <small class="text-muted d-block mt-2">
                             <i class="fas fa-info-circle me-1"></i>Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng
                         </small>
+                        <!-- Try-On Button (Guest can also try on) -->
+                        <button type="button" class="btn-tryon-open w-100 mt-2" onclick="tryOnModule.openModal()">
+                            <i class="fas fa-tshirt"></i>
+                            Thử Đồ <span class="tryon-ai-badge ms-1">AI</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -446,6 +629,415 @@
                 document.querySelectorAll('.thumb-img').forEach(img => img.classList.remove('active'));
                 element.classList.add('active');
             }
+        </script>
+
+        <!-- ===== VIRTUAL TRY-ON MODAL ===== -->
+        <div class="modal fade" id="tryOnModal" tabindex="-1" aria-labelledby="tryOnModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+
+                    <!-- Modal Header -->
+                    <div class="modal-header" style="background: #0a0a0a; color: #fff; border-bottom: 1px solid #222;">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fas fa-tshirt" style="color: #a78bfa;"></i>
+                            <h5 class="modal-title mb-0 fw-bold" id="tryOnModalLabel">Thử Đồ Ảo</h5>
+                            <span class="tryon-ai-badge">AI</span>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="modal-body p-4" style="background: #fafafa;">
+                        <div class="row g-4">
+
+                            <!-- LEFT: Controls -->
+                            <div class="col-md-5">
+
+                                <!-- Step 1: Choose Variant -->
+                                <div class="mb-4">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="tryon-step-badge">1</span>
+                                        <span class="fw-semibold" style="font-size:14px;">Chọn màu sắc</span>
+                                    </div>
+                                    <div id="tryon-color-options" class="d-flex flex-wrap gap-2 ms-1">
+                                        <!-- Injected dynamically from JS -->
+                                    </div>
+                                    <div id="tryon-size-options" class="d-flex flex-wrap gap-2 mt-2 ms-1">
+                                        <!-- Injected dynamically from JS -->
+                                    </div>
+                                </div>
+
+                                <!-- Step 2: Upload Photo -->
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="tryon-step-badge">2</span>
+                                        <span class="fw-semibold" style="font-size:14px;">Tải ảnh chân dung của
+                                            bạn</span>
+                                    </div>
+                                    <div id="tryon-drop-zone"
+                                        onclick="document.getElementById('tryon-file-input').click()">
+                                        <div id="tryon-upload-placeholder">
+                                            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                            <div class="text-muted" style="font-size: 13px;">Kéo thả
+                                                hoặc<br><strong>click để chọn ảnh</strong></div>
+                                            <div class="text-muted mt-1" style="font-size: 11px;">JPG, PNG (tối đa 5MB)
+                                            </div>
+                                        </div>
+                                        <img id="tryon-img-preview" class="preview d-none" alt="Preview">
+                                    </div>
+                                    <input type="file" id="tryon-file-input" accept="image/*" class="d-none">
+                                </div>
+
+                                <!-- Generate Button -->
+                                <button id="tryon-generate-btn" class="btn-tryon-main w-100"
+                                    onclick="tryOnModule.generate()" disabled>
+                                    <i class="fas fa-magic"></i>
+                                    Tạo ảnh thử đồ
+                                </button>
+                                <div id="tryon-status-msg" class="text-center mt-2"
+                                    style="font-size: 12px; color: #666; min-height: 18px;"></div>
+
+                            </div>
+
+                            <!-- RIGHT: Result -->
+                            <div class="col-md-7">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="tryon-step-badge">3</span>
+                                    <span class="fw-semibold" style="font-size:14px;">Kết quả</span>
+                                </div>
+                                <div id="tryon-result-area">
+                                    <!-- Idle state -->
+                                    <div id="tryon-idle-state" class="text-center py-5">
+                                        <i class="fas fa-tshirt fa-3x mb-3" style="color: #d0d0d0;"></i>
+                                        <p class="text-muted" style="font-size:13px;">Kết quả sẽ xuất hiện ở đây sau khi
+                                            bạn nhấn tạo ảnh</p>
+                                    </div>
+                                    <!-- Loading state -->
+                                    <div id="tryon-loading-state" class="text-center py-5 d-none">
+                                        <div class="tryon-loading-spinner mx-auto mb-3"></div>
+                                        <p class="fw-semibold mb-1" style="font-size: 14px;">AI đang tạo ảnh...</p>
+                                        <p class="text-muted" style="font-size: 12px;" id="tryon-loading-step">Đang phân
+                                            tích sản phẩm...</p>
+                                    </div>
+                                    <!-- Result state -->
+                                    <div id="tryon-result-state" class="d-none w-100">
+                                        <div class="position-relative">
+                                            <img id="tryon-result-img" src="" alt="Try-On Result"
+                                                style="width:100%; border-radius: 10px;">
+                                            <div class="d-flex justify-content-end mt-2 gap-2">
+                                                <button class="btn btn-sm btn-outline-secondary"
+                                                    onclick="tryOnModule.reset()">
+                                                    <i class="fas fa-redo me-1"></i>Thử lại
+                                                </button>
+                                                <a id="tryon-download-btn" href="#" download="tryon-result.png"
+                                                    class="btn btn-sm btn-dark">
+                                                    <i class="fas fa-download me-1"></i>Tải ảnh
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Error state -->
+                                    <div id="tryon-error-state" class="d-none text-center py-4">
+                                        <i class="fas fa-exclamation-circle fa-2x text-danger mb-2"></i>
+                                        <p class="text-danger fw-semibold" id="tryon-error-msg">Đã xảy ra lỗi.</p>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="tryOnModule.reset()">
+                                            Thử lại
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <!-- ===== END VIRTUAL TRY-ON MODAL ===== -->
+
+        <!-- [hidden] Gemini API Key from server -->
+        <span id="data-gemini-key" th:text="${geminiApiKey}" style="display:none;"></span>
+
+        <script>
+            // ============================================================
+            // VIRTUAL TRY-ON AI MODULE
+            // Uses Gemini gemini-2.5-flash-image to generate try-on images
+            // ============================================================
+            const tryOnModule = (function () {
+
+                // --- State ---
+                let userImageBase64 = null;  // base64 without header
+                let userImageMime = 'image/jpeg';
+                let selectedColor = null;
+                let selectedSize = null;
+                const GEMINI_API_KEY = document.getElementById('data-gemini-key')?.textContent?.trim() || '';
+
+                // --- DOM helpers ---
+                const el = id => document.getElementById(id);
+
+                // --- Open modal & sync current product state ---
+                function openModal() {
+                    // Read current variant selection from product page
+                    const checkedColor = document.querySelector('input[name="color"]:checked:not([id^="guest_"])');
+                    const checkedSize = document.querySelector('input[name="size"]:checked:not([id^="guest_"])') ||
+                        document.querySelector('input[name="size"]:checked');
+                    selectedColor = checkedColor ? checkedColor.value : null;
+                    selectedSize = checkedSize ? checkedSize.value : null;
+
+                    renderVariantSelectors();
+                    const modal = new bootstrap.Modal(el('tryOnModal'));
+                    modal.show();
+                }
+
+                // --- Render color & size chips inside modal ---
+                function renderVariantSelectors() {
+                    const rawData = el('data-variants').value;
+                    let vars = [];
+                    try { vars = JSON.parse(rawData); } catch (e) { }
+
+                    const colors = [...new Set(vars.map(v => v.color).filter(Boolean))];
+                    const sizes = [...new Set(vars.map(v => v.size).filter(Boolean))];
+
+                    // Colors
+                    const colorContainer = el('tryon-color-options');
+                    colorContainer.innerHTML = '';
+                    if (colors.length > 0) {
+                        colors.forEach(c => {
+                            const btn = document.createElement('span');
+                            btn.className = 'tryon-variant-label' + (c === selectedColor ? ' active' : '');
+                            btn.textContent = c;
+                            btn.onclick = () => {
+                                selectedColor = c;
+                                colorContainer.querySelectorAll('.tryon-variant-label').forEach(b => b.classList.remove('active'));
+                                btn.classList.add('active');
+                                updateGenerateBtn();
+                            };
+                            colorContainer.appendChild(btn);
+                        });
+                    }
+
+                    // Sizes
+                    const sizeContainer = el('tryon-size-options');
+                    sizeContainer.innerHTML = '';
+                    if (sizes.length > 0) {
+                        sizes.forEach(s => {
+                            const btn = document.createElement('span');
+                            btn.className = 'tryon-variant-label' + (s === selectedSize ? ' active' : '');
+                            btn.textContent = s;
+                            btn.onclick = () => {
+                                selectedSize = s;
+                                sizeContainer.querySelectorAll('.tryon-variant-label').forEach(b => b.classList.remove('active'));
+                                btn.classList.add('active');
+                                updateGenerateBtn();
+                            };
+                            sizeContainer.appendChild(btn);
+                        });
+                    }
+
+                    updateGenerateBtn();
+                }
+
+                function updateGenerateBtn() {
+                    const canGenerate = !!userImageBase64;
+                    el('tryon-generate-btn').disabled = !canGenerate;
+                }
+
+                // --- Image Upload ---
+                function handleFileSelect(file) {
+                    if (!file || !file.type.startsWith('image/')) return;
+                    if (file.size > 5 * 1024 * 1024) {
+                        el('tryon-status-msg').textContent = '⚠️ Ảnh quá lớn (tối đa 5MB)';
+                        return;
+                    }
+                    userImageMime = file.type;
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const dataUrl = e.target.result;
+                        userImageBase64 = dataUrl.split(',')[1];
+                        el('tryon-img-preview').src = dataUrl;
+                        el('tryon-img-preview').classList.remove('d-none');
+                        el('tryon-upload-placeholder').classList.add('d-none');
+                        el('tryon-status-msg').textContent = '';
+                        updateGenerateBtn();
+                    };
+                    reader.readAsDataURL(file);
+                }
+
+                // Drag & drop
+                document.addEventListener('DOMContentLoaded', function () {
+                    const dz = el('tryon-drop-zone');
+                    if (!dz) return;
+                    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+                    dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+                    dz.addEventListener('drop', e => {
+                        e.preventDefault();
+                        dz.classList.remove('dragover');
+                        if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files[0]);
+                    });
+                    el('tryon-file-input').addEventListener('change', function () {
+                        if (this.files.length) handleFileSelect(this.files[0]);
+                    });
+                });
+
+                // --- Helper: resize image ---
+                function resizeImage(base64, maxW) {
+                    return new Promise(resolve => {
+                        const img = new Image();
+                        img.src = 'data:image/jpeg;base64,' + base64;
+                        img.onload = () => {
+                            let w = img.width, h = img.height;
+                            if (w > maxW || h > maxW) {
+                                if (w > h) { h = Math.round(h * maxW / w); w = maxW; }
+                                else { w = Math.round(w * maxW / h); h = maxW; }
+                            } else { resolve(base64); return; }
+                            const c = document.createElement('canvas');
+                            c.width = w; c.height = h;
+                            c.getContext('2d').drawImage(img, 0, 0, w, h);
+                            resolve(c.toDataURL('image/jpeg', 0.88).split(',')[1]);
+                        };
+                        img.onerror = () => resolve(base64);
+                    });
+                }
+
+                // --- Main: Generate Try-On ---
+                async function generate() {
+                    if (!userImageBase64) return;
+                    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+                        showError('Chưa cấu hình Gemini API Key. Vui lòng thêm GEMINI_API_KEY vào application.properties.');
+                        return;
+                    }
+
+                    showLoading('Đang phân tích sản phẩm...');
+
+                    try {
+                        // Get product info from page
+                        const productName = document.querySelector('h2')?.textContent.trim() || 'sản phẩm';
+                        const productImage = document.getElementById('mainImage')?.src || '';
+                        const colorLabel = selectedColor ? selectedColor : 'màu mặc định';
+                        const sizeLabel = selectedSize ? selectedSize : '';
+
+                        // Resize user image
+                        setLoadingStep('Đang chuẩn bị ảnh...');
+                        const resizedUser = await resizeImage(userImageBase64, 1024);
+
+                        // Resize product image (fetch as base64)
+                        setLoadingStep('Đang tải ảnh sản phẩm...');
+                        let productBase64 = null;
+                        let productMime = 'image/jpeg';
+                        try {
+                            const resp = await fetch(productImage);
+                            const blob = await resp.blob();
+                            productMime = blob.type || 'image/jpeg';
+                            const buf = await blob.arrayBuffer();
+                            productBase64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+                        } catch (fe) {
+                            console.warn('Could not fetch product image, proceeding without it.', fe);
+                        }
+
+                        setLoadingStep('AI đang generate ảnh thử đồ...');
+
+                        // Build Gemini API request
+                        const parts = [];
+
+                        // Part 1: User portrait
+                        parts.push({ inlineData: { data: resizedUser, mimeType: userImageMime } });
+
+                        // Part 2: Product image (if available)
+                        if (productBase64) {
+                            parts.push({ inlineData: { data: productBase64, mimeType: productMime } });
+                        }
+
+                        // Part 3: Prompt
+                        const variantDesc = [colorLabel, sizeLabel].filter(Boolean).join(', ');
+                        const prompt = [
+                            `You are a fashion AI virtual try-on engine.`,
+                            `TASK: Generate a photorealistic image of the person in IMAGE 1 wearing/using the fashion item shown in IMAGE 2.`,
+                            `PRODUCT: "${productName}" — Variant: ${variantDesc}.`,
+                            `RULES:`,
+                            `- Preserve the person's face, skin tone, and body proportions from IMAGE 1 exactly.`,
+                            `- Dress the person in the exact clothing/item shown in IMAGE 2, keeping its color (${colorLabel}), texture, logo, and design details.`,
+                            `- Keep the same background or generate a clean studio background.`,
+                            `- Lighting should be natural and flattering.`,
+                            `- Output a portrait/full-body fashion photo, aspect ratio 3:4.`,
+                            `- NO text, NO watermarks on the output.`,
+                            `OUTPUT: A single photorealistic image of the person wearing the product.`
+                        ].join('\n');
+                        parts.push({ text: prompt });
+
+                        // Use confirmed model from ListModels API — gemini-2.0-flash-exp-image-generation
+                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${GEMINI_API_KEY}`;
+                        const requestBody = {
+                            contents: [{ parts }],
+                            generationConfig: { responseModalities: ['IMAGE', 'TEXT'] }
+                        };
+
+                        const res = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(requestBody)
+                        });
+
+                        if (!res.ok) {
+                            const errData = await res.json().catch(() => ({}));
+                            throw new Error(errData?.error?.message || `API error ${res.status}`);
+                        }
+
+                        const data = await res.json();
+                        const imgPart = data?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+                        if (!imgPart) {
+                            const textPart = data?.candidates?.[0]?.content?.parts?.find(p => p.text);
+                            throw new Error(textPart?.text || 'AI không thể tạo ảnh. Vui lòng thử lại với ảnh khác.');
+                        }
+
+                        const resultDataUrl = `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
+                        showResult(resultDataUrl);
+
+                    } catch (err) {
+                        console.error('Try-On Error:', err);
+                        showError(err.message || 'Đã xảy ra lỗi không xác định.');
+                    }
+                }
+
+                // --- UI State Helpers ---
+                function showLoading(msg) {
+                    el('tryon-idle-state').classList.add('d-none');
+                    el('tryon-result-state').classList.add('d-none');
+                    el('tryon-error-state').classList.add('d-none');
+                    el('tryon-loading-state').classList.remove('d-none');
+                    el('tryon-loading-step').textContent = msg || 'Đang xử lý...';
+                    el('tryon-generate-btn').disabled = true;
+                    el('tryon-status-msg').textContent = '';
+                }
+                function setLoadingStep(step) {
+                    if (el('tryon-loading-step')) el('tryon-loading-step').textContent = step;
+                }
+                function showResult(dataUrl) {
+                    el('tryon-loading-state').classList.add('d-none');
+                    el('tryon-result-state').classList.remove('d-none');
+                    el('tryon-result-img').src = dataUrl;
+                    el('tryon-download-btn').href = dataUrl;
+                    el('tryon-generate-btn').disabled = false;
+                }
+                function showError(msg) {
+                    el('tryon-loading-state').classList.add('d-none');
+                    el('tryon-idle-state').classList.add('d-none');
+                    el('tryon-error-state').classList.remove('d-none');
+                    el('tryon-error-msg').textContent = msg;
+                    el('tryon-generate-btn').disabled = false;
+                }
+                function reset() {
+                    el('tryon-idle-state').classList.remove('d-none');
+                    el('tryon-result-state').classList.add('d-none');
+                    el('tryon-error-state').classList.add('d-none');
+                    el('tryon-loading-state').classList.add('d-none');
+                    el('tryon-status-msg').textContent = '';
+                    updateGenerateBtn();
+                }
+
+                // --- Public API ---
+                return { openModal, generate, reset };
+
+            })();
         </script>
 
     </article>

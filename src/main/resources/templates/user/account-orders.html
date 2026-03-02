@@ -43,7 +43,9 @@
                 <div id="ordersContainer">
 
                     <div th:each="order : ${orders}" class="card-box p-0 overflow-hidden mb-4 order-card"
-                        th:attr="data-status=${order.status},data-order-id=${order.id}">
+                        th:attr="data-status=${order.status},
+                                 data-order-id=${order.id},
+                                 data-has-unreviewed=${order.status == 'COMPLETED' and !reviewedProductIds.contains(order.orderDetails[0].productVariant.product.id)}">
 
                         <!-- Order Status Header -->
                         <div class="bg-light px-4 py-2 border-bottom d-flex justify-content-between align-items-center">
@@ -103,10 +105,18 @@
                                             th:onclick="'confirmCancel(' + ${order.id} + ')'">Hủy đơn</button>
                                     </span>
                                     <span th:if="${order.status == 'COMPLETED'}">
-                                        <button type="button" class="btn btn-warning btn-sm px-4 fw-bold review-btn"
+                                        <!-- Chưa đánh giá → Viết đánh giá -->
+                                        <button
+                                            th:if="${!reviewedProductIds.contains(order.orderDetails[0].productVariant.product.id)}"
+                                            type="button" class="btn btn-warning btn-sm px-4 fw-bold review-btn"
                                             th:attr="data-order-id=${order.id}">
-                                            <i class="fas fa-star me-1"></i>Đánh giá
+                                            <i class="fas fa-star me-1"></i>Viết đánh giá
                                         </button>
+                                        <!-- Đã đánh giá → Xem đánh giá -->
+                                        <a th:if="${reviewedProductIds.contains(order.orderDetails[0].productVariant.product.id)}"
+                                            href="/account/reviews" class="btn btn-outline-success btn-sm px-4 fw-bold">
+                                            <i class="fas fa-check-circle me-1"></i>Xem đánh giá
+                                        </a>
                                     </span>
                                     <a th:href="@{/product/{id}(id=${order.orderDetails[0].productVariant.product.id})}"
                                         class="btn btn-dark btn-sm px-4">Mua lại</a>
@@ -484,8 +494,8 @@
                             // "Tất cả" excludes "CANCELLED" as per user request
                             card.style.display = cardStatus === 'CANCELLED' ? 'none' : 'block';
                         } else if (status === 'NEED_REVIEW') {
-                            // "Cần đánh giá" shows COMPLETED orders
-                            card.style.display = cardStatus === 'COMPLETED' ? 'block' : 'none';
+                            // "Cần đánh giá": COMPLETED orders that have at least one unreviewed product
+                            card.style.display = card.getAttribute('data-has-unreviewed') === 'true' ? 'block' : 'none';
                         } else if (cardStatus === status) {
                             card.style.display = 'block';
                         } else {

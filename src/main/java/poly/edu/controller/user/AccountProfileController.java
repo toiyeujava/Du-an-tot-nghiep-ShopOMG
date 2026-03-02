@@ -165,7 +165,15 @@ public class AccountProfileController {
         List<Order> orders = orderRepository.findByAccountIdOrderByOrderDateDesc(
                 acc.getId(), org.springframework.data.domain.Pageable.unpaged()).getContent();
 
+        // Build set of product IDs the user has already reviewed (for button state)
+        java.util.Set<Integer> reviewedProductIds = productReviewRepository
+                .findByAccountIdOrderByReviewDateDesc(acc.getId())
+                .stream()
+                .map(r -> r.getProduct().getId())
+                .collect(java.util.stream.Collectors.toSet());
+
         model.addAttribute("orders", orders);
+        model.addAttribute("reviewedProductIds", reviewedProductIds);
         model.addAttribute("activePage", "orders");
         return "user/account-orders";
     }

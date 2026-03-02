@@ -8,64 +8,487 @@
 <body>
     <article class="container py-5">
         <div class="row">
+            <!-- Sidebar -->
             <div class="col-lg-3 mb-4">
                 <div th:replace="~{fragments/account-sidebar :: sidebar('reviews')}"></div>
             </div>
-            <div class="col-lg-9">
-                <div class="card-box">
-                    <h5 class="fw-bold mb-1">Đánh giá của tôi</h5>
-                    <p class="text-muted small mb-4">Các đánh giá sản phẩm bạn đã gửi thành công.</p>
 
-                    <!-- Empty state -->
-                    <div th:if="${#lists.isEmpty(myReviews)}" class="text-center py-5">
-                        <i class="fas fa-star fa-3x text-muted mb-3 d-block"></i>
-                        <h6 class="fw-semibold mb-1">Bạn chưa có đánh giá nào</h6>
-                        <p class="text-muted small mb-3">Các đánh giá bạn đã gửi sẽ xuất hiện ở đây.</p>
-                        <a href="/account/orders" class="btn btn-dark btn-sm px-4">Xem đơn hàng</a>
+            <!-- Main content -->
+            <div class="col-lg-9">
+                <!-- Page header -->
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h5 class="fw-bold mb-0">Đánh giá của tôi</h5>
+                        <p class="text-muted small mb-0">Lịch sử đánh giá sản phẩm bạn đã gửi</p>
+                    </div>
+                    <span class="badge rounded-pill px-3 py-2"
+                        style="background:#fff3cd;color:#856404;font-size:.85rem;border:1px solid #ffc107;">
+                        <i class="fas fa-star me-1 text-warning"></i>
+                        <span th:text="${myReviews.size()}">0</span> đánh giá
+                    </span>
+                </div>
+
+                <!-- EMPTY STATE -->
+                <div th:if="${#lists.isEmpty(myReviews)}" class="text-center py-5 px-4"
+                    style="background:#fff;border-radius:20px;border:2px dashed #e9ecef;">
+                    <div
+                        style="width:80px;height:80px;background:#fff8e1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;">
+                        <i class="fas fa-star" style="font-size:2rem;color:#ffc107;"></i>
+                    </div>
+                    <h6 class="fw-bold mb-1">Chưa có đánh giá nào</h6>
+                    <p class="text-muted small mb-4">Mua sắm và chia sẻ trải nghiệm của bạn để giúp cộng đồng!</p>
+                    <a href="/account/orders" class="btn btn-dark rounded-pill px-4">
+                        <i class="fas fa-box me-2"></i>Xem đơn hàng
+                    </a>
+                </div>
+
+                <!-- REVIEW CARDS -->
+                <div class="d-flex flex-column gap-3" th:if="${!#lists.isEmpty(myReviews)}">
+                    <div th:each="review : ${myReviews}" class="review-card" th:id="'review-card-' + ${review.id}"
+                        th:attr="data-review-id=${review.id},
+                              data-product-id=${review.product.id},
+                              data-product-name=${review.product.name},
+                              data-product-image=${review.product.image},
+                              data-rating=${review.rating},
+                              data-comment=${review.comment != null ? review.comment : ''}"
+                        style="background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden;border:1px solid #f0f0f0;transition:box-shadow .2s;">
+
+                        <!-- Top: product info + star badge -->
+                        <div class="d-flex align-items-center gap-3 p-4 pb-3" style="border-bottom:1px solid #f8f8f8;">
+                            <a th:href="@{/product/{id}(id=${review.product.id})}" class="flex-shrink-0">
+                                <img th:src="@{${review.product.image}}" alt="product"
+                                    style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #eee;">
+                            </a>
+                            <div class="flex-grow-1 min-width-0">
+                                <a th:href="@{/product/{id}(id=${review.product.id})}"
+                                    class="fw-semibold text-dark text-decoration-none d-block text-truncate"
+                                    style="font-size:.95rem;" th:text="${review.product.name}">Tên SP</a>
+                                <small class="text-muted">
+                                    <i class="far fa-clock me-1"></i>
+                                    <span class="review-date-display"
+                                        th:text="${#temporals.format(review.reviewDate,'HH:mm · dd/MM/yyyy')}"></span>
+                                </small>
+                            </div>
+                            <!-- Star badge + label -->
+                            <div class="flex-shrink-0 text-end">
+                                <div class="star-badge" th:classappend="${review.rating == 5} ? 'star-5' :
+                                                (${review.rating == 4} ? 'star-4' :
+                                                (${review.rating == 3} ? 'star-3' : 'star-low'))">
+                                    <i class="fas fa-star me-1"></i>
+                                    <span class="badge-rating-num" th:text="${review.rating}">5</span>/5
+                                </div>
+                                <div class="mt-1 small fw-semibold rating-label" th:text="${review.rating == 1} ? 'Rất tệ' :
+                                          (${review.rating == 2} ? 'Tệ' :
+                                          (${review.rating == 3} ? 'Ổn' :
+                                          (${review.rating == 4} ? 'Tốt' : 'Xuất sắc')))" th:style="${review.rating >= 4} ? 'color:#2e7d32;' :
+                                           (${review.rating == 3} ? 'color:#e65100;' : 'color:#c62828;')"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom: full stars + comment + edit btn -->
+                        <div class="px-4 py-3 d-flex align-items-start gap-3">
+                            <div class="flex-grow-1">
+                                <!-- Star row -->
+                                <div class="stars-display mb-2">
+                                    <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                                        <i th:class="${i <= review.rating} ? 'fas fa-star' : 'far fa-star'"
+                                            th:style="${i <= review.rating} ? 'color:#ffc107;font-size:1.1rem;' : 'color:#dee2e6;font-size:1.1rem;'"></i>
+                                    </th:block>
+                                </div>
+                                <!-- Comment -->
+                                <p class="comment-display mb-0"
+                                    th:if="${review.comment != null and !review.comment.isEmpty()}"
+                                    style="font-size:.92rem;line-height:1.6;color:#444;" th:text="${review.comment}">
+                                </p>
+                                <p class="comment-display mb-0 fst-italic text-muted"
+                                    th:if="${review.comment == null or review.comment.isEmpty()}"
+                                    style="font-size:.88rem;">Không có nhận xét</p>
+                            </div>
+                            <!-- Edit button -->
+                            <button type="button" class="btn btn-sm edit-review-btn flex-shrink-0"
+                                style="border:1.5px solid #dee2e6;color:#555;border-radius:8px;padding:5px 12px;font-size:.82rem;transition:all .2s;"
+                                th:attr="data-review-id=${review.id}" title="Chỉnh sửa đánh giá">
+                                <i class="fas fa-pen me-1"></i>Sửa
+                            </button>
+                        </div>
+                    </div>
+                </div><!-- end cards -->
+
+            </div>
+        </div>
+
+        <!-- ===== REVIEW / EDIT MODAL ===== -->
+        <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:500px;">
+                <div class="modal-content border-0 shadow-lg" style="border-radius:16px;overflow:hidden;">
+                    <!-- Header -->
+                    <div class="modal-header border-0 px-4 pt-4 pb-3 position-relative d-flex align-items-center justify-content-center"
+                        style="min-height:56px;">
+                        <button type="button" id="reviewBackBtn"
+                            class="btn p-0 position-absolute start-0 ms-3 text-dark"
+                            style="font-size:1.3rem;line-height:1;">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h5 class="fw-bold mb-0" id="reviewModalTitle" style="font-size:1.05rem;">Chỉnh sửa đánh giá
+                        </h5>
                     </div>
 
-                    <!-- List of submitted reviews -->
-                    <div th:each="review : ${myReviews}" class="d-flex align-items-start gap-3 border-bottom pb-4 mb-4">
-                        <!-- Product image -->
-                        <a th:href="@{/product/{id}(id=${review.product.id})}" class="flex-shrink-0">
-                            <img th:src="@{${review.product.image}}" alt="Product" width="72" height="72"
-                                style="object-fit:cover; border-radius:8px; border:1px solid #eee;">
-                        </a>
-                        <!-- Review content -->
-                        <div class="flex-grow-1">
-                            <a th:href="@{/product/{id}(id=${review.product.id})}"
-                                class="fw-bold text-dark text-decoration-none d-block mb-1"
-                                th:text="${review.product.name}">Tên sản phẩm</a>
+                    <div class="modal-body px-4 pt-0 pb-4" style="max-height:80vh;overflow-y:auto;">
+                        <!-- Product info (filled by JS) -->
+                        <div id="reviewProductList" class="mb-4"></div>
 
-                            <!-- Star display -->
-                            <div class="mb-1">
-                                <th:block th:each="i : ${#numbers.sequence(1, 5)}">
-                                    <i th:class="${i <= review.rating} ? 'fas fa-star text-warning' : 'far fa-star text-muted'"
-                                        style="font-size:.9rem;"></i>
-                                </th:block>
-                                <span class="ms-1 small text-muted fw-semibold" th:text="${review.rating == 1 ? 'Rất tệ' :
-                                               (review.rating == 2 ? 'Tệ' :
-                                               (review.rating == 3 ? 'Ổn' :
-                                               (review.rating == 4 ? 'Tốt' : 'Xuất sắc')))}">Tốt</span>
+                        <!-- Star Rating -->
+                        <div class="text-center mb-2">
+                            <div class="d-flex justify-content-center gap-3 mb-1" id="reviewStars">
+                                <i class="star-icon far fa-star" data-star="1"
+                                    style="font-size:2rem;cursor:pointer;color:#ccc;transition:color .15s;"></i>
+                                <i class="star-icon far fa-star" data-star="2"
+                                    style="font-size:2rem;cursor:pointer;color:#ccc;transition:color .15s;"></i>
+                                <i class="star-icon far fa-star" data-star="3"
+                                    style="font-size:2rem;cursor:pointer;color:#ccc;transition:color .15s;"></i>
+                                <i class="star-icon far fa-star" data-star="4"
+                                    style="font-size:2rem;cursor:pointer;color:#ccc;transition:color .15s;"></i>
+                                <i class="star-icon far fa-star" data-star="5"
+                                    style="font-size:2rem;cursor:pointer;color:#ccc;transition:color .15s;"></i>
                             </div>
-
-                            <!-- Comment -->
-                            <p class="text-secondary mb-1" style="font-size:.9rem;"
-                                th:text="${review.comment != null && !review.comment.isEmpty()} ? ${review.comment} : '(Không có nhận xét)'">
-                            </p>
-
-                            <!-- Date -->
-                            <small class="text-muted">
-                                <i class="far fa-clock me-1"></i>
-                                <span
-                                    th:text="${#temporals.format(review.reviewDate, 'HH:mm dd/MM/yyyy')}">01/01/2025</span>
-                            </small>
+                            <div id="starRequiredMsg" class="text-danger small mb-1"
+                                style="display:none;font-weight:600;">Đây là mục bắt buộc</div>
+                            <div id="starLabel" class="fw-semibold mt-1" style="font-size:.92rem;color:#555;">
+                                Chấm điểm đơn hàng của bạn <span class="text-danger">*</span>
+                            </div>
                         </div>
+
+                        <hr class="my-3">
+
+                        <!-- Textarea -->
+                        <div class="mb-3">
+                            <label class="fw-semibold mb-2 d-block" style="font-size:.9rem;">Chia sẻ ý nghĩ của
+                                bạn</label>
+                            <div style="position:relative;">
+                                <textarea id="reviewText" class="form-control bg-light border-0" rows="4"
+                                    maxlength="300" placeholder="Chia sẻ ý nghĩ của bạn"
+                                    style="resize:none;border-radius:10px;font-size:.9rem;padding-bottom:28px;"></textarea>
+                                <span id="reviewCharCount"
+                                    style="position:absolute;bottom:8px;right:12px;font-size:.78rem;color:#aaa;">0/300</span>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <button type="button" id="reviewSubmitBtn" class="btn w-100 fw-bold py-2"
+                            style="border-radius:24px;background:#ff3366;color:#fff;font-size:1rem;border:none;letter-spacing:.5px;">
+                            Cập nhật đánh giá
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Confirm-abandon modal -->
+        <div class="modal fade" id="confirmAbandonModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:340px;">
+                <div class="modal-content border-0 shadow-lg" style="border-radius:20px;overflow:hidden;">
+                    <div class="modal-body text-center px-4 pt-4 pb-3">
+                        <div class="mb-3" style="font-size:3.5rem;line-height:1;">&#128203;</div>
+                        <h5 class="fw-bold mb-2" style="font-size:1.05rem;line-height:1.4;">
+                            Tiếp tục chỉnh sửa để<br>giúp những người khác
+                        </h5>
+                        <p class="text-muted mb-4" style="font-size:.88rem;">Nếu hủy, thay đổi sẽ không được lưu</p>
+                        <button type="button" id="abandonContinueBtn" class="btn w-100 fw-bold py-2 mb-2"
+                            style="border-radius:24px;background:#ff3366;color:#fff;border:none;">Tiếp tục sửa</button>
+                        <button type="button" id="abandonConfirmBtn" class="btn w-100 fw-semibold py-2"
+                            style="border-radius:24px;background:transparent;color:#555;border:none;">Hủy bỏ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Must rate alert modal -->
+        <div class="modal fade" id="mustRateModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:300px;">
+                <div class="modal-content border-0 shadow"
+                    style="border-radius:14px;overflow:hidden;background:rgba(30,30,30,.9);color:#fff;">
+                    <div class="modal-body text-center py-3 px-4">
+                        <p class="mb-0 fw-semibold" style="font-size:.95rem;">Vui lòng chọn số sao trước khi gửi</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast notification -->
+        <div id="reviewToast" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9999;
+                padding:12px 20px;border-radius:10px;font-size:.9rem;
+                box-shadow:0 4px 16px rgba(0,0,0,.15);
+                display:none;align-items:center;gap:10px;min-width:240px;">
+        </div>
+
+
+        <style>
+            .review-card:hover {
+                box-shadow: 0 6px 24px rgba(0, 0, 0, .1) !important;
+            }
+
+            .star-badge {
+                display: inline-flex;
+                align-items: center;
+                font-weight: 700;
+                font-size: .85rem;
+                padding: 4px 10px;
+                border-radius: 20px;
+            }
+
+            .star-badge.star-5 {
+                background: #e8f5e9;
+                color: #2e7d32;
+            }
+
+            .star-badge.star-4 {
+                background: #f1f8e9;
+                color: #558b2f;
+            }
+
+            .star-badge.star-3 {
+                background: #fff3e0;
+                color: #e65100;
+            }
+
+            .star-badge.star-low {
+                background: #ffebee;
+                color: #c62828;
+            }
+
+            .min-width-0 {
+                min-width: 0;
+            }
+
+            .edit-review-btn:hover {
+                background: #f8f9fa !important;
+                border-color: #adb5bd !important;
+                color: #333 !important;
+            }
+
+            @keyframes toastIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(12px)
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0)
+                }
+            }
+        </style>
+
+        <script>
+            window.addEventListener('load', function () {
+                const STAR_LABELS = ['Rất tệ', 'Tệ', 'Ổn', 'Tốt', 'Xuất sắc'];
+                const STAR_COLORS = { 5: '#2e7d32', 4: '#558b2f', 3: '#e65100', 2: '#c62828', 1: '#c62828' };
+                const BADGE_CLASSES = { 5: 'star-5', 4: 'star-4', 3: 'star-3', 2: 'star-low', 1: 'star-low' };
+
+                let currentStarValue = 0;
+                let currentProductId = null;
+                let currentReviewId = null;
+                let currentCardEl = null;
+                let abandonModal = null;
+
+                // ===== OPEN EDIT MODAL =====
+                document.addEventListener('click', function (e) {
+                    const btn = e.target.closest('.edit-review-btn');
+                    if (!btn) return;
+
+                    const reviewId = btn.getAttribute('data-review-id');
+                    const card = document.getElementById('review-card-' + reviewId);
+
+                    currentReviewId = reviewId;
+                    currentProductId = card.getAttribute('data-product-id');
+                    currentCardEl = card;
+
+                    const savedRating = parseInt(card.getAttribute('data-rating')) || 0;
+                    const savedComment = card.getAttribute('data-comment') || '';
+                    const productName = card.getAttribute('data-product-name') || '';
+                    const productImg = card.getAttribute('data-product-image') || '';
+
+                    // Reset stars
+                    currentStarValue = savedRating;
+                    document.querySelectorAll('.star-icon').forEach(s => {
+                        s.style.color = parseInt(s.getAttribute('data-star')) <= savedRating ? '#f5a623' : '#ccc';
+                    });
+                    document.getElementById('starLabel').innerHTML =
+                        savedRating > 0 ? STAR_LABELS[savedRating - 1] + ' <span class="text-danger">*</span>'
+                            : 'Chấm điểm đơn hàng của bạn <span class="text-danger">*</span>';
+                    document.getElementById('starRequiredMsg').style.display = 'none';
+
+                    // Fill textarea
+                    const textarea = document.getElementById('reviewText');
+                    textarea.value = savedComment;
+                    document.getElementById('reviewCharCount').textContent = savedComment.length + '/300';
+
+                    // Populate product info
+                    document.getElementById('reviewProductList').innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0f0;">
+                <img src="${productImg}" alt="${productName}"
+                     style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid #eee;flex-shrink:0;"
+                     onerror="this.src='/images/placeholder.png'">
+                <div>
+                    <div style="font-size:.92rem;font-weight:600;line-height:1.3;">${productName}</div>
+                </div>
+            </div>`;
+
+                    document.getElementById('reviewModalTitle').textContent = 'Chỉnh sửa đánh giá';
+                    document.getElementById('reviewSubmitBtn').textContent = 'Cập nhật đánh giá';
+                    document.getElementById('reviewSubmitBtn').disabled = false;
+
+                    new bootstrap.Modal(document.getElementById('reviewModal')).show();
+                });
+
+                // ===== STAR INTERACTION =====
+                document.querySelectorAll('.star-icon').forEach(star => {
+                    star.addEventListener('mouseenter', function () {
+                        const hov = parseInt(this.getAttribute('data-star'));
+                        document.querySelectorAll('.star-icon').forEach(s =>
+                            s.style.color = parseInt(s.getAttribute('data-star')) <= hov ? '#f5a623'
+                                : (parseInt(s.getAttribute('data-star')) <= currentStarValue ? '#f5a623' : '#ccc')
+                        );
+                    });
+                    star.addEventListener('mouseleave', function () {
+                        document.querySelectorAll('.star-icon').forEach(s =>
+                            s.style.color = parseInt(s.getAttribute('data-star')) <= currentStarValue ? '#f5a623' : '#ccc'
+                        );
+                    });
+                    star.addEventListener('click', function () {
+                        currentStarValue = parseInt(this.getAttribute('data-star'));
+                        document.querySelectorAll('.star-icon').forEach(s =>
+                            s.style.color = parseInt(s.getAttribute('data-star')) <= currentStarValue ? '#f5a623' : '#ccc'
+                        );
+                        document.getElementById('starLabel').innerHTML =
+                            STAR_LABELS[currentStarValue - 1] + ' <span class="text-danger">*</span>';
+                        document.getElementById('starRequiredMsg').style.display = 'none';
+                    });
+                });
+
+                // ===== CHAR COUNTER =====
+                document.getElementById('reviewText').addEventListener('input', function () {
+                    document.getElementById('reviewCharCount').textContent = this.value.length + '/300';
+                });
+
+                // ===== SUBMIT (UPDATE) =====
+                document.getElementById('reviewSubmitBtn').addEventListener('click', function () {
+                    if (currentStarValue === 0) {
+                        document.getElementById('starRequiredMsg').style.display = 'block';
+                        const m = new bootstrap.Modal(document.getElementById('mustRateModal'));
+                        m.show(); setTimeout(() => m.hide(), 2000);
+                        return;
+                    }
+
+                    const btn = this;
+                    btn.disabled = true;
+                    btn.textContent = 'Đang cập nhật...';
+
+                    fetch('/account/reviews/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            productId: parseInt(currentProductId),
+                            rating: currentStarValue,
+                            comment: document.getElementById('reviewText').value.trim()
+                        })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+
+                                // ===== REAL-TIME CARD UPDATE =====
+                                const newRating = currentStarValue;
+                                const newComment = document.getElementById('reviewText').value.trim();
+                                const card = currentCardEl;
+
+                                // Update data-* attrs for next edit
+                                card.setAttribute('data-rating', newRating);
+                                card.setAttribute('data-comment', newComment);
+
+                                // Update star badge class & number
+                                const badge = card.querySelector('.star-badge');
+                                badge.className = 'star-badge ' + BADGE_CLASSES[newRating];
+                                badge.querySelector('.badge-rating-num').textContent = newRating;
+
+                                // Update label
+                                const labelEl = card.querySelector('.rating-label');
+                                const labelText = STAR_LABELS[newRating - 1];
+                                labelEl.textContent = labelText;
+                                labelEl.style.color = STAR_COLORS[newRating];
+
+                                // Update full star row
+                                const starsDisplay = card.querySelector('.stars-display');
+                                starsDisplay.innerHTML = [1, 2, 3, 4, 5].map(i =>
+                                    `<i class="${i <= newRating ? 'fas' : 'far'} fa-star"
+                        style="${i <= newRating ? 'color:#ffc107;' : 'color:#dee2e6;'}font-size:1.1rem;"></i>`
+                                ).join('');
+
+                                // Update comment
+                                const commentEl = card.querySelector('.comment-display');
+                                if (commentEl) {
+                                    commentEl.style.fontStyle = newComment ? '' : 'italic';
+                                    commentEl.style.color = newComment ? '#444' : '';
+                                    commentEl.textContent = newComment || 'Không có nhận xét';
+                                }
+
+                                // Update star-badge color on star-badge element (for hover/card look)
+                                badge.style.background = '';  // class handles it
+
+                                showToast('✓ Cập nhật đánh giá thành công!', 'success');
+                            } else {
+                                btn.disabled = false;
+                                btn.textContent = 'Cập nhật đánh giá';
+                                showToast(data.error || 'Đã xảy ra lỗi, vui lòng thử lại.', 'error');
+                            }
+                        })
+                        .catch(() => {
+                            btn.disabled = false;
+                            btn.textContent = 'Cập nhật đánh giá';
+                            showToast('Lỗi kết nối, vui lòng thử lại.', 'error');
+                        });
+                });
+
+                // ===== BACK BUTTON =====
+                document.getElementById('reviewBackBtn').addEventListener('click', function () {
+                    const hasChanges = currentStarValue !== parseInt(currentCardEl?.getAttribute('data-rating') || '0')
+                        || document.getElementById('reviewText').value.trim() !== (currentCardEl?.getAttribute('data-comment') || '');
+
+                    if (!hasChanges) {
+                        bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+                        return;
+                    }
+                    abandonModal = new bootstrap.Modal(document.getElementById('confirmAbandonModal'));
+                    abandonModal.show();
+                });
+
+                document.getElementById('abandonContinueBtn').addEventListener('click', function () {
+                    if (abandonModal) { abandonModal.hide(); abandonModal = null; }
+                });
+
+                document.getElementById('abandonConfirmBtn').addEventListener('click', function () {
+                    if (abandonModal) { abandonModal.hide(); abandonModal = null; }
+                    const rm = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+                    if (rm) rm.hide();
+                });
+
+                // ===== TOAST =====
+                function showToast(msg, type) {
+                    const toast = document.getElementById('reviewToast');
+                    toast.textContent = msg;
+                    toast.style.display = 'flex';
+                    toast.style.background = type === 'success' ? '#1b5e20' : '#b71c1c';
+                    toast.style.color = '#fff';
+                    toast.style.animation = 'toastIn .3s ease';
+                    clearTimeout(toast._timer);
+                    toast._timer = setTimeout(() => toast.style.display = 'none', 3000);
+                }
+            }); // end window.load
+        </script>
+
     </article>
+
 </body>
 
 </html>

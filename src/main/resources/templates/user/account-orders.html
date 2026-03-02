@@ -31,6 +31,9 @@
                             <a class="nav-link text-center" href="#" data-status="COMPLETED">Đã hoàn thành</a>
                         </li>
                         <li class="nav-item flex-fill">
+                            <a class="nav-link text-center" href="#" data-status="NEED_REVIEW">Cần đánh giá</a>
+                        </li>
+                        <li class="nav-item flex-fill">
                             <a class="nav-link text-center" href="#" data-status="CANCELLED">Đã hủy</a>
                         </li>
                     </ul>
@@ -57,24 +60,14 @@
                             </div>
                         </div>
 
-                        <!-- Expected Delivery / Status Info -->
-                        <div class="px-4 py-3 bg-white border-bottom" th:if="${order.status == 'PENDING'}">
-                            <div class="d-flex align-items-center text-muted">
-                                <i class="fas fa-truck me-2"></i>
-                                <span class="fw-bold text-success">Đang chờ xác nhận</span>
-                            </div>
-                        </div>
-                        <div class="px-4 py-3 bg-white border-bottom shipping-status-bar"
-                            th:if="${order.status == 'SHIPPING'}">
-                            <div class="d-flex align-items-center text-muted">
-                                <i class="fas fa-truck me-2"></i>
-                                <span class="fw-bold text-success">Đang giao</span>
-                            </div>
-                        </div>
+
+
 
                         <!-- Order Products -->
                         <div class="p-4">
-                            <div th:each="detail : ${order.orderDetails}" class="d-flex align-items-center mb-3">
+                            <div th:each="detail : ${order.orderDetails}"
+                                class="d-flex align-items-center mb-3 order-detail-item"
+                                th:attr="data-product-id=${detail.productVariant.product.id},data-product-name=${detail.productName},data-product-image=${detail.productVariant.product.image},data-product-color=${detail.productVariant.color},data-product-size=${detail.productVariant.size},data-product-qty=${detail.quantity}">
                                 <a th:href="@{/product/{id}(id=${detail.productVariant.product.id})}"
                                     class="text-decoration-none d-flex align-items-center flex-grow-1 text-dark">
                                     <img th:src="@{${detail.productVariant.product.image}}" alt="Product"
@@ -108,6 +101,12 @@
                                     <span th:if="${order.status == 'PENDING' || order.status == 'CONFIRMED'}">
                                         <button type="button" class="btn btn-outline-danger btn-sm px-4"
                                             th:onclick="'confirmCancel(' + ${order.id} + ')'">Hủy đơn</button>
+                                    </span>
+                                    <span th:if="${order.status == 'COMPLETED'}">
+                                        <button type="button" class="btn btn-warning btn-sm px-4 fw-bold review-btn"
+                                            th:attr="data-order-id=${order.id}">
+                                            <i class="fas fa-star me-1"></i>Đánh giá
+                                        </button>
                                     </span>
                                     <a th:href="@{/product/{id}(id=${order.orderDetails[0].productVariant.product.id})}"
                                         class="btn btn-dark btn-sm px-4">Mua lại</a>
@@ -205,6 +204,132 @@
             </div>
         </div>
 
+        <!-- ===== REVIEW MODAL ===== -->
+        <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+
+                    <!-- Header -->
+                    <div
+                        class="modal-header border-0 px-4 pt-4 pb-3 position-relative d-flex align-items-center justify-content-center">
+                        <button type="button" id="reviewBackBtn"
+                            class="btn p-0 position-absolute start-0 ms-3 text-dark"
+                            style="font-size: 1.3rem; line-height:1;">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h5 class="fw-bold mb-0" style="font-size: 1.05rem;">Vi&#7871;t &#273;&#225;nh gi&#225;</h5>
+                    </div>
+
+                    <div class="modal-body px-4 pt-0 pb-4" style="max-height:80vh; overflow-y:auto;">
+
+                        <!-- Product info list -->
+                        <div id="reviewProductList" class="mb-4"></div>
+
+                        <!-- Star Rating -->
+                        <div class="text-center mb-2" id="reviewStarSection">
+                            <div class="d-flex justify-content-center gap-3 mb-1" id="reviewStars">
+                                <i class="star-icon far fa-star" data-star="1"
+                                    style="font-size:2rem; cursor:pointer; color:#ccc; transition:color .15s;"></i>
+                                <i class="star-icon far fa-star" data-star="2"
+                                    style="font-size:2rem; cursor:pointer; color:#ccc; transition:color .15s;"></i>
+                                <i class="star-icon far fa-star" data-star="3"
+                                    style="font-size:2rem; cursor:pointer; color:#ccc; transition:color .15s;"></i>
+                                <i class="star-icon far fa-star" data-star="4"
+                                    style="font-size:2rem; cursor:pointer; color:#ccc; transition:color .15s;"></i>
+                                <i class="star-icon far fa-star" data-star="5"
+                                    style="font-size:2rem; cursor:pointer; color:#ccc; transition:color .15s;"></i>
+                            </div>
+                            <div id="starRequiredMsg" class="text-danger small mb-1"
+                                style="display:none; font-weight:600;">&#272;&#226;y l&#224; m&#7909;c b&#7855;t
+                                bu&#7897;c</div>
+                            <div id="starLabel" class="fw-semibold mt-1" style="font-size: 0.92rem; color: #555;">
+                                Ch&#7845;m &#273;i&#7875;m &#273;&#417;n h&#224;ng c&#7911;a b&#7841;n <span
+                                    class="text-danger">*</span>
+                            </div>
+                        </div>
+
+                        <hr class="my-3">
+
+                        <!-- Text area -->
+                        <div class="mb-3">
+                            <label class="fw-semibold mb-2 d-block" style="font-size: 0.9rem;">Chia s&#7867; &#253;
+                                ngh&#297; c&#7911;a b&#7841;n</label>
+                            <div style="position: relative;">
+                                <textarea id="reviewText" class="form-control bg-light border-0" rows="4"
+                                    maxlength="300" placeholder="Chia s&#7867; &#253; ngh&#297; c&#7911;a b&#7841;n"
+                                    style="resize: none; border-radius: 10px; font-size: 0.9rem; padding-bottom: 28px;"></textarea>
+                                <span id="reviewCharCount"
+                                    style="position:absolute; bottom:8px; right:12px; font-size: 0.78rem; color:#aaa;">0/300</span>
+                            </div>
+                        </div>
+
+                        <!-- Media upload -->
+                        <div class="mb-4">
+                            <label class="fw-semibold mb-2 d-block" style="font-size: 0.9rem;">Th&#234;m &#7843;nh
+                                ho&#7863;c video</label>
+                            <div id="mediaUploadArea"
+                                style="border: 2px dashed #ddd; border-radius: 10px; padding: 24px 16px; text-align: center; cursor: pointer; background: #fafafa; transition: border-color .2s;"
+                                onclick="document.getElementById('reviewMediaInput').click()">
+                                <i class="fas fa-camera fa-2x mb-2 d-block" style="color:#bbb;"></i>
+                                <span style="color:#aaa; font-size: 0.88rem;">Th&#234;m &#7843;nh ho&#7863;c
+                                    video</span>
+                            </div>
+                            <input type="file" id="reviewMediaInput" accept="image/*,video/*" multiple
+                                style="display:none;">
+                            <div id="reviewMediaPreview" class="d-flex flex-wrap gap-2 mt-3"></div>
+                        </div>
+
+                        <!-- Submit button -->
+                        <button type="button" id="reviewSubmitBtn" class="btn w-100 fw-bold py-2"
+                            style="border-radius: 24px; background: #ff3366; color: #fff; font-size: 1rem; border: none; letter-spacing: .5px;">
+                            G&#7917;i
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm-abandon modal (when user clicks back mid-review) -->
+        <div class="modal fade" id="confirmAbandonModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 340px; z-index: 1060;">
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                    <div class="modal-body text-center px-4 pt-4 pb-3">
+                        <!-- Illustration -->
+                        <div class="mb-3" style="font-size: 4rem; line-height:1;">&#128203;&#10003;</div>
+                        <h5 class="fw-bold mb-2" style="font-size: 1.05rem; line-height: 1.4;">
+                            Ti&#7871;p t&#7909;c &#273;&#225;nh gi&#225; &#273;&#7875;<br>gi&#250;p nh&#7919;ng
+                            ng&#432;&#7901;i kh&#225;c
+                        </h5>
+                        <p class="text-muted mb-4" style="font-size: 0.88rem;">
+                            N&#7871;u b&#7841;n h&#7911;y b&#7887;, &#273;&#225;nh gi&#225; c&#7911;a b&#7841;n s&#7869;
+                            kh&#244;ng l&#432;u l&#7841;i
+                        </p>
+                        <button type="button" id="abandonContinueBtn" class="btn w-100 fw-bold py-2 mb-2"
+                            style="border-radius: 24px; background: #ff3366; color: #fff; border: none; font-size: 0.97rem;">
+                            Ti&#7871;p t&#7909;c vi&#7871;t
+                        </button>
+                        <button type="button" id="abandonConfirmBtn" class="btn w-100 fw-semibold py-2"
+                            style="border-radius: 24px; background: transparent; color: #555; border: none; font-size: 0.95rem;">
+                            H&#7911;y b&#7887;
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Small "must rate" alert modal -->
+        <div class="modal fade" id="mustRateModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 320px;">
+                <div class="modal-content border-0 shadow"
+                    style="border-radius: 14px; overflow: hidden; background: rgba(30,30,30,0.9); color:#fff;">
+                    <div class="modal-body text-center py-3 px-4">
+                        <p class="mb-0 fw-semibold" style="font-size: 0.95rem;">&#272;&#7875; g&#7917;i, h&#227;y
+                            th&#234;m &#273;&#225;nh gi&#225;</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <style>
             .status-tab {
                 padding: 12px 20px;
@@ -274,6 +399,75 @@
                 cursor: pointer;
                 flex-shrink: 0;
             }
+
+            /* ===== Review Modal CSS ===== */
+            #reviewStars .star-icon:hover,
+            #reviewStars .star-icon.hovered {
+                color: #f5a623 !important;
+            }
+
+            #reviewStars .star-icon.selected {
+                color: #f5a623 !important;
+            }
+
+            .review-product-item {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 10px 0;
+                border-bottom: 1px solid #f0f0f0;
+            }
+
+            .review-product-item:last-child {
+                border-bottom: none;
+            }
+
+            .review-product-item img {
+                width: 60px;
+                height: 60px;
+                object-fit: cover;
+                border-radius: 8px;
+                border: 1px solid #eee;
+                flex-shrink: 0;
+            }
+
+            .review-media-thumb {
+                width: 72px;
+                height: 72px;
+                object-fit: cover;
+                border-radius: 8px;
+                border: 1px solid #eee;
+            }
+
+            .review-media-thumb-wrapper {
+                position: relative;
+                display: inline-block;
+            }
+
+            .review-media-thumb-wrapper .remove-media {
+                position: absolute;
+                top: -6px;
+                right: -6px;
+                width: 20px;
+                height: 20px;
+                background: #333;
+                color: #fff;
+                border-radius: 50%;
+                font-size: 11px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                line-height: 1;
+            }
+
+            #reviewModal .modal-header {
+                min-height: 56px;
+            }
+
+            #reviewSubmitBtn:hover {
+                filter: brightness(1.1);
+            }
         </style>
 
         <script>
@@ -289,6 +483,9 @@
                         if (status === 'all') {
                             // "Tất cả" excludes "CANCELLED" as per user request
                             card.style.display = cardStatus === 'CANCELLED' ? 'none' : 'block';
+                        } else if (status === 'NEED_REVIEW') {
+                            // "Cần đánh giá" shows COMPLETED orders
+                            card.style.display = cardStatus === 'COMPLETED' ? 'block' : 'none';
                         } else if (cardStatus === status) {
                             card.style.display = 'block';
                         } else {
@@ -430,6 +627,220 @@
                     notifyModal.show();
                 }
             };
+
+            // ===== REVIEW MODAL =====
+            const STAR_LABELS = ['Rất tệ', 'Tệ', 'Ổn', 'Tốt', 'Xuất sắc'];
+            let currentStarValue = 0;
+            let currentProductId = null;  // product ID sent to backend
+
+            // Open review modal when "Đánh giá" button is clicked
+            document.addEventListener('click', function (e) {
+                const btn = e.target.closest('.review-btn');
+                if (!btn) return;
+
+                // Reset modal state
+                currentStarValue = 0;
+                document.querySelectorAll('.star-icon').forEach(s => {
+                    s.classList.remove('selected', 'hovered');
+                    s.style.color = '#ccc';
+                });
+                document.getElementById('starLabel').innerHTML = 'Chấm điểm đơn hàng của bạn <span class="text-danger">*</span>';
+                document.getElementById('starRequiredMsg').style.display = 'none';
+                document.getElementById('reviewText').value = '';
+                document.getElementById('reviewCharCount').textContent = '0/300';
+                document.getElementById('reviewMediaInput').value = '';
+                document.getElementById('reviewMediaPreview').innerHTML = '';
+                document.getElementById('mediaUploadArea').style.display = '';
+
+                // Populate product list from parent order card
+                const card = btn.closest('.order-card');
+                const productList = document.getElementById('reviewProductList');
+                productList.innerHTML = '';
+                currentProductId = null;
+                card.querySelectorAll('.order-detail-item').forEach((item, idx) => {
+                    const productId = item.getAttribute('data-product-id') || '';
+                    const name = item.getAttribute('data-product-name') || '';
+                    const img = item.getAttribute('data-product-image') || '';
+                    const color = item.getAttribute('data-product-color') || '';
+                    const size = item.getAttribute('data-product-size') || '';
+                    const qty = item.getAttribute('data-product-qty') || '';
+
+                    // Use first product's ID for the review submission
+                    if (idx === 0 && productId) currentProductId = parseInt(productId);
+
+                    const el = document.createElement('div');
+                    el.className = 'review-product-item';
+                    el.innerHTML = `
+                        <img src="${img}" alt="${name}" onerror="this.src='/images/placeholder.png'">
+                        <div>
+                            <div class="fw-semibold" style="font-size:.92rem; line-height:1.3;">${name}</div>
+                            <div class="text-muted" style="font-size:.82rem; margin-top:3px;">${color} / ${size}, x${qty}</div>
+                        </div>
+                    `;
+                    productList.appendChild(el);
+                });
+
+                const modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+                modal.show();
+            });
+
+            // Star rating — hover
+            document.querySelectorAll('.star-icon').forEach(star => {
+                star.addEventListener('mouseenter', function () {
+                    const hov = parseInt(this.getAttribute('data-star'));
+                    document.querySelectorAll('.star-icon').forEach(s => {
+                        const v = parseInt(s.getAttribute('data-star'));
+                        s.style.color = v <= hov ? '#f5a623' : (v <= currentStarValue ? '#f5a623' : '#ccc');
+                    });
+                });
+                star.addEventListener('mouseleave', function () {
+                    document.querySelectorAll('.star-icon').forEach(s => {
+                        const v = parseInt(s.getAttribute('data-star'));
+                        s.style.color = v <= currentStarValue ? '#f5a623' : '#ccc';
+                    });
+                });
+                star.addEventListener('click', function () {
+                    currentStarValue = parseInt(this.getAttribute('data-star'));
+                    document.querySelectorAll('.star-icon').forEach(s => {
+                        const v = parseInt(s.getAttribute('data-star'));
+                        s.style.color = v <= currentStarValue ? '#f5a623' : '#ccc';
+                    });
+                    document.getElementById('starLabel').innerHTML =
+                        STAR_LABELS[currentStarValue - 1] + ' <span class="text-danger">*</span>';
+                    document.getElementById('starRequiredMsg').style.display = 'none';
+                });
+            });
+
+            // Char counter
+            document.getElementById('reviewText').addEventListener('input', function () {
+                document.getElementById('reviewCharCount').textContent = this.value.length + '/300';
+            });
+
+            // Media preview
+            document.getElementById('reviewMediaInput').addEventListener('change', function () {
+                const preview = document.getElementById('reviewMediaPreview');
+                Array.from(this.files).forEach(file => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'review-media-thumb-wrapper';
+
+                    if (file.type.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.className = 'review-media-thumb';
+                        const reader = new FileReader();
+                        reader.onload = e => img.src = e.target.result;
+                        reader.readAsDataURL(file);
+                        wrapper.appendChild(img);
+                    } else {
+                        const vid = document.createElement('video');
+                        vid.className = 'review-media-thumb';
+                        vid.style.objectFit = 'cover';
+                        const reader = new FileReader();
+                        reader.onload = e => vid.src = e.target.result;
+                        reader.readAsDataURL(file);
+                        wrapper.appendChild(vid);
+                    }
+
+                    const removeBtn = document.createElement('span');
+                    removeBtn.className = 'remove-media';
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.onclick = () => wrapper.remove();
+                    wrapper.appendChild(removeBtn);
+                    preview.appendChild(wrapper);
+                });
+
+                // Hide the upload area when files are added, show a '+' tile instead
+                if (preview.children.length > 0) {
+                    document.getElementById('mediaUploadArea').style.display = 'none';
+                    // Add a '+' tile to add more
+                    let addMore = preview.querySelector('.add-more-tile');
+                    if (!addMore) {
+                        addMore = document.createElement('div');
+                        addMore.className = 'add-more-tile review-media-thumb-wrapper';
+                        addMore.style.cssText = 'width:72px;height:72px;border:2px dashed #ddd;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.5rem;color:#aaa;flex-shrink:0;';
+                        addMore.innerHTML = '+';
+                        addMore.onclick = () => document.getElementById('reviewMediaInput').click();
+                        preview.appendChild(addMore);
+                    }
+                }
+            });
+
+            // Submit review
+            document.getElementById('reviewSubmitBtn').addEventListener('click', function () {
+                if (currentStarValue === 0) {
+                    // Show required message
+                    document.getElementById('starRequiredMsg').style.display = 'block';
+                    // Show the small dark alert modal
+                    const mustRateModal = new bootstrap.Modal(document.getElementById('mustRateModal'));
+                    mustRateModal.show();
+                    // Auto-hide after 2s
+                    setTimeout(() => {
+                        mustRateModal.hide();
+                    }, 2000);
+                    return;
+                }
+
+                // POST review to backend
+                const submitBtn = document.getElementById('reviewSubmitBtn');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Đang gửi...';
+
+                fetch('/account/reviews/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        productId: currentProductId,
+                        rating: currentStarValue,
+                        comment: document.getElementById('reviewText').value.trim()
+                    })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+                            window.location.href = '/account/reviews';
+                        } else {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Gửi';
+                            alert(data.error || 'Đã xảy ra lỗi, vui lòng thử lại.');
+                        }
+                    })
+                    .catch(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Gửi';
+                        alert('Lỗi kết nối, vui lòng thử lại.');
+                    });
+            });
+
+            // ===== BACK BUTTON — abandon confirmation =====
+            let abandonModal = null;
+
+            document.getElementById('reviewBackBtn').addEventListener('click', function () {
+                const hasContent = currentStarValue > 0 || document.getElementById('reviewText').value.trim().length > 0
+                    || document.getElementById('reviewMediaPreview').children.length > 0;
+
+                if (!hasContent) {
+                    // Nothing typed — close immediately
+                    bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+                    return;
+                }
+
+                // Show the abandon confirmation on top of the review modal
+                abandonModal = new bootstrap.Modal(document.getElementById('confirmAbandonModal'));
+                abandonModal.show();
+            });
+
+            // "Tiếp tục viết" — dismiss confirm only, keep review modal open
+            document.getElementById('abandonContinueBtn').addEventListener('click', function () {
+                if (abandonModal) { abandonModal.hide(); abandonModal = null; }
+            });
+
+            // "Hủy bỏ" — close both modals
+            document.getElementById('abandonConfirmBtn').addEventListener('click', function () {
+                if (abandonModal) { abandonModal.hide(); abandonModal = null; }
+                const reviewModal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+                if (reviewModal) reviewModal.hide();
+            });
+
         </script>
     </article>
 </body>

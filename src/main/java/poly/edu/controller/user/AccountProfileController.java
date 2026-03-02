@@ -11,8 +11,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import poly.edu.dto.ProfileForm;
 import poly.edu.entity.Account;
 import poly.edu.entity.Order;
+import poly.edu.entity.Product;
+import poly.edu.entity.ProductReview;
 import poly.edu.repository.AccountRepository;
 import poly.edu.repository.OrderRepository;
+import poly.edu.repository.ProductRepository;
+import poly.edu.repository.ProductReviewRepository;
 import poly.edu.service.AccountService;
 import poly.edu.service.FileService;
 import poly.edu.service.OrderQueryService;
@@ -57,6 +61,8 @@ public class AccountProfileController {
     private final OrderQueryService orderQueryService;
     private final OrderRepository orderRepository;
     private final poly.edu.service.OrderCommandService orderCommandService;
+    private final ProductReviewRepository productReviewRepository;
+    private final ProductRepository productRepository;
 
     /**
      * Display user profile page (GET).
@@ -193,9 +199,66 @@ public class AccountProfileController {
     }
 
     @GetMapping("/reviews")
-    public String reviews(Model model) {
+    public String reviews(Model model, Principal principal) {
+        Account acc = getAuthenticatedAccount(principal);
+        if (acc == null)
+            return "redirect:/login?error=true";
+
+        List<ProductReview> myReviews = productReviewRepository
+                .findByAccountIdOrderByReviewDateDesc(acc.getId());
+
+        model.addAttribute("myReviews", myReviews);
         model.addAttribute("activePage", "reviews");
         return "user/account-reviews";
+    }
+
+    /**
+     * Submit a product review (AJAX POST from review modal).
+     * Body: { productId, rating, comment }
+     * Returns 200 OK on success, 400/401 on error.
+     */
+    @PostMapping("/reviews/submit")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> submitReview(
+            @RequestBody Map<String, Object> body,
+            Principal principal) {
+
+        Account acc = getAuthenticatedAccount(principal);
+        if (acc == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Chưa đăng nhập"));
+        }
+
+        try {
+            Integer productId = Integer.valueOf(body.get("productId").toString());
+            Integer rating = Integer.valueOf(body.get("rating").toString());
+            String comment = body.containsKey("comment") ? body.get("comment").toString() : "";
+
+            if (rating < 1 || rating > 5) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Số sao không hợp lệ"));
+            }
+
+            Optional<Product> productOpt = productRepository.findById(productId);
+            if (productOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Sản phẩm không tồn tại"));
+            }
+
+            // Upsert: if already reviewed this product, update; otherwise insert
+            ProductReview review = productReviewRepository
+                    .findByProductIdAndAccountId(productId, acc.getId())
+                    .orElse(new ProductReview());
+
+            review.setProduct(productOpt.get());
+            review.setAccount(acc);
+            review.setRating(rating);
+            review.setComment(comment.isBlank() ? null : comment);
+
+            productReviewRepository.save(review);
+
+            return ResponseEntity.ok(Map.of("success", true, "message", "Đánh giá đã được gửi thành công!"));
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Đã xảy ra lỗi: " + e.getMessage()));
+        }
     }
 
     @GetMapping("/addresses")

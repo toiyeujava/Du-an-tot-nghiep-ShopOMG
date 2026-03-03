@@ -55,16 +55,17 @@ public class AdminDashboardController {
     public String dashboard(Model model) {
         model.addAttribute("pageTitle", "Tổng quan - Admin");
 
-        // Get dashboard statistics
         Map<String, Object> stats = dashboardService.getDashboardStats();
         model.addAttribute("monthlyRevenue", stats.get("monthlyRevenue"));
+        model.addAttribute("revenueGrowth", stats.get("revenueGrowth"));
+        model.addAttribute("revenueByStatus", stats.get("revenueByStatus"));
         model.addAttribute("pendingOrders", stats.get("pendingOrders"));
         model.addAttribute("totalCustomers", stats.get("totalCustomers"));
         model.addAttribute("totalProducts", stats.get("totalProducts"));
-        model.addAttribute("recentOrders", stats.get("recentOrders"));
+        model.addAttribute("activeOrders", stats.get("activeOrders"));
+        model.addAttribute("orderStatsByStatus", stats.get("orderStatsByStatus"));
         model.addAttribute("topProducts", stats.get("topProducts"));
 
-        // Get chart data (last 7 months)
         model.addAttribute("revenueChartData", dashboardService.getRevenueChartData(7));
 
         return "admin/dashboard";

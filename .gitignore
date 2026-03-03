@@ -65,9 +65,16 @@ application-prod.yml
 # but be sure to remove real passwords from it first!)
 
 # ==========================================
-# Antigravity Agent State (Local Only)
+# Antigravity Agent & AI Tools (Local Only)
 # ==========================================
+.agent/
 .agent/cache/
 .agent/memory/
 .agent/keys.json
 .agent/*.local.md
+.agent/logs/
+# Bỏ qua các file markdown tạm thời do agent tạo ra trong quá trình làm việc
+*.agent.md
+# Nếu bạn sử dụng các công cụ AI khác thường tạo folder tạm
+.cursor/
+.windsurf/

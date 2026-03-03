@@ -13,47 +13,49 @@ import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Integer> {
 
-    // Find orders by status
-    List<Order> findByStatus(String status);
+        // Find orders by status
+        List<Order> findByStatus(String status);
 
-    Page<Order> findByStatus(String status, Pageable pageable);
+        Page<Order> findByStatus(String status, Pageable pageable);
 
-    // Find orders by account
-    List<Order> findByAccountId(Integer accountId);
+        // Find orders by account
+        List<Order> findByAccountId(Integer accountId);
 
-    Page<Order> findByAccountIdOrderByOrderDateDesc(Integer accountId, Pageable pageable);
+        Page<Order> findByAccountIdOrderByOrderDateDesc(Integer accountId, Pageable pageable);
 
-    // Find orders by date range
-    @Query("SELECT o FROM Order o WHERE o.orderDate BETWEEN :startDate AND :endDate ORDER BY o.orderDate DESC")
-    List<Order> findByDateRange(@Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate);
+        List<Order> findByAccountIdAndStatusOrderByOrderDateDesc(Integer accountId, String status);
 
-    // Count orders by status
-    Long countByStatus(String status);
+        // Find orders by date range
+        @Query("SELECT o FROM Order o WHERE o.orderDate BETWEEN :startDate AND :endDate ORDER BY o.orderDate DESC")
+        List<Order> findByDateRange(@Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
 
-    // Get monthly revenue
-    @Query("SELECT COALESCE(SUM(o.finalAmount), 0) FROM Order o " +
-            "WHERE o.status = 'COMPLETED' " +
-            "AND MONTH(o.orderDate) = :month " +
-            "AND YEAR(o.orderDate) = :year")
-    BigDecimal getMonthlyRevenue(@Param("month") int month, @Param("year") int year);
+        // Count orders by status
+        Long countByStatus(String status);
 
-    // Get daily revenue for chart
-    @Query("SELECT CAST(o.orderDate AS date) as orderDate, SUM(o.finalAmount) as revenue " +
-            "FROM Order o " +
-            "WHERE o.status = 'COMPLETED' " +
-            "AND o.orderDate BETWEEN :startDate AND :endDate " +
-            "GROUP BY CAST(o.orderDate AS date) " +
-            "ORDER BY CAST(o.orderDate AS date)")
-    List<Object[]> getDailyRevenue(@Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate);
+        // Get monthly revenue
+        @Query("SELECT COALESCE(SUM(o.finalAmount), 0) FROM Order o " +
+                        "WHERE o.status = 'COMPLETED' " +
+                        "AND MONTH(o.orderDate) = :month " +
+                        "AND YEAR(o.orderDate) = :year")
+        BigDecimal getMonthlyRevenue(@Param("month") int month, @Param("year") int year);
 
-    // Get recent orders
-    List<Order> findTop10ByOrderByOrderDateDesc();
+        // Get daily revenue for chart
+        @Query("SELECT CAST(o.orderDate AS date) as orderDate, SUM(o.finalAmount) as revenue " +
+                        "FROM Order o " +
+                        "WHERE o.status = 'COMPLETED' " +
+                        "AND o.orderDate BETWEEN :startDate AND :endDate " +
+                        "GROUP BY CAST(o.orderDate AS date) " +
+                        "ORDER BY CAST(o.orderDate AS date)")
+        List<Object[]> getDailyRevenue(@Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
 
-    // Check if product variant has orders
-    @Query("SELECT COUNT(od) > 0 FROM OrderDetail od " +
-            "WHERE od.productVariant.product.id = :productId " +
-            "AND od.order.status IN ('PENDING', 'CONFIRMED', 'SHIPPING')")
-    boolean hasActiveOrdersForProduct(@Param("productId") Integer productId);
+        // Get recent orders
+        List<Order> findTop10ByOrderByOrderDateDesc();
+
+        // Check if product variant has orders
+        @Query("SELECT COUNT(od) > 0 FROM OrderDetail od " +
+                        "WHERE od.productVariant.product.id = :productId " +
+                        "AND od.order.status IN ('PENDING', 'CONFIRMED', 'SHIPPING')")
+        boolean hasActiveOrdersForProduct(@Param("productId") Integer productId);
 }

@@ -10,8 +10,6 @@ import poly.edu.repository.OrderDetailRepository;
 import poly.edu.repository.OrderRepository;
 import poly.edu.repository.ProductVariantRepository;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 

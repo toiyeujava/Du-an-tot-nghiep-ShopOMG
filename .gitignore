@@ -78,3 +78,5 @@ application-prod.yml
 # Nếu bạn sử dụng các công cụ AI khác thường tạo folder tạm
 .cursor/
 .windsurf/
+
+.application.properties

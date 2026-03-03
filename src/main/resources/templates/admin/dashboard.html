@@ -12,7 +12,7 @@
         <div class="row g-4 mb-4">
 
             <!-- Doanh thu tháng -->
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="stat-card">
                     <div>
                         <h6 class="text-muted small fw-bold text-uppercase mb-1">Doanh thu tháng</h6>
@@ -22,7 +22,6 @@
                                     ? #numbers.formatDecimal(monthlyRevenue / 1000000.0, 1, 'POINT', 1, 'COMMA') + ' tr ₫'
                                     : #numbers.formatInteger(monthlyRevenue, 3, 'POINT') + ' ₫')}">0 ₫
                         </h3>
-                        <!-- Growth badge -->
                         <span th:if="${revenueGrowth != null}"
                             th:class="${revenueGrowth >= 0 ? 'badge bg-success-subtle text-success' : 'badge bg-danger-subtle text-danger'}"
                             style="font-size: 0.75rem;">
@@ -30,7 +29,6 @@
                             <span
                                 th:text="${#numbers.formatDecimal(revenueGrowth, 1, 'POINT', 1, 'COMMA') + '% so T.trước'}"></span>
                         </span>
-                        <!-- Full amount in small text -->
                         <small class="text-muted d-block" style="font-size: 0.7rem;"
                             th:text="${#numbers.formatInteger(monthlyRevenue, 3, 'POINT') + ' ₫'}"></small>
                     </div>
@@ -38,19 +36,8 @@
                 </div>
             </div>
 
-            <!-- Đơn hàng chờ xử lý -->
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div>
-                        <h6 class="text-muted small fw-bold text-uppercase mb-1">Đơn hàng chờ xử lý</h6>
-                        <h3 class="fw-bold mb-0" th:text="${pendingOrders}">0</h3>
-                    </div>
-                    <div class="icon-box bg-success-soft"><i class="fas fa-shopping-bag"></i></div>
-                </div>
-            </div>
-
             <!-- Khách hàng -->
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="stat-card">
                     <div>
                         <h6 class="text-muted small fw-bold text-uppercase mb-1">Khách hàng</h6>
@@ -63,7 +50,7 @@
             </div>
 
             <!-- Sản phẩm -->
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="stat-card">
                     <div>
                         <h6 class="text-muted small fw-bold text-uppercase mb-1">Sản phẩm</h6>
@@ -74,67 +61,7 @@
             </div>
         </div>
 
-        <!-- ===== REVENUE BREAKDOWN BY STATUS ===== -->
-        <div class="row g-3 mb-4" th:if="${revenueByStatus != null}">
-            <div class="col-12">
-                <div class="card-box">
-                    <h5 class="fw-bold mb-3">
-                        <i class="fas fa-chart-pie me-2 text-primary"></i>
-                        Doanh thu theo trạng thái đơn – Tháng này
-                    </h5>
-                    <div class="row g-3">
-                        <!-- PENDING -->
-                        <div class="col-md col-6">
-                            <div class="p-3 rounded bg-warning-subtle text-center">
-                                <div class="text-muted small mb-1"><i class="fas fa-clock me-1"></i>Chờ xử lý</div>
-                                <div class="fw-bold"
-                                    th:text="${#numbers.formatInteger(revenueByStatus['PENDING'], 3, 'POINT') + ' ₫'}">0
-                                    ₫</div>
-                            </div>
-                        </div>
-                        <!-- CONFIRMED -->
-                        <div class="col-md col-6">
-                            <div class="p-3 rounded bg-info-subtle text-center">
-                                <div class="text-muted small mb-1"><i class="fas fa-check me-1"></i>Đã xác nhận</div>
-                                <div class="fw-bold"
-                                    th:text="${#numbers.formatInteger(revenueByStatus['CONFIRMED'], 3, 'POINT') + ' ₫'}">
-                                    0 ₫</div>
-                            </div>
-                        </div>
-                        <!-- SHIPPING -->
-                        <div class="col-md col-6">
-                            <div class="p-3 rounded bg-primary-subtle text-center">
-                                <div class="text-muted small mb-1"><i class="fas fa-truck me-1"></i>Đang giao</div>
-                                <div class="fw-bold"
-                                    th:text="${#numbers.formatInteger(revenueByStatus['SHIPPING'], 3, 'POINT') + ' ₫'}">
-                                    0 ₫</div>
-                            </div>
-                        </div>
-                        <!-- COMPLETED -->
-                        <div class="col-md col-6">
-                            <div class="p-3 rounded bg-success-subtle text-center">
-                                <div class="text-muted small mb-1"><i class="fas fa-check-circle me-1"></i>Hoàn thành
-                                </div>
-                                <div class="fw-bold text-success"
-                                    th:text="${#numbers.formatInteger(revenueByStatus['COMPLETED'], 3, 'POINT') + ' ₫'}">
-                                    0 ₫</div>
-                            </div>
-                        </div>
-                        <!-- CANCELLED -->
-                        <div class="col-md col-6">
-                            <div class="p-3 rounded bg-danger-subtle text-center">
-                                <div class="text-muted small mb-1"><i class="fas fa-times-circle me-1"></i>Đã huỷ</div>
-                                <div class="fw-bold text-danger"
-                                    th:text="${#numbers.formatInteger(revenueByStatus['CANCELLED'], 3, 'POINT') + ' ₫'}">
-                                    0 ₫</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===== CHART + PENDING ORDERS ===== -->
+        <!-- ===== CHART + ORDER STATUS PANEL ===== -->
         <div class="row">
             <!-- Revenue Chart -->
             <div class="col-lg-8 mb-4">
@@ -150,31 +77,43 @@
                 </div>
             </div>
 
-            <!-- Pending Orders List -->
+            <!-- Order Status Panel -->
             <div class="col-lg-4 mb-4">
                 <div class="card-box h-100">
-                    <h5 class="fw-bold mb-4">Đơn chờ xử lý</h5>
+                    <h5 class="fw-bold mb-4">
+                        <i class="fas fa-tasks me-2 text-secondary"></i>Trạng thái đơn
+                    </h5>
 
-                    <div th:if="${recentOrders != null and !recentOrders.isEmpty()}">
-                        <div th:each="order, stat : ${recentOrders}" th:if="${stat.index < 5}"
-                            class="d-flex align-items-center mb-3 p-3 rounded bg-light">
-                            <div class="icon-box bg-white shadow-sm me-3" style="width:40px; height:40px">
-                                <i class="fas fa-file-invoice text-warning"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="fw-bold mb-0" th:text="'#ORD-' + ${order.id}">Order</h6>
-                                <small class="text-muted"
-                                    th:text="${#temporals.format(order.orderDate, 'dd/MM HH:mm')}">Time</small>
-                            </div>
-                            <a th:href="@{/admin/orders/{id}(id=${order.id})}"
-                                class="btn btn-sm btn-dark rounded-pill px-3">Xem</a>
+                    <div th:if="${orderStatsByStatus != null}" class="mb-4">
+                        <div
+                            class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-warning-subtle">
+                            <span class="small"><i class="fas fa-clock me-1 text-warning"></i>Chờ xử lý</span>
+                            <span class="badge bg-warning text-dark" th:text="${orderStatsByStatus['PENDING']}">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-info-subtle">
+                            <span class="small"><i class="fas fa-check me-1 text-info"></i>Đã xác nhận</span>
+                            <span class="badge bg-info text-dark" th:text="${orderStatsByStatus['CONFIRMED']}">0</span>
+                        </div>
+                        <div
+                            class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-primary-subtle">
+                            <span class="small"><i class="fas fa-truck me-1 text-primary"></i>Đang giao</span>
+                            <span class="badge bg-primary" th:text="${orderStatsByStatus['SHIPPING']}">0</span>
+                        </div>
+                        <div
+                            class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-success-subtle">
+                            <span class="small"><i class="fas fa-check-circle me-1 text-success"></i>Hoàn thành</span>
+                            <span class="badge bg-success" th:text="${orderStatsByStatus['COMPLETED']}">0</span>
+                        </div>
+                        <div
+                            class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-danger-subtle">
+                            <span class="small"><i class="fas fa-times-circle me-1 text-danger"></i>Đã huỷ</span>
+                            <span class="badge bg-danger" th:text="${orderStatsByStatus['CANCELLED']}">0</span>
                         </div>
                     </div>
 
-                    <div th:if="${recentOrders == null or recentOrders.isEmpty()}" class="text-center text-muted py-4">
-                        <i class="fas fa-inbox fa-2x mb-2"></i>
-                        <p class="mb-0">Không có đơn hàng chờ xử lý</p>
-                    </div>
+                    <a href="/admin/orders" class="btn btn-sm btn-outline-secondary w-100 mt-auto">
+                        <i class="fas fa-list me-1"></i> Xem tất cả đơn hàng
+                    </a>
                 </div>
             </div>
         </div>
@@ -203,19 +142,12 @@
                                     <td>
                                         <span th:if="${stat.index == 0}" class="badge bg-warning text-dark">🥇</span>
                                         <span th:if="${stat.index == 1}" class="badge bg-secondary">🥈</span>
-                                        <span th:if="${stat.index == 2}" class="badge bg-danger"
-                                            style="background-color: #cd7f32 !important;">🥉</span>
+                                        <span th:if="${stat.index == 2}" class="badge bg-danger">🥉</span>
                                         <span th:if="${stat.index >= 3}" class="text-muted"
                                             th:text="${stat.index + 1}"></span>
                                     </td>
                                     <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <img th:src="${product['productImage'] != null ? '/images/products/' + product['productImage'] : '/images/no-image.png'}"
-                                                alt="product" width="40" height="40"
-                                                class="rounded object-fit-cover border"
-                                                onerror="this.src='/images/no-image.png'">
-                                            <span class="fw-semibold" th:text="${product['productName']}">-</span>
-                                        </div>
+                                        <span class="fw-semibold" th:text="${product['productName']}">-</span>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-primary-subtle text-primary"

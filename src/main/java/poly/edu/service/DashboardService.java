@@ -6,6 +6,7 @@ import poly.edu.repository.OrderRepository;
 import poly.edu.repository.OrderDetailRepository;
 import poly.edu.repository.AccountRepository;
 import poly.edu.repository.ProductRepository;
+import poly.edu.entity.Order;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -194,7 +195,7 @@ public class DashboardService {
     /**
      * Get all dashboard stats in a single call.
      * Includes: monthlyRevenue, revenueGrowth, revenueByStatus,
-     * pendingOrders, totalCustomers, totalProducts, recentOrders, topProducts.
+     * pendingOrders, totalCustomers, totalProducts, activeOrders, topProducts.
      */
     public Map<String, Object> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
@@ -205,10 +206,26 @@ public class DashboardService {
         stats.put("pendingOrders", getPendingOrderCount());
         stats.put("totalCustomers", getTotalCustomers());
         stats.put("totalProducts", getTotalProducts());
-        stats.put("recentOrders", orderRepository.findTop10ByOrderByOrderDateDesc());
+        // Only non-completed, non-cancelled orders for the active list
+        stats.put("activeOrders", getActiveOrders());
+        stats.put("orderStatsByStatus", getOrderStatsByStatus());
         stats.put("topProducts", getTopProducts(5));
 
         return stats;
+    }
+
+    /**
+     * Get active (in-progress) orders: PENDING, CONFIRMED, SHIPPING only.
+     * COMPLETED and CANCELLED are excluded.
+     */
+    public List<Order> getActiveOrders() {
+        List<Order> active = new ArrayList<>();
+        active.addAll(orderRepository.findByStatus("PENDING"));
+        active.addAll(orderRepository.findByStatus("CONFIRMED"));
+        active.addAll(orderRepository.findByStatus("SHIPPING"));
+        // Sort by orderDate descending
+        active.sort((a, b) -> b.getOrderDate().compareTo(a.getOrderDate()));
+        return active;
     }
 
     /**

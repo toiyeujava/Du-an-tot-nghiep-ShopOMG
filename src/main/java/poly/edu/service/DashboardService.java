@@ -8,6 +8,7 @@ import poly.edu.repository.AccountRepository;
 import poly.edu.repository.ProductRepository;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.*;
@@ -22,15 +23,7 @@ public class DashboardService {
     private final ProductRepository productRepository;
 
     /**
-     * Get monthly revenue for current month
-     * Algorithm: SQL SUM aggregation with date filtering
-     * Time Complexity: O(n) where n = orders in current month
-     * Space Complexity: O(1)
-     * 
-     * Query: SELECT SUM(final_amount) FROM Orders
-     * WHERE status = 'COMPLETED'
-     * AND MONTH(order_date) = current_month
-     * AND YEAR(order_date) = current_year
+     * Get monthly revenue for current month (COMPLETED orders only).
      */
     public BigDecimal getMonthlyRevenue() {
         LocalDateTime now = LocalDateTime.now();
@@ -42,7 +35,7 @@ public class DashboardService {
     }
 
     /**
-     * Get revenue for specific month
+     * Get revenue for specific month (COMPLETED orders only).
      */
     public BigDecimal getMonthlyRevenue(int month, int year) {
         BigDecimal revenue = orderRepository.getMonthlyRevenue(month, year);
@@ -50,18 +43,65 @@ public class DashboardService {
     }
 
     /**
-     * Get pending order count
-     * Algorithm: Simple COUNT query with status filter
-     * Time Complexity: O(1) - database indexed query
+     * Calculate revenue growth percentage vs previous month.
+     * Formula: ((current - previous) / previous) * 100
+     * Returns 100.0 if previous = 0 and current > 0, else 0.0.
+     */
+    public double getRevenueGrowthPercent() {
+        LocalDateTime now = LocalDateTime.now();
+        YearMonth currentYM = YearMonth.from(now);
+        YearMonth previousYM = currentYM.minusMonths(1);
+
+        BigDecimal current = getMonthlyRevenue(currentYM.getMonthValue(), currentYM.getYear());
+        BigDecimal previous = getMonthlyRevenue(previousYM.getMonthValue(), previousYM.getYear());
+
+        if (previous.compareTo(BigDecimal.ZERO) == 0) {
+            return current.compareTo(BigDecimal.ZERO) > 0 ? 100.0 : 0.0;
+        }
+
+        return current.subtract(previous)
+                .divide(previous, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(1, RoundingMode.HALF_UP)
+                .doubleValue();
+    }
+
+    /**
+     * Get revenue breakdown by order status for current month.
+     * Returns map: status -> SUM(finalAmount)
+     */
+    public Map<String, BigDecimal> getRevenueByStatus() {
+        LocalDateTime now = LocalDateTime.now();
+        int month = now.getMonthValue();
+        int year = now.getYear();
+
+        List<Object[]> results = orderRepository.getRevenueByStatus(month, year);
+        Map<String, BigDecimal> revenueByStatus = new LinkedHashMap<>();
+
+        // Initialize all statuses with ZERO
+        for (String status : Arrays.asList("PENDING", "CONFIRMED", "SHIPPING", "COMPLETED", "CANCELLED")) {
+            revenueByStatus.put(status, BigDecimal.ZERO);
+        }
+
+        // Fill in actual values from DB
+        for (Object[] row : results) {
+            String status = (String) row[0];
+            BigDecimal amount = (BigDecimal) row[1];
+            revenueByStatus.put(status, amount != null ? amount : BigDecimal.ZERO);
+        }
+
+        return revenueByStatus;
+    }
+
+    /**
+     * Get pending order count.
      */
     public long getPendingOrderCount() {
         return orderRepository.countByStatus("PENDING");
     }
 
     /**
-     * Get total customer count
-     * Algorithm: COUNT query with role filter
-     * Time Complexity: O(1)
+     * Get total customer count (accounts with role USER).
      */
     public long getTotalCustomers() {
         return accountRepository.findAll().stream()
@@ -71,9 +111,7 @@ public class DashboardService {
     }
 
     /**
-     * Get total active products
-     * Algorithm: COUNT query with isActive filter
-     * Time Complexity: O(1)
+     * Get total active products.
      */
     public long getTotalProducts() {
         return productRepository.findAll().stream()
@@ -82,16 +120,7 @@ public class DashboardService {
     }
 
     /**
-     * Get revenue chart data for last N months
-     * Algorithm:
-     * 1. Calculate date range (last N months)
-     * 2. For each month, query revenue
-     * 3. Build array of [month_label, revenue]
-     * 
-     * Time Complexity: O(m * n) where m = months, n = orders per month
-     * Space Complexity: O(m) for storing month data
-     * 
-     * Data Structure: List of Maps for chart data
+     * Get revenue chart data for last N months (COMPLETED orders only).
      */
     public List<Map<String, Object>> getRevenueChartData(int months) {
         List<Map<String, Object>> chartData = new ArrayList<>();
@@ -116,9 +145,7 @@ public class DashboardService {
     }
 
     /**
-     * Get daily revenue for current month (for detailed chart)
-     * Algorithm: GROUP BY date aggregation
-     * Time Complexity: O(n) where n = orders in month
+     * Get daily revenue for current month (COMPLETED orders only).
      */
     public List<Map<String, Object>> getDailyRevenueForMonth() {
         LocalDateTime now = LocalDateTime.now();
@@ -140,12 +167,7 @@ public class DashboardService {
     }
 
     /**
-     * Get top selling products
-     * Algorithm: JOIN + GROUP BY + ORDER BY + LIMIT
-     * Time Complexity: O(n log n) where n = order details (for sorting)
-     * Space Complexity: O(k) where k = limit
-     * 
-     * Data Structure: List of product statistics
+     * Get top selling products by revenue in the current month.
      */
     public List<Map<String, Object>> getTopProducts(int limit) {
         LocalDateTime now = LocalDateTime.now();
@@ -170,13 +192,16 @@ public class DashboardService {
     }
 
     /**
-     * Get dashboard statistics summary
-     * Returns all key metrics in one call
+     * Get all dashboard stats in a single call.
+     * Includes: monthlyRevenue, revenueGrowth, revenueByStatus,
+     * pendingOrders, totalCustomers, totalProducts, recentOrders, topProducts.
      */
     public Map<String, Object> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
 
         stats.put("monthlyRevenue", getMonthlyRevenue());
+        stats.put("revenueGrowth", getRevenueGrowthPercent());
+        stats.put("revenueByStatus", getRevenueByStatus());
         stats.put("pendingOrders", getPendingOrderCount());
         stats.put("totalCustomers", getTotalCustomers());
         stats.put("totalProducts", getTotalProducts());
@@ -187,7 +212,7 @@ public class DashboardService {
     }
 
     /**
-     * Get order statistics by status
+     * Get order count statistics by status.
      */
     public Map<String, Long> getOrderStatsByStatus() {
         Map<String, Long> stats = new HashMap<>();

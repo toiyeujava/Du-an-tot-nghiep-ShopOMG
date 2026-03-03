@@ -50,6 +50,14 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
         List<Object[]> getDailyRevenue(@Param("startDate") LocalDateTime startDate,
                         @Param("endDate") LocalDateTime endDate);
 
+        // Get revenue grouped by status for a given month/year
+        @Query("SELECT o.status, COALESCE(SUM(o.finalAmount), 0) " +
+                        "FROM Order o " +
+                        "WHERE MONTH(o.orderDate) = :month " +
+                        "AND YEAR(o.orderDate) = :year " +
+                        "GROUP BY o.status")
+        List<Object[]> getRevenueByStatus(@Param("month") int month, @Param("year") int year);
+
         // Get recent orders
         List<Order> findTop10ByOrderByOrderDateDesc();
 

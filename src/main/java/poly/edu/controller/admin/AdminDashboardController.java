@@ -58,6 +58,8 @@ public class AdminDashboardController {
         // Get dashboard statistics
         Map<String, Object> stats = dashboardService.getDashboardStats();
         model.addAttribute("monthlyRevenue", stats.get("monthlyRevenue"));
+        model.addAttribute("revenueGrowth", stats.get("revenueGrowth"));
+        model.addAttribute("revenueByStatus", stats.get("revenueByStatus"));
         model.addAttribute("pendingOrders", stats.get("pendingOrders"));
         model.addAttribute("totalCustomers", stats.get("totalCustomers"));
         model.addAttribute("totalProducts", stats.get("totalProducts"));

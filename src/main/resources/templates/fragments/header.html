@@ -30,6 +30,25 @@
         body {
             padding-top: 110px;
         }
+		@media all and (min-width: 992px) {
+		        .navbar .nav-item.dropdown:hover .dropdown-menu {
+		            display: block;
+		            visibility: visible;
+		            opacity: 1;
+		            margin-top: 0;
+		            transition: all 0.3s ease;
+		        }
+		    }
+		/* --- Đoạn cần thêm cho hover giỏ hàng --- */
+		@media all and (min-width: 992px) {
+		    .nav-item.dropdown.cart-dropdown:hover .dropdown-menu {
+		        display: block;
+		        visibility: visible;
+		        opacity: 1;
+		        margin-top: 0;
+		        transition: all 0.3s ease;
+		    }
+		}
     </style>
 
     <div id="mainHeader" class="smart-header header-visible">
@@ -49,11 +68,57 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav mx-auto">
                         <li class="nav-item"><a class="nav-link" href="/home">Trang chủ</a></li>
-                        <li class="nav-item"><a class="nav-link" th:href="@{/home(gender='Nam')}">Nam</a></li>
-                        <li class="nav-item"><a class="nav-link" th:href="@{/home(gender='Nữ')}">Nữ</a></li>
-                        <li class="nav-item"><a class="nav-link" th:href="@{/home(gender='Unisex')}">Unisex</a></li>
-                        <li class="nav-item"><a class="nav-link text-danger fw-bold"
-                                th:href="@{/home(sale=true)}">Sale</a></li>
+						<li class="nav-item dropdown">
+						    <a class="nav-link fw-bold dropdown-toggle" th:href="@{/home(gender='Nam')}" data-bs-toggle="dropdown">Nam</a>
+						    <ul class="dropdown-menu shadow-sm border-0">
+						        <li><a class="dropdown-item fw-bold" th:href="@{/home(gender='Nam')}">Tất cả Nam</a></li>
+						        <li><hr class="dropdown-divider"></li>
+						        <li th:each="cat : ${categories}">
+						            <a class="dropdown-item" 
+						               th:href="@{/home(gender='Nam', category=${cat.id}, color='', sale='', min='', max='', sort='newest', keyword='')}" 
+						               th:text="${cat.name}">Tên danh mục</a>
+						        </li>
+						    </ul>
+						</li>
+
+						<li class="nav-item dropdown">
+						    <a class="nav-link fw-bold dropdown-toggle" th:href="@{/home(gender='Nữ')}" data-bs-toggle="dropdown">Nữ</a>
+						    <ul class="dropdown-menu shadow-sm border-0">
+						        <li><a class="dropdown-item fw-bold" th:href="@{/home(gender='Nữ')}">Tất cả Nữ</a></li>
+						        <li><hr class="dropdown-divider"></li>
+						        <li th:each="cat : ${categories}">
+						            <a class="dropdown-item" 
+						               th:href="@{/home(gender='Nữ', category=${cat.id}, color='', sale='', min='', max='', sort='newest', keyword='')}" 
+						               th:text="${cat.name}">Tên danh mục</a>
+						        </li>
+						    </ul>
+						</li>
+
+						<li class="nav-item dropdown">
+						    <a class="nav-link fw-bold dropdown-toggle" th:href="@{/home(gender='Unisex')}" data-bs-toggle="dropdown">Unisex</a>
+						    <ul class="dropdown-menu shadow-sm border-0">
+						        <li><a class="dropdown-item fw-bold" th:href="@{/home(gender='Unisex')}">Tất cả Unisex</a></li>
+						        <li><hr class="dropdown-divider"></li>
+						        <li th:each="cat : ${categories}">
+						            <a class="dropdown-item" 
+						               th:href="@{/home(gender='Unisex', category=${cat.id}, color='', sale='', min='', max='', sort='newest', keyword='')}" 
+						               th:text="${cat.name}">Tên danh mục</a>
+						        </li>
+						    </ul>
+						</li>
+
+						<li class="nav-item dropdown">
+						    <a class="nav-link fw-bold text-danger dropdown-toggle" th:href="@{/home(sale=true)}" data-bs-toggle="dropdown">Sale</a>
+						    <ul class="dropdown-menu shadow-sm border-0">
+						        <li><a class="dropdown-item fw-bold text-danger" th:href="@{/home(sale=true)}">Tất cả hàng Sale</a></li>
+						        <li><hr class="dropdown-divider"></li>
+						        <li th:each="cat : ${categories}">
+						            <a class="dropdown-item" 
+						               th:href="@{/home(sale=true, category=${cat.id}, color='', gender='', min='', max='', sort='newest', keyword='')}" 
+						               th:text="${cat.name}">Tên danh mục</a>
+						        </li>
+						    </ul>
+						</li>
                     </ul>
 
                     <div class="d-flex gap-3 align-items-center">
@@ -76,12 +141,49 @@
                             </button>
                         </form>
 
-                        <a href="/cart" class="position-relative text-dark">
-                            <i class="fas fa-shopping-bag fa-lg"></i>
-                            <span th:if="${cartItemCount > 0}"
-                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                                style="font-size: 0.6rem;" th:text="${cartItemCount}">0</span>
-                        </a>
+						<div class="nav-item dropdown cart-dropdown d-flex align-items-center">
+												    <a href="/cart" class="nav-link position-relative">
+												        <i class="fas fa-shopping-cart fa-lg text-dark"></i>
+												        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-count-badge" 
+												              style="font-size: 0.65rem;"
+												              th:text="${cartCount != null ? cartCount : 0}">0</span>
+												    </a>
+												    
+												    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-3" style="width: 320px; right: 0; left: auto; top: 100%;">
+												        <h6 class="fw-bold mb-3 text-uppercase border-bottom pb-2">Giỏ hàng của bạn</h6>
+												        
+												        <div class="cart-items-wrapper pe-1" style="max-height: 280px; overflow-y: auto;">
+											                <div th:if="${cartItems != null and not #lists.isEmpty(cartItems)}">
+											                    <div th:each="item : ${cartItems}" class="d-flex align-items-center mb-3">
+											                        <img th:src="${item.productVariant.product.image}" 
+											                             onerror="this.src='https://placehold.co/100x100?text=No+Image'"
+											                             alt="Product" 
+											                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;" class="shadow-sm border">
+											                        
+											                        <div class="ms-3 flex-grow-1">
+											                            <a th:href="@{/product/{id}(id=${item.productVariant.product.id})}" class="text-dark text-decoration-none">
+											                                <p class="mb-0 fw-bold small text-truncate" style="max-width: 180px;" th:text="${item.productVariant.product.name}">Tên sản phẩm</p>
+											                            </a>
+											                            <small class="text-muted d-block" style="font-size: 0.75rem;" th:text="${item.productVariant.color + ' / ' + item.productVariant.size}">Phân loại</small>
+											                            <div class="d-flex justify-content-between align-items-center mt-1">
+											                                <span class="text-danger fw-bold small" th:text="${#numbers.formatDecimal(item.productVariant.product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">Giá</span>
+											                                <span class="badge bg-light text-dark border">x<span class="cart-item-qty" th:text="${item.quantity}">1</span></span>
+											                            </div>
+											                        </div>
+											                    </div>
+											                </div>
+											                
+											                <div class="text-center text-muted py-4" th:if="${cartItems == null or #lists.isEmpty(cartItems)}">
+											                    <i class="fas fa-box-open fs-2 mb-2 opacity-50"></i>
+											                    <p class="mb-0 small fw-medium">Chưa có sản phẩm nào</p>
+											                </div>
+												        </div>
+
+												        <div class="mt-2 pt-3 border-top text-center" th:if="${cartItems != null and not #lists.isEmpty(cartItems)}">
+												            <a href="/cart" class="btn btn-dark btn-sm w-100 rounded-pill fw-bold py-2"><i class="fas fa-shopping-bag me-2"></i>Xem giỏ hàng</a>
+												        </div>
+												    </div>
+												</div>
 
                         <div class="d-flex align-items-center border-start ps-3 ms-2">
                             <div sec:authorize="isAnonymous()" class="d-flex align-items-center">

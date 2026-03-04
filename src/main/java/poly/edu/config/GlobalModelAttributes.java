@@ -1,11 +1,14 @@
 package poly.edu.config;
 
 import java.security.Principal;
+import java.util.List;
 
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 import poly.edu.entity.Account;
+import poly.edu.entity.Cart;
 import poly.edu.service.AccountService;
 import poly.edu.service.CartService;
 
@@ -39,5 +42,21 @@ public class GlobalModelAttributes {
         }
         return cartService.getCartItemCount(account.getId());
     }
+    
+    @ModelAttribute
+    public void addGlobalAttributes(Model model, Principal principal) {
+        if (principal != null) {
+            String username = principal.getName();
+            
+            // Lưu ý: Nếu báo đỏ ở getCartByUsername, hãy tạo hàm này trong CartService
+            // Hoặc đổi thành hàm tương đương bạn đang có, ví dụ: cartService.findByAccountId(account.getId())
+            List<Cart> cartItems = cartService.getCartByUsername(username); 
+            
+            int cartCount = cartItems != null ? cartItems.stream().mapToInt(Cart::getQuantity).sum() : 0;
+            
+            model.addAttribute("cartItems", cartItems);
+            model.addAttribute("cartCount", cartCount);
+        }
+    }
+    
 }
-

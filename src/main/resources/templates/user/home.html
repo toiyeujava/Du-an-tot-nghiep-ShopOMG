@@ -561,9 +561,9 @@
                                     </div>
                                 </div>
                                 <!-- Quick View Modal -->
-                                <div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}"
+								<div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}"
                                     tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-dialog modal-dialog-centered modal-xl">
                                         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
                                             <div class="modal-header border-0 pb-0 position-absolute top-0 end-0 p-3"
                                                 style="z-index: 20;">
@@ -680,9 +680,9 @@
                                     </div>
                                 </div>
                                 <!-- Quick View Modal -->
-                                <div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}"
+								<div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}"
                                     tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-dialog modal-dialog-centered modal-xl">
                                         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
                                             <div class="modal-header border-0 pb-0 position-absolute top-0 end-0 p-3"
                                                 style="z-index: 20;">
@@ -937,14 +937,24 @@
                                     const modalInstance = bootstrap.Modal.getInstance(modalEl);
                                     modalInstance.hide();
 
-                                    // Gọi hàm hiện thông báo (Thay vì alert)
-                                    showToast(data.message);
-
-                                    btn.innerHTML = originalText;
-                                    btn.disabled = false;
-
-                                    // Nếu muốn cập nhật số lượng trên icon giỏ hàng ngay lập tức:
-                                    // if(data.cartCount) document.querySelector('.cart-count-badge').innerText = data.cartCount;
+									// Đóng modal và hiện thông báo
+	                                showToast(data.message);
+	                                btn.innerHTML = originalText;
+	                                btn.disabled = false;
+	
+	                                // Thủ thuật: Tải ngầm lại trang hiện tại và bóc tách lấy riêng phần HTML của giỏ hàng để cập nhật
+	                                fetch(window.location.href)
+	                                    .then(res => res.text())
+	                                    .then(html => {
+	                                        const parser = new DOMParser();
+	                                        const doc = parser.parseFromString(html, "text/html");
+	                                        const newCartDropdown = doc.querySelector('.cart-dropdown');
+	                                        const oldCartDropdown = document.querySelector('.cart-dropdown');
+	                                        if (newCartDropdown && oldCartDropdown) {
+	                                            // Thay thế toàn bộ code HTML cũ của giỏ hàng bằng HTML mới (Bao gồm cả số đếm và danh sách món đồ)
+	                                            oldCartDropdown.innerHTML = newCartDropdown.innerHTML;
+	                                        }
+	                                    });
                                 }
                             } else {
                                 if (data.redirect) {

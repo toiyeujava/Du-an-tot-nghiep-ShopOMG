@@ -55,4 +55,6 @@ public interface CartService {
      * Xóa danh sách sản phẩm khỏi giỏ hàng
      */
     void removeItemsFromCart(List<Integer> ids, Integer accountId);
+    
+    List<Cart> getCartByUsername(String username);
 }

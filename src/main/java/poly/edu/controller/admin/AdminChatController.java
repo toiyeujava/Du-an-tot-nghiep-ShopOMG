@@ -16,7 +16,7 @@ public class AdminChatController {
     @GetMapping("/chat")
     public String openAdminChat(Model model) {
         model.addAttribute("pageTitle", "Hỗ trợ khách hàng");
-        return "admin/admin_chat"; // Trả về file view (thường là .html hoặc .jsp)
+        return "admin/admin_chat";
     }
 
 }

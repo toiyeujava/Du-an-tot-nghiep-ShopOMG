@@ -5,6 +5,11 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.ModelAndView;
 
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
 /**
  * GlobalExceptionHandler - Centralized exception handling for the application.
  *
@@ -89,5 +94,14 @@ public class GlobalExceptionHandler {
         mav.addObject("errorTitle", title);
         mav.addObject("errorMessage", message);
         return mav;
+    }
+    
+ // ... trong class GlobalExceptionHandler
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public void handleFaviconError(NoResourceFoundException ex) {
+        // Để trống ở đây. Không log, không in ra gì cả. 
+        // Trình duyệt sẽ nhận 404 và im lặng.
     }
 }

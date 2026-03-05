@@ -10,29 +10,37 @@ import java.util.Optional;
 
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, Integer> {
 
-    // Find variants by product ID
-    List<ProductVariant> findByProductId(Integer productId);
+        // Find variants by product ID
+        List<ProductVariant> findByProductId(Integer productId);
 
-    // Find variant by SKU
-    Optional<ProductVariant> findBySku(String sku);
+        // Find variant by SKU
+        Optional<ProductVariant> findBySku(String sku);
 
-    // Check if SKU exists
-    boolean existsBySku(String sku);
+        // Check if SKU exists
+        boolean existsBySku(String sku);
 
-    // Check if size/color combination exists for product
-    @Query("SELECT COUNT(pv) > 0 FROM ProductVariant pv WHERE pv.product.id = :productId AND pv.size = :size AND pv.color = :color")
-    boolean existsByProductIdAndSizeAndColor(@Param("productId") Integer productId,
-            @Param("size") String size,
-            @Param("color") String color);
+        // Check if size/color combination exists for product
+        @Query("SELECT COUNT(pv) > 0 FROM ProductVariant pv WHERE pv.product.id = :productId AND pv.size = :size AND pv.color = :color")
+        boolean existsByProductIdAndSizeAndColor(@Param("productId") Integer productId,
+                        @Param("size") String size,
+                        @Param("color") String color);
 
-    // Find variant by product ID, color, and size
-    @Query("SELECT pv FROM ProductVariant pv WHERE pv.product.id = :productId AND pv.color = :color AND pv.size = :size")
-    Optional<ProductVariant> findByProductIdAndColorAndSize(@Param("productId") Integer productId,
-            @Param("color") String color,
-            @Param("size") String size);
+        // Find variant by product ID, color, and size
+        @Query("SELECT pv FROM ProductVariant pv WHERE pv.product.id = :productId AND pv.color = :color AND pv.size = :size")
+        Optional<ProductVariant> findByProductIdAndColorAndSize(@Param("productId") Integer productId,
+                        @Param("color") String color,
+                        @Param("size") String size);
 
-    // Check if variant has active orders (PENDING, CONFIRMED, SHIPPING)
-    @Query("SELECT COUNT(od) > 0 FROM OrderDetail od WHERE od.productVariant.id = :variantId " +
-            "AND od.order.status IN ('PENDING', 'CONFIRMED', 'SHIPPING')")
-    boolean hasActiveOrders(@Param("variantId") Integer variantId);
+        // Check if variant has active orders (PENDING, CONFIRMED, SHIPPING)
+        @Query("SELECT COUNT(od) > 0 FROM OrderDetail od WHERE od.productVariant.id = :variantId " +
+                        "AND od.order.status IN ('PENDING', 'CONFIRMED', 'SHIPPING')")
+        boolean hasActiveOrders(@Param("variantId") Integer variantId);
+
+        // Check if variant is in ANY order detail history (completed or cancelled)
+        @Query("SELECT COUNT(od) > 0 FROM OrderDetail od WHERE od.productVariant.id = :variantId")
+        boolean hasAnyOrders(@Param("variantId") Integer variantId);
+
+        // Check if variant is currently in anyone's shopping cart
+        @Query("SELECT COUNT(c) > 0 FROM Cart c WHERE c.productVariant.id = :variantId")
+        boolean isInCarts(@Param("variantId") Integer variantId);
 }

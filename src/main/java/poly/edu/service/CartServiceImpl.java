@@ -167,4 +167,13 @@ public class CartServiceImpl implements CartService {
                 })
                 .sum();
     }
+    @Override
+    public List<Cart> getCartByUsername(String username) {
+        Account account = accountRepository.findByEmail(username).orElse(null);
+        if (account != null) {
+            // Giả sử trong CartRepository của bạn có hàm findByAccount_Id hoặc findByAccountId
+            return cartRepository.findByAccountId(account.getId()); 
+        }
+        return new java.util.ArrayList<>();
+    }
 }

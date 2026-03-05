@@ -27,6 +27,13 @@ public class CategoryService {
     }
 
     /**
+     * Get all categories (findAll alias)
+     */
+    public List<Category> findAll() {
+        return categoryRepository.findAll();
+    }
+
+    /**
      * Get category by ID
      * Algorithm: Direct lookup by primary key
      * Time Complexity: O(1)
@@ -90,8 +97,7 @@ public class CategoryService {
      * 2. If count > 0 -> throw exception with product count
      * 3. If count = 0 -> delete category
      * Time Complexity: O(1) for count + O(1) for delete = O(1)
-     * 
-     * Data Structure: Simple counter
+     * * Data Structure: Simple counter
      */
     @Transactional
     public void deleteCategory(Integer id) {

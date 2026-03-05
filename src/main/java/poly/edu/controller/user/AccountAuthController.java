@@ -47,11 +47,8 @@ public class AccountAuthController {
      * Display sign-up form (GET).
      */
     @GetMapping("/sign-up")
-    public String signUpForm(Model model) {
-        if (!model.containsAttribute("form")) {
-            model.addAttribute("form", new SignUpForm());
-        }
-        return "user/register";
+    public String signUpForm() {
+        return "redirect:/login?mode=register";
     }
 
     /**
@@ -72,6 +69,7 @@ public class AccountAuthController {
     @PostMapping("/sign-up")
     public String doSignUp(@Valid @ModelAttribute("form") SignUpForm form,
             BindingResult binding,
+            Model model,
             RedirectAttributes ra) {
 
         if (!form.getPassword().equals(form.getConfirmPassword())) {
@@ -87,7 +85,8 @@ public class AccountAuthController {
         }
 
         if (binding.hasErrors()) {
-            return "user/register";
+            model.addAttribute("showRegister", true);
+            return "user/login";
         }
 
         Account acc = new Account();

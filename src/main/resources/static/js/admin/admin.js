@@ -151,6 +151,7 @@ const VariantManager = {
         this.isEditMode = false;
         document.getElementById('modalTitle').textContent = 'Thêm biến thể mới';
         document.getElementById('variantId').value = '';
+        document.getElementById('variantId').disabled = true; // Fix Spring binding error on create
         document.getElementById('sku').value = '';
         document.getElementById('color').value = '';
         document.getElementById('size').value = '';
@@ -162,6 +163,7 @@ const VariantManager = {
         this.isEditMode = true;
         document.getElementById('modalTitle').textContent = 'Sửa biến thể';
         document.getElementById('variantId').value = id;
+        document.getElementById('variantId').disabled = false; // Enable for edit binding
         document.getElementById('sku').value = sku === 'null' ? '' : (sku || '');
         document.getElementById('color').value = color === 'null' ? '' : (color || '');
         document.getElementById('size').value = size === 'null' ? '' : (size || '');

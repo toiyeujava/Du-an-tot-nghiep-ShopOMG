@@ -110,8 +110,7 @@
                         <small class="text-muted">Tổng biến thể</small>
                     </div>
                     <div class="col">
-                        <h5 class="fw-bold mb-0 text-primary"
-                            th:text="${variants.stream().mapToInt(v -> v.quantity ?: 0).sum()}">0</h5>
+                        <h5 class="fw-bold mb-0 text-primary" th:text="${totalQuantity}">0</h5>
                         <small class="text-muted">Tổng tồn kho</small>
                     </div>
                 </div>

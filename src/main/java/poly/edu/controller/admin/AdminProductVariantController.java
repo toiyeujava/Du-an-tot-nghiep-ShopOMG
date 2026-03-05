@@ -51,9 +51,15 @@ public class AdminProductVariantController {
         Product product = productService.getProductById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
 
+        java.util.List<ProductVariant> variants = productVariantService.getVariantsByProduct(productId);
+        int totalQuantity = variants.stream()
+                .mapToInt(v -> v.getQuantity() != null ? v.getQuantity() : 0)
+                .sum();
+
         model.addAttribute("pageTitle", "Quản lý biến thể - " + product.getName());
         model.addAttribute("product", product);
-        model.addAttribute("variants", productVariantService.getVariantsByProduct(productId));
+        model.addAttribute("variants", variants);
+        model.addAttribute("totalQuantity", totalQuantity);
         model.addAttribute("newVariant", new ProductVariant());
 
         return "admin/product-variants";

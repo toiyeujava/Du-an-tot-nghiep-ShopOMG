@@ -177,4 +177,26 @@ public class AdminCategoryController {
                     "message", "Lỗi: " + e.getMessage());
         }
     }
+
+    /**
+     * Hard Delete category (AJAX)
+     */
+    @DeleteMapping("/{id}/hard")
+    @ResponseBody
+    public Map<String, Object> hardDeleteCategory(@PathVariable Integer id) {
+        try {
+            categoryService.hardDeleteCategory(id);
+            return Map.of(
+                    "success", true,
+                    "message", "Đã xóa vĩnh viễn danh mục!");
+        } catch (IllegalStateException e) {
+            return Map.of(
+                    "success", false,
+                    "message", e.getMessage());
+        } catch (Exception e) {
+            return Map.of(
+                    "success", false,
+                    "message", "Lỗi: " + e.getMessage());
+        }
+    }
 }

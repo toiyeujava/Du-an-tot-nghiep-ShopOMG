@@ -52,10 +52,16 @@
                                     th:attr="onclick='deleteCategory(' + ${cat.id} + ')'" title="Xóa">
                                     <i class="fas fa-trash"></i>
                                 </button>
-                                <button th:unless="${cat.isActive}" class="btn-icon btn-icon-edit ms-1 text-success"
-                                    th:attr="onclick='restoreCategory(' + ${cat.id} + ')'" title="Khôi phục">
-                                    <i class="fas fa-trash-restore"></i>
-                                </button>
+                                <th:block th:unless="${cat.isActive}">
+                                    <button class="btn-icon btn-icon-edit ms-1 text-success"
+                                        th:attr="onclick='restoreCategory(' + ${cat.id} + ')'" title="Khôi phục">
+                                        <i class="fas fa-trash-restore"></i>
+                                    </button>
+                                    <button class="btn-icon btn-icon-delete ms-1 text-danger"
+                                        th:attr="onclick='hardDeleteCategory(' + ${cat.id} + ')'" title="Xóa vĩnh viễn">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
+                                </th:block>
                             </td>
                         </tr>
 

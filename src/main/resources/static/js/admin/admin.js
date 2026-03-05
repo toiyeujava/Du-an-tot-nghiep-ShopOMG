@@ -105,6 +105,27 @@ const CategoryManager = {
         } catch (error) {
             alert('Lỗi kết nối: ' + error.message);
         }
+    },
+
+    hardDelete: async function (id) {
+        if (!confirm('Hành động này sẽ XÓA VĨNH VIỄN loại sản phẩm này và không thể khôi phục. Bạn có chắc chắn?')) return;
+
+        try {
+            const response = await fetch(`/admin/categories/${id}/hard`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                location.reload();
+            } else {
+                alert('Lỗi: ' + result.message);
+            }
+        } catch (error) {
+            alert('Lỗi kết nối: ' + error.message);
+        }
     }
 };
 
@@ -114,6 +135,7 @@ function openEditModal(id, name, image) { CategoryManager.openEditModal(id, name
 function saveCategory() { CategoryManager.save(); }
 function deleteCategory(id) { CategoryManager.delete(id); }
 function restoreCategory(id) { CategoryManager.restore(id); }
+function hardDeleteCategory(id) { CategoryManager.hardDelete(id); }
 
 
 // ===== VARIANT CRUD =====

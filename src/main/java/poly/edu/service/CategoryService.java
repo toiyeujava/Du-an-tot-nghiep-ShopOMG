@@ -133,7 +133,7 @@ public class CategoryService {
     }
 
     /**
-     * Force delete category and its products
+     * Force delete category and its products (soft delete)
      */
     @Transactional
     public void forceDeleteCategory(Integer id) {
@@ -176,6 +176,29 @@ public class CategoryService {
         // Restore the category
         category.setIsActive(true);
         categoryRepository.save(category);
+    }
+
+    /**
+     * Hard delete category (permanently remove from DB)
+     */
+    @Transactional
+    public void hardDeleteCategory(Integer id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
+
+        // Check for ANY products (active or inactive)
+        long totalProducts = productRepository.findAll().stream()
+                .filter(p -> p.getCategoryId().equals(id))
+                .count();
+
+        if (totalProducts > 0) {
+            throw new IllegalStateException(
+                    String.format(
+                            "Không thể xóa vĩnh viễn loại '%s' vì vẫn còn %d mặt hàng. Vui lòng xóa vĩnh viễn các mặt hàng này trước.",
+                            category.getName(), totalProducts));
+        }
+
+        categoryRepository.delete(category);
     }
 
     /**

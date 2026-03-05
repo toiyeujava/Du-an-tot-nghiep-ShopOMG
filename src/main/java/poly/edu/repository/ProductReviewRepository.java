@@ -28,4 +28,19 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, In
 
     /** Count reviews for a product */
     long countByProductId(Integer productId);
+    /**
+     * Kiểm tra account đã mua sản phẩm này chưa (qua OrderDetails).
+     * Điều kiện: đơn hàng có status = 'COMPLETED'.
+     */
+    @Query("""
+        SELECT COUNT(od) > 0
+        FROM OrderDetail od
+        JOIN od.order o
+        JOIN od.productVariant pv
+        WHERE o.account.id = :accountId
+          AND pv.product.id = :productId
+          AND o.status = 'COMPLETED'
+        """)
+    boolean hasPurchasedProduct(@Param("accountId") Integer accountId,
+                                @Param("productId") Integer productId);
 }

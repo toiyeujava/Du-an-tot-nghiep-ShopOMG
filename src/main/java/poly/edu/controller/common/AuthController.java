@@ -6,18 +6,14 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.servlet.http.HttpSession;
+import poly.edu.dto.SignUpForm;
 import poly.edu.service.LoginAttemptService;
 
 /**
  * AuthController - Handles login page and authentication redirects.
  *
- * Rubber Duck Explanation:
- * -------------------------
- * "Why is this in the common/ package?"
- *
- * Authentication endpoints (/login, /register) are neither user-specific
- * nor admin-specific - they're used by BOTH roles. The common/ package
- * holds cross-cutting controllers that don't fit neatly into user/ or admin/.
+ * The login page now includes both login AND register forms
+ * with a flip-card toggle switch for seamless switching.
  */
 @Controller
 @RequiredArgsConstructor
@@ -29,7 +25,8 @@ public class AuthController {
     public String showLoginForm(Model model,
             String email,
             String error,
-            String locked) {
+            String locked,
+            @RequestParam(name = "mode", required = false) String mode) {
 
         if (email != null && !email.isBlank()) {
             int remaining = loginAttemptService.getRemainingAttempts(email);
@@ -43,12 +40,22 @@ public class AuthController {
             }
         }
 
+        // Provide empty SignUpForm for the register side of the flip card
+        if (!model.containsAttribute("form")) {
+            model.addAttribute("form", new SignUpForm());
+        }
+
+        // If mode=register, tell template to show register side
+        if ("register".equals(mode)) {
+            model.addAttribute("showRegister", true);
+        }
+
         return "user/login";
     }
 
     @GetMapping("/register")
     public String redirectToSignUp() {
-        return "redirect:/account/sign-up";
+        return "redirect:/login?mode=register";
     }
 
     @GetMapping("/auth/require-login")

@@ -3,14 +3,17 @@ package poly.edu.config;
 import java.security.Principal;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 import poly.edu.entity.Account;
 import poly.edu.entity.Cart;
+import poly.edu.entity.Category;
 import poly.edu.service.AccountService;
 import poly.edu.service.CartService;
+import poly.edu.service.CategoryService;
 
 @ControllerAdvice
 public class GlobalModelAttributes {
@@ -18,6 +21,10 @@ public class GlobalModelAttributes {
     private final AccountService accountService;
     private final CartService cartService;
 
+    
+    @Autowired
+    private CategoryService categoryService;
+    
     public GlobalModelAttributes(AccountService accountService, CartService cartService) {
         this.accountService = accountService;
         this.cartService = cartService;
@@ -57,6 +64,11 @@ public class GlobalModelAttributes {
             model.addAttribute("cartItems", cartItems);
             model.addAttribute("cartCount", cartCount);
         }
+    }
+ // Dữ liệu này sẽ tự động được inject vào mọi trang (mọi URL)
+    @ModelAttribute("categories") 
+    public List<Category> getGlobalCategories() {
+        return categoryService.findAll(); // Sửa lại thành hàm lấy danh mục tương ứng của bạn
     }
     
 }

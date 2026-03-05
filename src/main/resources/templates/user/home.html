@@ -561,7 +561,7 @@
                                     </div>
                                 </div>
                                 <!-- Quick View Modal -->
-								<div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}"
+                                <div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}"
                                     tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered modal-xl">
                                         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
@@ -680,7 +680,7 @@
                                     </div>
                                 </div>
                                 <!-- Quick View Modal -->
-								<div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}"
+                                <div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}"
                                     tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered modal-xl">
                                         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
@@ -937,24 +937,24 @@
                                     const modalInstance = bootstrap.Modal.getInstance(modalEl);
                                     modalInstance.hide();
 
-									// Đóng modal và hiện thông báo
-	                                showToast(data.message);
-	                                btn.innerHTML = originalText;
-	                                btn.disabled = false;
-	
-	                                // Thủ thuật: Tải ngầm lại trang hiện tại và bóc tách lấy riêng phần HTML của giỏ hàng để cập nhật
-	                                fetch(window.location.href)
-	                                    .then(res => res.text())
-	                                    .then(html => {
-	                                        const parser = new DOMParser();
-	                                        const doc = parser.parseFromString(html, "text/html");
-	                                        const newCartDropdown = doc.querySelector('.cart-dropdown');
-	                                        const oldCartDropdown = document.querySelector('.cart-dropdown');
-	                                        if (newCartDropdown && oldCartDropdown) {
-	                                            // Thay thế toàn bộ code HTML cũ của giỏ hàng bằng HTML mới (Bao gồm cả số đếm và danh sách món đồ)
-	                                            oldCartDropdown.innerHTML = newCartDropdown.innerHTML;
-	                                        }
-	                                    });
+                                    // Đóng modal và hiện thông báo
+                                    showToast(data.message);
+                                    btn.innerHTML = originalText;
+                                    btn.disabled = false;
+
+                                    // Thủ thuật: Tải ngầm lại trang hiện tại và bóc tách lấy riêng phần HTML của giỏ hàng để cập nhật
+                                    fetch(window.location.href)
+                                        .then(res => res.text())
+                                        .then(html => {
+                                            const parser = new DOMParser();
+                                            const doc = parser.parseFromString(html, "text/html");
+                                            const newCartDropdown = doc.querySelector('.cart-dropdown');
+                                            const oldCartDropdown = document.querySelector('.cart-dropdown');
+                                            if (newCartDropdown && oldCartDropdown) {
+                                                // Thay thế toàn bộ code HTML cũ của giỏ hàng bằng HTML mới (Bao gồm cả số đếm và danh sách món đồ)
+                                                oldCartDropdown.innerHTML = newCartDropdown.innerHTML;
+                                            }
+                                        });
                                 }
                             } else {
                                 if (data.redirect) {
@@ -979,6 +979,263 @@
                         btn.disabled = false;
                     });
             };
+
+            // =============================================
+            // AJAX FILTERING — No Full Page Reload
+            // =============================================
+            (function () {
+                'use strict';
+
+                var SIDEBAR_SELECTOR = 'aside.col-lg-3';
+                var MAIN_SELECTOR = 'main.col-lg-9';
+                var isLoading = false;
+
+                // --- Loading Overlay ---
+                function createLoadingOverlay(container) {
+                    var overlay = document.createElement('div');
+                    overlay.className = 'ajax-loading-overlay';
+                    overlay.innerHTML = '<div class="spinner-border text-dark" role="status"><span class="visually-hidden">Đang tải...</span></div>';
+                    overlay.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;z-index:100;border-radius:8px;transition:opacity 0.2s;';
+                    // Dark mode support
+                    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                        overlay.style.background = 'rgba(18,18,18,0.7)';
+                    }
+                    container.style.position = 'relative';
+                    container.appendChild(overlay);
+                    return overlay;
+                }
+
+                function removeLoadingOverlay(container) {
+                    var overlay = container.querySelector('.ajax-loading-overlay');
+                    if (overlay) overlay.remove();
+                    container.style.position = '';
+                }
+
+                // --- Core: Fetch and replace content ---
+                function ajaxNavigate(url, pushState) {
+                    if (isLoading) return;
+                    isLoading = true;
+
+                    var mainEl = document.querySelector(MAIN_SELECTOR);
+                    if (mainEl) createLoadingOverlay(mainEl);
+
+                    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(function (res) { return res.text(); })
+                        .then(function (html) {
+                            var parser = new DOMParser();
+                            var doc = parser.parseFromString(html, 'text/html');
+
+                            // Replace sidebar
+                            var newSidebar = doc.querySelector(SIDEBAR_SELECTOR);
+                            var oldSidebar = document.querySelector(SIDEBAR_SELECTOR);
+                            if (newSidebar && oldSidebar) {
+                                oldSidebar.innerHTML = newSidebar.innerHTML;
+                            }
+
+                            // Replace main product area
+                            var newMain = doc.querySelector(MAIN_SELECTOR);
+                            var oldMain = document.querySelector(MAIN_SELECTOR);
+                            if (newMain && oldMain) {
+                                oldMain.innerHTML = newMain.innerHTML;
+                            }
+
+                            // Update page title
+                            var newTitle = doc.querySelector('title');
+                            if (newTitle) document.title = newTitle.textContent;
+
+                            // Push URL to browser history
+                            if (pushState !== false) {
+                                history.pushState({ ajaxFilter: true }, '', url);
+                            }
+
+                            // Re-init modals & quick view
+                            reinitAfterAjax();
+
+                            // Scroll to product list smoothly
+                            var productList = document.getElementById('productList');
+                            if (productList) {
+                                productList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        })
+                        .catch(function (err) {
+                            console.error('AJAX filter error:', err);
+                            // Fallback: normal navigation
+                            window.location.href = url;
+                        })
+                        .finally(function () {
+                            isLoading = false;
+                            var mainEl = document.querySelector(MAIN_SELECTOR);
+                            if (mainEl) removeLoadingOverlay(mainEl);
+                        });
+                }
+
+                // --- Re-initialize after AJAX content swap ---
+                function reinitAfterAjax() {
+                    // Re-bind filter links
+                    bindFilterLinks();
+                    bindSortSelect();
+                    bindPriceForm();
+                    bindPagination();
+                    bindNavbarLinks();
+
+                    // Re-init quick view modals
+                    document.querySelectorAll(MAIN_SELECTOR + ' .variant-wrapper').forEach(function (wrapper) {
+                        initQuickView(wrapper);
+                    });
+                }
+
+                // --- Bind filter sidebar links ---
+                function bindFilterLinks() {
+                    var sidebar = document.querySelector(SIDEBAR_SELECTOR);
+                    if (!sidebar) return;
+
+                    // All <a> links inside filter sidebar
+                    sidebar.querySelectorAll('a[href]').forEach(function (link) {
+                        link.removeEventListener('click', handleFilterClick);
+                        link.addEventListener('click', handleFilterClick);
+                    });
+
+                    // Price filter form button
+                    bindPriceForm();
+                }
+
+                function handleFilterClick(e) {
+                    var href = this.getAttribute('href');
+                    // Only intercept internal links
+                    if (href && href.startsWith('/home')) {
+                        e.preventDefault();
+                        ajaxNavigate(href);
+                    }
+                }
+
+                // --- Bind sort <select> ---
+                function bindSortSelect() {
+                    var main = document.querySelector(MAIN_SELECTOR);
+                    if (!main) return;
+
+                    var sortSelect = main.querySelector('select.form-select');
+                    if (sortSelect) {
+                        // Replace the inline onchange
+                        sortSelect.removeAttribute('onchange');
+                        sortSelect.addEventListener('change', function () {
+                            ajaxNavigate(this.value);
+                        });
+                    }
+                }
+
+                // --- Bind price filter form ---
+                function bindPriceForm() {
+                    var sidebar = document.querySelector(SIDEBAR_SELECTOR);
+                    if (!sidebar) return;
+
+                    var priceForm = sidebar.querySelector('form[th\\:action], form[action]');
+                    // Find form with price inputs
+                    var forms = sidebar.querySelectorAll('form');
+                    forms.forEach(function (form) {
+                        var minInput = form.querySelector('input[name="min"]');
+                        if (!minInput) return; // Not the price form
+
+                        form.removeEventListener('submit', handlePriceSubmit);
+                        form.addEventListener('submit', handlePriceSubmit);
+                    });
+                }
+
+                function handlePriceSubmit(e) {
+                    e.preventDefault();
+                    var formData = new FormData(this);
+                    var params = new URLSearchParams(formData).toString();
+                    ajaxNavigate('/home?' + params);
+                }
+
+                // --- Bind pagination links ---
+                function bindPagination() {
+                    var main = document.querySelector(MAIN_SELECTOR);
+                    if (!main) return;
+
+                    main.querySelectorAll('.pagination a.page-link').forEach(function (link) {
+                        link.removeEventListener('click', handlePaginationClick);
+                        link.addEventListener('click', handlePaginationClick);
+                    });
+                }
+
+                function handlePaginationClick(e) {
+                    var href = this.getAttribute('href');
+                    if (href && href.startsWith('/home')) {
+                        e.preventDefault();
+                        ajaxNavigate(href);
+                    }
+                }
+
+                // --- Bind navbar dropdown links (Nam, Nữ, Unisex, Sale) ---
+                function bindNavbarLinks() {
+                    var navbar = document.getElementById('navbarNav');
+                    if (!navbar) return;
+
+                    navbar.querySelectorAll('.dropdown-menu a.dropdown-item').forEach(function (link) {
+                        link.removeEventListener('click', handleNavbarClick);
+                        link.addEventListener('click', handleNavbarClick);
+                    });
+
+                    // Also bind the top-level nav links (Nam, Nữ, Unisex, Sale)
+                    navbar.querySelectorAll('.nav-link.dropdown-toggle').forEach(function (link) {
+                        link.removeEventListener('click', handleNavbarClick);
+                        link.addEventListener('click', handleNavbarClick);
+                    });
+
+                    // Also bind search form
+                    var searchForm = navbar.closest('.container')?.querySelector('form[action="/home"]');
+                    if (searchForm) {
+                        searchForm.removeEventListener('submit', handleSearchSubmit);
+                        searchForm.addEventListener('submit', handleSearchSubmit);
+                    }
+                }
+
+                function handleNavbarClick(e) {
+                    var href = this.getAttribute('href');
+                    if (href && (href.startsWith('/home') || href === '/home')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        // Close any open Bootstrap dropdown
+                        var openDropdown = this.closest('.dropdown-menu');
+                        if (openDropdown) {
+                            var bsDropdown = bootstrap.Dropdown.getInstance(openDropdown.previousElementSibling || openDropdown.closest('.dropdown')?.querySelector('[data-bs-toggle="dropdown"]'));
+                            if (bsDropdown) bsDropdown.hide();
+                        }
+
+                        ajaxNavigate(href);
+                    }
+                }
+
+                function handleSearchSubmit(e) {
+                    e.preventDefault();
+                    var formData = new FormData(this);
+                    var params = new URLSearchParams(formData).toString();
+                    ajaxNavigate('/home?' + params);
+                }
+
+                // --- Handle browser back/forward ---
+                window.addEventListener('popstate', function (e) {
+                    if (e.state && e.state.ajaxFilter) {
+                        ajaxNavigate(location.href, false);
+                    } else {
+                        // For non-AJAX history entries, do a normal load
+                        ajaxNavigate(location.href, false);
+                    }
+                });
+
+                // --- Initial binding on page load ---
+                document.addEventListener('DOMContentLoaded', function () {
+                    // Mark initial state so popstate works correctly
+                    history.replaceState({ ajaxFilter: true }, '', location.href);
+
+                    bindFilterLinks();
+                    bindSortSelect();
+                    bindPriceForm();
+                    bindPagination();
+                    bindNavbarLinks();
+                });
+            })();
         </script>
     </article>
 </body>

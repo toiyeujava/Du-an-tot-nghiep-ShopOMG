@@ -806,6 +806,127 @@ footer {
     background-color: var(--surface-secondary-bg) !important;
 }
 
+/* --- Account Reviews Page --- */
+[data-theme="dark"] .review-card {
+    background: var(--surface-bg) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 2px 12px var(--shadow-color) !important;
+}
+
+[data-theme="dark"] .review-card:hover {
+    box-shadow: 0 6px 24px var(--shadow-color) !important;
+}
+
+/* Review card inner borders */
+[data-theme="dark"] .review-card .d-flex.align-items-center.gap-3 {
+    border-color: var(--border-color) !important;
+}
+
+/* Product name link in review */
+[data-theme="dark"] .review-card a.text-dark {
+    color: var(--text-primary) !important;
+}
+
+/* Comment text */
+[data-theme="dark"] .review-card .comment-display {
+    color: var(--text-secondary) !important;
+}
+
+/* Edit button */
+[data-theme="dark"] .edit-review-btn {
+    border-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .edit-review-btn:hover {
+    background: var(--hover-bg) !important;
+    border-color: var(--text-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Star badge backgrounds */
+[data-theme="dark"] .star-badge.star-5 {
+    background: #1b3a1e !important;
+    color: #66bb6a !important;
+}
+
+[data-theme="dark"] .star-badge.star-4 {
+    background: #2a3a1b !important;
+    color: #9ccc65 !important;
+}
+
+[data-theme="dark"] .star-badge.star-3 {
+    background: #3a2a1b !important;
+    color: #ffa726 !important;
+}
+
+[data-theme="dark"] .star-badge.star-low {
+    background: #3a1b1b !important;
+    color: #ef5350 !important;
+}
+
+/* Reviews page badge (count) */
+[data-theme="dark"] .badge[style*="background:#fff3cd"] {
+    background: #3a341b !important;
+    border-color: #5a4a1b !important;
+    color: #ffc107 !important;
+}
+
+/* Empty state */
+[data-theme="dark"] div[style*="background:#fff"][style*="border:2px dashed"] {
+    background: var(--surface-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] div[style*="background:#fff8e1"] {
+    background: #3a341b !important;
+}
+
+/* Review modal */
+[data-theme="dark"] #reviewModal .modal-content {
+    background-color: var(--modal-bg) !important;
+}
+
+[data-theme="dark"] #reviewModal .modal-header {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] #reviewModal .modal-header .btn.text-dark {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] #reviewModal #starLabel {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] #reviewModal #reviewText {
+    background-color: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Confirm abandon modal */
+[data-theme="dark"] #confirmAbandonModal .modal-content {
+    background: var(--modal-bg) !important;
+}
+
+[data-theme="dark"] #confirmAbandonModal h5 {
+    color: var(--text-primary) !important;
+}
+
+/* Product info inside review modal */
+[data-theme="dark"] #reviewProductList div[style*="border-bottom:1px solid #f0f0f0"] {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] #reviewProductList img {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] #reviewProductList div[style*="font-weight:600"] {
+    color: var(--text-primary) !important;
+}
+
 /* =========================================
    THEME TOGGLE SWITCH (From Uiverse.io by Galahhad)
    ========================================= */

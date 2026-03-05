@@ -2,32 +2,157 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
 
 <head>
-    <title>Đăng nhập - ShopOMG</title>
+    <title th:text="${showRegister != null and showRegister} ? 'Đăng ký - ShopOMG' : 'Đăng nhập - ShopOMG'">Đăng nhập -
+        ShopOMG</title>
 </head>
 
 <body>
     <article class="container py-5">
         <style>
-            /* --- COPY STYLE TỪ TRANG REGISTER --- */
-            .register-card {
+            /* ===== AUTH WRAPPER ===== */
+            .auth-wrapper {
+                --input-focus: #2d8cf0;
+                --font-color: #323232;
+                --font-color-sub: #666;
+                --bg-color: #fff;
+                --main-color: #323232;
                 max-width: 500px;
                 margin: 0 auto;
+            }
+
+            /* ===== TOGGLE SWITCH (from Uiverse.io) ===== */
+            .auth-switch-row {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 16px;
+                margin-bottom: 28px;
+                user-select: none;
+            }
+
+            .auth-switch-label {
+                font-weight: 600;
+                font-size: 0.95rem;
+                color: var(--font-color);
+                cursor: pointer;
+                text-decoration: none;
+                transition: all 0.3s;
+                padding: 4px 0;
+            }
+
+            .auth-switch-label.active {
+                text-decoration: underline;
+                text-underline-offset: 4px;
+            }
+
+            .auth-switch-track {
+                position: relative;
+                width: 50px;
+                height: 20px;
+                cursor: pointer;
+            }
+
+            .auth-switch-track .track-bg {
+                box-sizing: border-box;
+                border-radius: 5px;
+                border: 2px solid var(--main-color);
+                box-shadow: 4px 4px var(--main-color);
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: var(--bg-color);
+                transition: 0.3s;
+            }
+
+            .auth-switch-track .track-thumb {
+                box-sizing: border-box;
+                position: absolute;
+                height: 20px;
+                width: 20px;
+                border: 2px solid var(--main-color);
+                border-radius: 5px;
+                left: -2px;
+                bottom: 2px;
+                background-color: var(--bg-color);
+                box-shadow: 0 3px 0 var(--main-color);
+                transition: 0.3s;
+                z-index: 1;
+            }
+
+            .auth-switch-track.register .track-bg {
+                background-color: var(--input-focus);
+            }
+
+            .auth-switch-track.register .track-thumb {
+                transform: translateX(30px);
+            }
+
+            /* ===== FLIP CONTAINER ===== */
+            .auth-flip-container {
+                position: relative;
+                perspective: 1200px;
+            }
+
+            .auth-face {
+                width: 100%;
+                transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1),
+                    opacity 0.4s ease;
+                transform-style: preserve-3d;
+                backface-visibility: hidden;
+                -webkit-backface-visibility: hidden;
+            }
+
+            /* Front face: login (default visible) */
+            .auth-face-front {
+                position: relative;
+                transform: rotateY(0deg);
+            }
+
+            /* Back face: register (default hidden) */
+            .auth-face-back {
+                position: absolute;
+                top: 0;
+                left: 0;
+                transform: rotateY(180deg);
+            }
+
+            /* Flipped state */
+            .auth-flip-container.flipped .auth-face-front {
+                position: absolute;
+                top: 0;
+                left: 0;
+                transform: rotateY(-180deg);
+                pointer-events: none;
+            }
+
+            .auth-flip-container.flipped .auth-face-back {
+                position: relative;
+                transform: rotateY(0deg);
+                pointer-events: auto;
+            }
+
+            /* ===== SHARED CARD STYLES ===== */
+            .auth-card {
                 border: none;
-                box-shadow: 0 0 20px rgba(0,0,0,0.05);
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
                 border-radius: 12px;
                 overflow: hidden;
             }
-            .register-header {
+
+            .auth-header {
                 background: #000;
                 color: #fff;
                 padding: 30px 20px;
                 text-align: center;
             }
+
             .form-control:focus {
                 box-shadow: none;
                 border-color: #000;
             }
-            
+
             /* Nút mắt ẩn/hiện */
             .btn-toggle-pass {
                 border-color: #ced4da;
@@ -37,133 +162,424 @@
                 border-top-right-radius: 0.375rem !important;
                 border-bottom-right-radius: 0.375rem !important;
             }
+
             .btn-toggle-pass:hover {
                 background: #f8f9fa;
                 color: #000;
             }
+
             .form-control-pass {
                 border-right: none;
             }
 
-            /* Style nút Social cho đồng bộ */
-            .btn-google, .btn-facebook {
-                display: flex; align-items: center; justify-content: center; gap: 10px;
-                padding: 10px; border: 1px solid #ddd; border-radius: 8px;
-                text-decoration: none; color: #333; font-weight: 600; transition: 0.2s;
+            /* Style nút Social */
+            .btn-google,
+            .btn-facebook {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                text-decoration: none;
+                color: #333;
+                font-weight: 600;
+                transition: 0.2s;
             }
-            .btn-google:hover, .btn-facebook:hover { background: #f8f9fa; transform: translateY(-2px); }
-            .btn-google img, .btn-facebook img { width: 20px; }
+
+            .btn-google:hover,
+            .btn-facebook:hover {
+                background: #f8f9fa;
+                transform: translateY(-2px);
+            }
+
+            .btn-google img,
+            .btn-facebook img {
+                width: 20px;
+            }
+
+            /* Password validation */
+            .validation-item {
+                font-size: 0.85rem;
+                color: #6c757d;
+                transition: all 0.3s;
+                margin-bottom: 4px;
+                display: flex;
+                align-items: center;
+            }
+
+            .validation-item i {
+                font-size: 0.6rem;
+                margin-right: 8px;
+                transition: all 0.3s;
+            }
+
+            .validation-item.valid {
+                color: #198754;
+                font-weight: 500;
+            }
+
+            .validation-item.valid i {
+                color: #198754;
+                transform: scale(1.2);
+            }
+
+            /* ===== DARK MODE ===== */
+            [data-theme="dark"] .auth-wrapper {
+                --font-color: #e0e0e0;
+                --font-color-sub: #999;
+                --bg-color: #1e1e1e;
+                --main-color: #e0e0e0;
+            }
+
+            [data-theme="dark"] .auth-card {
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            }
+
+            [data-theme="dark"] .auth-header {
+                background: #111;
+            }
+
+            [data-theme="dark"] .auth-switch-track .track-bg {
+                box-shadow: 4px 4px var(--main-color);
+            }
         </style>
 
-        <div class="card register-card">
-            <div class="register-header">
-                <h3 class="fw-bold mb-1">Chào mừng trở lại!</h3>
-                <p class="small opacity-75 mb-0">Vui lòng đăng nhập để tiếp tục mua sắm</p>
+        <div class="auth-wrapper">
+            <!-- ===== TOGGLE SWITCH ROW ===== -->
+            <div class="auth-switch-row">
+                <span class="auth-switch-label active" id="labelLogin" onclick="showLogin()">Đăng nhập</span>
+                <div class="auth-switch-track" id="authTrack" onclick="toggleAuth()">
+                    <div class="track-bg"></div>
+                    <div class="track-thumb"></div>
+                </div>
+                <span class="auth-switch-label" id="labelRegister" onclick="showRegister()">Đăng ký</span>
             </div>
 
-            <div class="card-body p-4">
-                <form th:action="@{/login}" method="post">
+            <!-- ===== FLIP CONTAINER ===== -->
+            <div class="auth-flip-container" id="authFlip">
 
-                    <div th:if="${message}" class="alert alert-success text-center small py-2" th:text="${message}"></div>
+                <!-- ===== FRONT: LOGIN ===== -->
+                <div class="auth-face auth-face-front">
+                    <div class="card auth-card">
+                        <div class="auth-header">
+                            <h3 class="fw-bold mb-1">Chào mừng trở lại!</h3>
+                            <p class="small opacity-75 mb-0">Vui lòng đăng nhập để tiếp tục mua sắm</p>
+                        </div>
 
-                    <div th:if="${param.error}" class="alert alert-danger small py-2">
-                        <i class="fas fa-exclamation-triangle me-1"></i>
-                        <strong>Email hoặc mật khẩu sai!</strong>
-                        <span th:if="${remainingAttempts != null and remainingAttempts > 0}">
-                            <br>Còn <strong th:text="${remainingAttempts}">X</strong> lần thử.
-                        </span>
-                    </div>
+                        <div class="card-body p-4">
+                            <form th:action="@{/login}" method="post">
 
-                    <div th:if="${param.logout}" class="alert alert-success text-center small py-2">
-                        <i class="fas fa-check-circle me-1"></i> Đã đăng xuất!
-                    </div>
+                                <div th:if="${message}" class="alert alert-success text-center small py-2"
+                                    th:text="${message}"></div>
 
-                    <div th:if="${param.notVerified}" class="alert alert-warning small py-2">
-                        <i class="fas fa-envelope me-1"></i> Email chưa xác thực.
-                        <a th:href="@{/resend-verification}" class="fw-bold text-dark">Gửi lại ngay</a>
-                    </div>
+                                <div th:if="${param.error}" class="alert alert-danger small py-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    <strong>Email hoặc mật khẩu sai!</strong>
+                                    <span th:if="${remainingAttempts != null and remainingAttempts > 0}">
+                                        <br>Còn <strong th:text="${remainingAttempts}">X</strong> lần thử.
+                                    </span>
+                                </div>
 
-                    <div th:if="${param.locked}" class="alert alert-danger small py-2">
-                        <i class="fas fa-lock me-1"></i>
-                        <strong>Tài khoản bị khóa!</strong><br>
-                        Thử lại sau: 
-                        <strong th:text="${minutesUntilUnlock != null ? minutesUntilUnlock + ' phút' : '15 phút'}"></strong>
-                    </div>
+                                <div th:if="${param.logout}" class="alert alert-success text-center small py-2">
+                                    <i class="fas fa-check-circle me-1"></i> Đã đăng xuất!
+                                </div>
 
-                    <div class="mb-3">
-                        <label for="email" class="form-label small fw-bold text-uppercase text-muted">Email / Tên đăng nhập</label>
-                        <input type="text" class="form-control" id="email" name="email"
-                            placeholder="example@email.com" th:value="${email}" required>
-                    </div>
+                                <div th:if="${param.notVerified}" class="alert alert-warning small py-2">
+                                    <i class="fas fa-envelope me-1"></i> Email chưa xác thực.
+                                    <a th:href="@{/resend-verification}" class="fw-bold text-dark">Gửi lại ngay</a>
+                                </div>
 
-                    <div class="mb-3">
-                        <label for="password" class="form-label small fw-bold text-uppercase text-muted">Mật khẩu</label>
-                        <div class="input-group">
-                            <input type="password" class="form-control form-control-pass" id="password" name="password"
-                                placeholder="Nhập mật khẩu" required>
-                            <button class="btn btn-toggle-pass" type="button" onclick="togglePassword()">
-                                <i class="fas fa-eye" id="eyeIcon"></i>
-                            </button>
+                                <div th:if="${param.locked}" class="alert alert-danger small py-2">
+                                    <i class="fas fa-lock me-1"></i>
+                                    <strong>Tài khoản bị khóa!</strong><br>
+                                    Thử lại sau:
+                                    <strong
+                                        th:text="${minutesUntilUnlock != null ? minutesUntilUnlock + ' phút' : '15 phút'}"></strong>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="loginEmail"
+                                        class="form-label small fw-bold text-uppercase text-muted">Email / Tên đăng
+                                        nhập</label>
+                                    <input type="text" class="form-control" id="loginEmail" name="email"
+                                        placeholder="example@email.com" th:value="${email}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="loginPassword"
+                                        class="form-label small fw-bold text-uppercase text-muted">Mật khẩu</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control form-control-pass" id="loginPassword"
+                                            name="password" placeholder="Nhập mật khẩu" required>
+                                        <button class="btn btn-toggle-pass" type="button"
+                                            onclick="togglePassword('loginPassword', this)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="rememberMe"
+                                            name="remember-me">
+                                        <label class="form-check-label small text-muted" for="rememberMe">Ghi nhớ
+                                            tôi</label>
+                                    </div>
+                                    <a th:href="@{/forgot-password}"
+                                        class="text-decoration-none small text-dark fw-bold">Quên mật khẩu?</a>
+                                </div>
+
+                                <div class="d-grid mb-4">
+                                    <button type="submit" class="btn btn-dark py-2 fw-bold">ĐĂNG NHẬP</button>
+                                </div>
+
+                                <div class="position-relative text-center mb-3">
+                                    <hr class="text-muted opacity-25">
+                                    <span
+                                        class="position-absolute top-50 start-50 translate-middle px-2 small text-muted"
+                                        style="background-color: var(--bg-color, #fff);">Hoặc đăng nhập bằng</span>
+                                </div>
+
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <a href="/oauth2/authorization/google" class="btn-google w-100">
+                                            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
+                                                alt="G">
+                                            <span class="small">Google</span>
+                                        </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <a href="/oauth2/authorization/facebook" class="btn-facebook w-100">
+                                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg"
+                                                alt="F">
+                                            <span class="small">Facebook</span>
+                                        </a>
+                                    </div>
+                                </div>
+
+                            </form>
                         </div>
                     </div>
+                </div>
 
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="rememberMe" name="remember-me">
-                            <label class="form-check-label small text-muted" for="rememberMe">Ghi nhớ tôi</label>
+                <!-- ===== BACK: REGISTER ===== -->
+                <div class="auth-face auth-face-back">
+                    <div class="card auth-card">
+                        <div class="auth-header">
+                            <h3 class="fw-bold mb-1">Đăng ký tài khoản</h3>
+                            <p class="small opacity-75 mb-0">Trở thành thành viên của ShopOMG ngay hôm nay</p>
                         </div>
-                        <a th:href="@{/forgot-password}" class="text-decoration-none small text-dark fw-bold">Quên mật khẩu?</a>
-                    </div>
 
-                    <div class="d-grid mb-4">
-                        <button type="submit" class="btn btn-dark py-2 fw-bold">ĐĂNG NHẬP</button>
-                    </div>
+                        <div class="card-body p-4">
+                            <div th:if="${error}" class="alert alert-danger text-center small py-2 mb-3" role="alert">
+                                <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
+                            </div>
 
-                    <div class="text-center mb-4">
-                        <span class="small text-muted">Chưa có tài khoản?</span>
-                        <a th:href="@{/register}" class="text-dark fw-bold small ms-1">Đăng ký ngay</a>
-                    </div>
+                            <form th:action="@{/account/sign-up}" th:object="${form}" method="post" id="registerForm">
 
-                    <div class="position-relative text-center mb-3">
-                        <hr class="text-muted opacity-25">
-                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-2 small text-muted">Hoặc đăng nhập bằng</span>
-                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-uppercase text-muted">Họ và tên</label>
+                                    <input type="text" class="form-control" th:field="*{fullName}"
+                                        placeholder="Nhập họ tên của bạn">
+                                    <small class="text-danger" th:if="${#fields.hasErrors('fullName')}"
+                                        th:errors="*{fullName}"></small>
+                                </div>
 
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <a href="/oauth2/authorization/google" class="btn-google w-100">
-                                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="G">
-                                <span class="small">Google</span>
-                            </a>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-uppercase text-muted">Email</label>
+                                    <input type="email" class="form-control" th:field="*{email}"
+                                        placeholder="example@email.com">
+                                    <small class="text-danger" th:if="${#fields.hasErrors('email')}"
+                                        th:errors="*{email}"></small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-uppercase text-muted">Tên đăng
+                                        nhập</label>
+                                    <input type="text" class="form-control" th:field="*{username}"
+                                        placeholder="Chọn tên đăng nhập">
+                                    <small class="text-danger" th:if="${#fields.hasErrors('username')}"
+                                        th:errors="*{username}"></small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-uppercase text-muted">Mật khẩu</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control form-control-pass" id="regPassword"
+                                            th:field="*{password}" placeholder="Nhập mật khẩu"
+                                            onkeyup="checkPasswordStrength()">
+                                        <button class="btn btn-toggle-pass" type="button"
+                                            onclick="togglePassword('regPassword', this)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="mt-2 ps-1" id="password-rules">
+                                        <div class="validation-item" id="rule-length">
+                                            <i class="fas fa-circle"></i> Tối thiểu 8 ký tự
+                                        </div>
+                                        <div class="validation-item" id="rule-case">
+                                            <i class="fas fa-circle"></i> Chữ hoa &amp; chữ thường
+                                        </div>
+                                        <div class="validation-item" id="rule-special">
+                                            <i class="fas fa-circle"></i> Số và ký tự đặc biệt (@$!%*?&amp;)
+                                        </div>
+                                    </div>
+
+                                    <small class="text-danger" th:if="${#fields.hasErrors('password')}"
+                                        th:errors="*{password}"></small>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label small fw-bold text-uppercase text-muted">Xác nhận mật
+                                        khẩu</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control form-control-pass"
+                                            id="confirmPassword" th:field="*{confirmPassword}"
+                                            placeholder="Nhập lại mật khẩu" onkeyup="checkConfirmPassword()">
+                                        <button class="btn btn-toggle-pass" type="button"
+                                            onclick="togglePassword('confirmPassword', this)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="validation-item mt-1 ps-1 d-none" id="rule-match">
+                                        <i class="fas fa-circle"></i> Mật khẩu khớp
+                                    </div>
+                                    <small class="text-danger" th:if="${#fields.hasErrors('confirmPassword')}"
+                                        th:errors="*{confirmPassword}"></small>
+                                </div>
+
+                                <button type="submit" class="btn btn-dark w-100 fw-bold py-2 mb-3">ĐĂNG KÝ NGAY</button>
+
+                            </form>
                         </div>
-                        <div class="col-6">
-                            <a href="/oauth2/authorization/facebook" class="btn-facebook w-100">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="F">
-                                <span class="small">Facebook</span>
-                            </a>
-                        </div>
                     </div>
+                </div>
 
-                </form>
-            </div>
+            </div><!-- end flip-container -->
         </div>
 
         <script>
-            function togglePassword() {
-                const passwordInput = document.getElementById('password');
-                const eyeIcon = document.getElementById('eyeIcon');
-                
-                if (passwordInput.type === 'password') {
-                    passwordInput.type = 'text';
-                    eyeIcon.classList.remove('fa-eye');
-                    eyeIcon.classList.add('fa-eye-slash');
+            // ===== Auth Toggle Logic =====
+            var isRegisterMode = false;
+
+            function showLogin() {
+                isRegisterMode = false;
+                updateAuthUI();
+            }
+
+            function showRegister() {
+                isRegisterMode = true;
+                updateAuthUI();
+            }
+
+            function toggleAuth() {
+                isRegisterMode = !isRegisterMode;
+                updateAuthUI();
+            }
+
+            function updateAuthUI() {
+                var flip = document.getElementById('authFlip');
+                var track = document.getElementById('authTrack');
+                var labelLogin = document.getElementById('labelLogin');
+                var labelRegister = document.getElementById('labelRegister');
+
+                if (isRegisterMode) {
+                    flip.classList.add('flipped');
+                    track.classList.add('register');
+                    labelLogin.classList.remove('active');
+                    labelRegister.classList.add('active');
                 } else {
-                    passwordInput.type = 'password';
-                    eyeIcon.classList.remove('fa-eye-slash');
-                    eyeIcon.classList.add('fa-eye');
+                    flip.classList.remove('flipped');
+                    track.classList.remove('register');
+                    labelLogin.classList.add('active');
+                    labelRegister.classList.remove('active');
                 }
             }
+
+            // ===== Toggle Password Visibility =====
+            function togglePassword(fieldId, btn) {
+                var input = document.getElementById(fieldId);
+                var icon = btn.querySelector('i');
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
+
+            // ===== Password Strength Checker =====
+            function checkPasswordStrength() {
+                var password = document.getElementById('regPassword').value;
+
+                var minLength = password.length >= 8;
+                var hasCase = /[a-z]/.test(password) && /[A-Z]/.test(password);
+                var hasSpecialAndNumber = /[0-9]/.test(password) && /[@$!%*?&]/.test(password);
+
+                updateRuleStatus('rule-length', minLength);
+                updateRuleStatus('rule-case', hasCase);
+                updateRuleStatus('rule-special', hasSpecialAndNumber);
+
+                checkConfirmPassword();
+            }
+
+            function updateRuleStatus(elementId, isValid) {
+                var el = document.getElementById(elementId);
+                if (!el) return;
+                var icon = el.querySelector('i');
+
+                if (isValid) {
+                    el.classList.add('valid');
+                    icon.classList.remove('fa-circle');
+                    icon.classList.add('fa-check-circle');
+                } else {
+                    el.classList.remove('valid');
+                    icon.classList.remove('fa-check-circle');
+                    icon.classList.add('fa-circle');
+                }
+            }
+
+            function checkConfirmPassword() {
+                var password = document.getElementById('regPassword').value;
+                var confirm = document.getElementById('confirmPassword').value;
+                var ruleMatch = document.getElementById('rule-match');
+                if (!ruleMatch) return;
+
+                if (confirm.length > 0) {
+                    ruleMatch.classList.remove('d-none');
+                    if (password === confirm) {
+                        ruleMatch.classList.add('valid');
+                        ruleMatch.innerHTML = '<i class="fas fa-check-circle me-2"></i>Mật khẩu trùng khớp';
+                    } else {
+                        ruleMatch.classList.remove('valid');
+                        ruleMatch.innerHTML = '<i class="fas fa-times-circle me-2 text-danger"></i>Chưa khớp';
+                    }
+                } else {
+                    ruleMatch.classList.add('d-none');
+                }
+            }
+
+            // ===== Init on page load =====
+            document.addEventListener('DOMContentLoaded', function () {
+                // Auto-show register if server says so, or URL indicates register mode
+                var serverShowRegister = /*[[${showRegister != null and showRegister}]]*/ false;
+                if (serverShowRegister ||
+                    window.location.search.includes('mode=register') ||
+                    window.location.pathname.includes('register') ||
+                    window.location.pathname.includes('sign-up')) {
+                    isRegisterMode = true;
+                    updateAuthUI();
+                }
+            });
         </script>
     </article>
 </body>
+
 </html>

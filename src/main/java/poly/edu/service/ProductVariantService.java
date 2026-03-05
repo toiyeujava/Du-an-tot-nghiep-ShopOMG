@@ -190,7 +190,21 @@ public class ProductVariantService {
         boolean hasActiveOrders = variantRepository.hasActiveOrders(id);
         if (hasActiveOrders) {
             throw new IllegalStateException(
-                    "Cannot delete variant. It has active orders (PENDING, CONFIRMED, or SHIPPING).");
+                    "Không thể xóa: Biến thể đang nằm trong đơn hàng đang xử lý (Chưa hoàn thành).");
+        }
+
+        // Check if variant is in any historical orders
+        boolean hasAnyOrders = variantRepository.hasAnyOrders(id);
+        if (hasAnyOrders) {
+            throw new IllegalStateException(
+                    "Không thể xóa: Biến thể này đã nằm trong lịch sử đơn hàng của khách.");
+        }
+
+        // Check if variant is in shopping carts
+        boolean isInCarts = variantRepository.isInCarts(id);
+        if (isInCarts) {
+            throw new IllegalStateException(
+                    "Không thể xóa: Có khách hàng đang để biến thể này trong giỏ hàng.");
         }
 
         variantRepository.delete(variant);

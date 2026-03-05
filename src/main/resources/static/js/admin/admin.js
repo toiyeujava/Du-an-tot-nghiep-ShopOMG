@@ -58,19 +58,68 @@ const CategoryManager = {
         }
     },
 
-    delete: async function (id) {
-        if (!confirm('Bạn có chắc muốn xóa loại này?')) return;
+    delete: async function (id, force = false) {
+        if (!force && !confirm('Bạn có chắc muốn xóa loại này?')) return;
 
         try {
-            const response = await fetch(`/admin/categories/${id}`, {
+            const url = force ? `/admin/categories/${id}?force=true` : `/admin/categories/${id}`;
+            const response = await fetch(url, {
                 method: 'DELETE'
             });
 
             const result = await response.json();
 
             if (result.success) {
-                document.getElementById('row-' + id).remove();
+                // If it's a soft delete, we probably want to reload to show the "Restore" button instead
                 alert(result.message);
+                location.reload();
+            } else if (result.requiresForce) {
+                // The category has products
+                if (confirm('Bạn vẫn muốn xóa loại này chứ? Nó sẽ buộc xóa tất cả các sản phẩm bên trong!')) {
+                    this.delete(id, true);
+                }
+            } else {
+                alert('Lỗi: ' + result.message);
+            }
+        } catch (error) {
+            alert('Lỗi kết nối: ' + error.message);
+        }
+    },
+
+    restore: async function (id) {
+        if (!confirm('Bạn có chắc muốn khôi phục loại này cùng các sản phẩm bên trong?')) return;
+
+        try {
+            const response = await fetch(`/admin/categories/${id}/restore`, {
+                method: 'PUT'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                location.reload();
+            } else {
+                alert('Lỗi: ' + result.message);
+            }
+        } catch (error) {
+            alert('Lỗi kết nối: ' + error.message);
+        }
+    },
+
+    hardDelete: async function (id) {
+        if (!confirm('Hành động này sẽ XÓA VĨNH VIỄN loại sản phẩm này và không thể khôi phục. Bạn có chắc chắn?')) return;
+
+        try {
+            const response = await fetch(`/admin/categories/${id}/hard`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                location.reload();
             } else {
                 alert('Lỗi: ' + result.message);
             }
@@ -85,6 +134,8 @@ function openCreateModal() { CategoryManager.openCreateModal(); }
 function openEditModal(id, name, image) { CategoryManager.openEditModal(id, name, image); }
 function saveCategory() { CategoryManager.save(); }
 function deleteCategory(id) { CategoryManager.delete(id); }
+function restoreCategory(id) { CategoryManager.restore(id); }
+function hardDeleteCategory(id) { CategoryManager.hardDelete(id); }
 
 
 // ===== VARIANT CRUD =====
@@ -100,6 +151,7 @@ const VariantManager = {
         this.isEditMode = false;
         document.getElementById('modalTitle').textContent = 'Thêm biến thể mới';
         document.getElementById('variantId').value = '';
+        document.getElementById('variantId').disabled = true; // Fix Spring binding error on create
         document.getElementById('sku').value = '';
         document.getElementById('color').value = '';
         document.getElementById('size').value = '';
@@ -111,6 +163,7 @@ const VariantManager = {
         this.isEditMode = true;
         document.getElementById('modalTitle').textContent = 'Sửa biến thể';
         document.getElementById('variantId').value = id;
+        document.getElementById('variantId').disabled = false; // Enable for edit binding
         document.getElementById('sku').value = sku === 'null' ? '' : (sku || '');
         document.getElementById('color').value = color === 'null' ? '' : (color || '');
         document.getElementById('size').value = size === 'null' ? '' : (size || '');

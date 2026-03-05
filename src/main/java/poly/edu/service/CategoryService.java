@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import poly.edu.entity.Category;
+import poly.edu.entity.Product;
 import poly.edu.repository.CategoryRepository;
 import poly.edu.repository.ProductRepository;
 
@@ -99,6 +100,16 @@ public class CategoryService {
      * Time Complexity: O(1) for count + O(1) for delete = O(1)
      * * Data Structure: Simple counter
      */
+    /**
+     * Delete category with constraint checking
+     * Algorithm:
+     * 1. Count products in category: SELECT COUNT(*) FROM Products WHERE
+     * category_id = ?
+     * 2. If count > 0 -> throw exception with product count
+     * 3. If count = 0 -> delete category
+     * Time Complexity: O(1) for count + O(1) for delete = O(1)
+     * * Data Structure: Simple counter
+     */
     @Transactional
     public void deleteCategory(Integer id) {
         Category category = categoryRepository.findById(id)
@@ -106,7 +117,7 @@ public class CategoryService {
 
         // Count products in this category
         long productCount = productRepository.findAll().stream()
-                .filter(p -> p.getCategoryId().equals(id))
+                .filter(p -> p.getCategoryId().equals(id) && (p.getIsActive() == null || p.getIsActive()))
                 .count();
 
         if (productCount > 0) {
@@ -116,7 +127,77 @@ public class CategoryService {
                             category.getName(), productCount));
         }
 
-        // Safe to delete
+        // Safe to delete (soft delete)
+        category.setIsActive(false);
+        categoryRepository.save(category);
+    }
+
+    /**
+     * Force delete category and its products (soft delete)
+     */
+    @Transactional
+    public void forceDeleteCategory(Integer id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
+
+        // Soft delete all products in this category
+        List<Product> products = productRepository.findAll().stream()
+                .filter(p -> p.getCategoryId().equals(id))
+                .toList();
+
+        for (Product product : products) {
+            product.setIsActive(false);
+        }
+        productRepository.saveAll(products);
+
+        // Soft delete the category
+        category.setIsActive(false);
+        categoryRepository.save(category);
+    }
+
+    /**
+     * Restore category and its products
+     */
+    @Transactional
+    public void restoreCategory(Integer id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
+
+        // Restore all products in this category
+        List<Product> products = productRepository.findAll().stream()
+                .filter(p -> p.getCategoryId().equals(id))
+                .toList();
+
+        for (Product product : products) {
+            product.setIsActive(true);
+        }
+        productRepository.saveAll(products);
+
+        // Restore the category
+        category.setIsActive(true);
+        categoryRepository.save(category);
+    }
+
+    /**
+     * Hard delete category (permanently remove from DB)
+     */
+    @Transactional
+    public void hardDeleteCategory(Integer id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
+
+        // Check for ANY products (active or inactive)
+        long totalProducts = productRepository.findAll().stream()
+                .filter(p -> p.getCategoryId().equals(id))
+                .count();
+
+        if (totalProducts > 0) {
+            throw new IllegalStateException(
+                    String.format(
+                            "Không thể xóa vĩnh viễn loại '%s' vì vẫn còn %d mặt hàng. Vui lòng xóa vĩnh viễn các mặt hàng này trước.",
+                            category.getName(), totalProducts));
+        }
+
         categoryRepository.delete(category);
     }
 
@@ -126,7 +207,7 @@ public class CategoryService {
      */
     public long getProductCountByCategory(Integer categoryId) {
         return productRepository.findAll().stream()
-                .filter(p -> p.getCategoryId().equals(categoryId))
+                .filter(p -> p.getCategoryId().equals(categoryId) && (p.getIsActive() == null || p.getIsActive()))
                 .count();
     }
 

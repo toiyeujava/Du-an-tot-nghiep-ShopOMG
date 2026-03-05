@@ -119,18 +119,58 @@ public class AdminCategoryController {
      * - Force admin to move products first
      * - Data integrity
      */
+    /**
+     * Delete category (AJAX).
+     * 
+     * Algorithm:
+     * 1. Count products in this category
+     * 2. If count > 0 → return error with product count and REQUIRES_FORCE flag
+     * 3. If count = 0 or force = true → delete category
+     * 
+     * Why constraint check?
+     * - Prevent orphaned products
+     * - Force admin to move products first
+     * - Data integrity
+     */
     @DeleteMapping("/{id}")
     @ResponseBody
-    public Map<String, Object> deleteCategory(@PathVariable Integer id) {
+    public Map<String, Object> deleteCategory(@PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "false") boolean force) {
         try {
-            categoryService.deleteCategory(id);
-            return Map.of(
-                    "success", true,
-                    "message", "Xóa danh mục thành công!");
+            if (force) {
+                categoryService.forceDeleteCategory(id);
+                return Map.of(
+                        "success", true,
+                        "message", "Đã buộc xóa danh mục cùng tất cả các sản phẩm bên trong!");
+            } else {
+                categoryService.deleteCategory(id);
+                return Map.of(
+                        "success", true,
+                        "message", "Xóa danh mục thành công!");
+            }
         } catch (IllegalStateException e) {
             return Map.of(
                     "success", false,
+                    "requiresForce", true,
                     "message", e.getMessage());
+        } catch (Exception e) {
+            return Map.of(
+                    "success", false,
+                    "message", "Lỗi: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Restore category (AJAX)
+     */
+    @PutMapping("/{id}/restore")
+    @ResponseBody
+    public Map<String, Object> restoreCategory(@PathVariable Integer id) {
+        try {
+            categoryService.restoreCategory(id);
+            return Map.of(
+                    "success", true,
+                    "message", "Khôi phục danh mục thành công!");
         } catch (Exception e) {
             return Map.of(
                     "success", false,

@@ -48,9 +48,13 @@
                                     th:attr="onclick='openEditModal(' + ${cat.id} + ', \'' + ${cat.name} + '\', \'' + ${cat.image} + '\')'">
                                     <i class="fas fa-pen"></i>
                                 </button>
-                                <button class="btn-icon btn-icon-delete ms-1"
-                                    th:attr="onclick='deleteCategory(' + ${cat.id} + ')'">
+                                <button th:if="${cat.isActive}" class="btn-icon btn-icon-delete ms-1"
+                                    th:attr="onclick='deleteCategory(' + ${cat.id} + ')'" title="Xóa">
                                     <i class="fas fa-trash"></i>
+                                </button>
+                                <button th:unless="${cat.isActive}" class="btn-icon btn-icon-edit ms-1 text-success"
+                                    th:attr="onclick='restoreCategory(' + ${cat.id} + ')'" title="Khôi phục">
+                                    <i class="fas fa-trash-restore"></i>
                                 </button>
                             </td>
                         </tr>

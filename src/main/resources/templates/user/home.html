@@ -25,6 +25,32 @@
                 transform: rotate(180deg);
             }
 
+            /* --- Sidebar + Main responsive layout --- */
+            #sidebarFilter,
+            #mainProducts {
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            /* When sidebar collapsed: full-width header bar + centered products */
+            #sidebarFilter.filter-collapsed {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                margin-bottom: 16px;
+            }
+
+            #mainProducts.products-expanded {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+
+            /* When collapsed, make the filter header horizontal */
+            #sidebarFilter.filter-collapsed .filter-section {
+                position: relative;
+                top: auto;
+            }
+
             .color-dot {
                 width: 25px;
                 height: 25px;
@@ -383,8 +409,8 @@
         <!-- ==========================================
              PRODUCT LISTING
              ========================================== -->
-        <div class="row justify-content-center">
-            <aside class="col-lg-3 d-none d-lg-block">
+        <div class="row justify-content-center" id="productRow">
+            <aside class="col-lg-3 d-none d-lg-block" id="sidebarFilter">
                 <div class="filter-section p-4 border rounded-3 bg-white shadow-sm" th:with="isFiltering=${(selectedGender != null and selectedGender != '') 
                                          or (selectedCategory != null) 
                                          or (selectedColor != null and selectedColor != '') 
@@ -481,7 +507,7 @@
                 </div>
             </aside>
 
-            <main class="col-lg-9">
+            <main class="col-lg-9" id="mainProducts">
 
                 <div id="productList"
                     class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border">
@@ -986,8 +1012,8 @@
             (function () {
                 'use strict';
 
-                var SIDEBAR_SELECTOR = 'aside.col-lg-3';
-                var MAIN_SELECTOR = 'main.col-lg-9';
+                var SIDEBAR_SELECTOR = '#sidebarFilter';
+                var MAIN_SELECTOR = '#mainProducts';
                 var isLoading = false;
 
                 // --- Loading Overlay ---
@@ -1077,6 +1103,30 @@
                     bindPriceForm();
                     bindPagination();
                     bindNavbarLinks();
+
+                    // Re-sync collapse layout state
+                    var filterContent = document.getElementById('filterContent');
+                    var sidebar = document.getElementById('sidebarFilter');
+                    var mainProducts = document.getElementById('mainProducts');
+                    if (filterContent && sidebar && mainProducts) {
+                        var isExpanded = filterContent.classList.contains('show');
+                        if (isExpanded) {
+                            sidebar.classList.remove('filter-collapsed');
+                            mainProducts.classList.remove('products-expanded');
+                        } else {
+                            sidebar.classList.add('filter-collapsed');
+                            mainProducts.classList.add('products-expanded');
+                        }
+                        // Re-bind collapse events
+                        filterContent.addEventListener('shown.bs.collapse', function () {
+                            sidebar.classList.remove('filter-collapsed');
+                            mainProducts.classList.remove('products-expanded');
+                        });
+                        filterContent.addEventListener('hidden.bs.collapse', function () {
+                            sidebar.classList.add('filter-collapsed');
+                            mainProducts.classList.add('products-expanded');
+                        });
+                    }
 
                     // Re-init quick view modals
                     document.querySelectorAll(MAIN_SELECTOR + ' .variant-wrapper').forEach(function (wrapper) {
@@ -1234,6 +1284,35 @@
                     bindPriceForm();
                     bindPagination();
                     bindNavbarLinks();
+
+                    // --- Sidebar collapse/expand layout toggle ---
+                    var filterContent = document.getElementById('filterContent');
+                    var sidebar = document.getElementById('sidebarFilter');
+                    var mainProducts = document.getElementById('mainProducts');
+
+                    function setFilterLayout(isExpanded) {
+                        if (isExpanded) {
+                            sidebar.classList.remove('filter-collapsed');
+                            mainProducts.classList.remove('products-expanded');
+                        } else {
+                            sidebar.classList.add('filter-collapsed');
+                            mainProducts.classList.add('products-expanded');
+                        }
+                    }
+
+                    if (filterContent && sidebar && mainProducts) {
+                        // Set initial state
+                        var isInitExpanded = filterContent.classList.contains('show');
+                        setFilterLayout(isInitExpanded);
+
+                        // Listen for Bootstrap collapse events
+                        filterContent.addEventListener('shown.bs.collapse', function () {
+                            setFilterLayout(true);
+                        });
+                        filterContent.addEventListener('hidden.bs.collapse', function () {
+                            setFilterLayout(false);
+                        });
+                    }
                 });
             })();
         </script>

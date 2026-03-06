@@ -89,10 +89,25 @@
 }
 
 /* Icon Colors - Pastel */
-.bg-primary-soft { background-color: #e1f0ff; color: #3699ff; }
-.bg-success-soft { background-color: #c9f7f5; color: #1bc5bd; }
-.bg-warning-soft { background-color: #fff4de; color: #ffa800; }
-.bg-danger-soft { background-color: #ffe2e5; color: #f64e60; }
+.bg-primary-soft {
+    background-color: #e1f0ff;
+    color: #3699ff;
+}
+
+.bg-success-soft {
+    background-color: #c9f7f5;
+    color: #1bc5bd;
+}
+
+.bg-warning-soft {
+    background-color: #fff4de;
+    color: #ffa800;
+}
+
+.bg-danger-soft {
+    background-color: #ffe2e5;
+    color: #f64e60;
+}
 
 /* ===== CARD BOX ===== */
 .card-box {
@@ -119,8 +134,15 @@
     padding: 15px 20px;
 }
 
-.table-custom thead th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
-.table-custom thead th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+.table-custom thead th:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.table-custom thead th:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
 
 .table-custom tbody td {
     padding: 15px 20px;
@@ -130,14 +152,45 @@
     font-size: 0.95rem;
 }
 
-.table-custom tr:last-child td { border-bottom: none; }
+.table-custom tr:last-child td {
+    border-bottom: none;
+}
 
 /* ===== BADGES ===== */
-.badge-light-success { background-color: #c9f7f5; color: #1bc5bd; padding: 5px 12px; border-radius: 6px; }
-.badge-light-danger { background-color: #ffe2e5; color: #f64e60; padding: 5px 12px; border-radius: 6px; }
-.badge-light-warning { background-color: #fff4de; color: #ffa800; padding: 5px 12px; border-radius: 6px; }
-.badge-light-info { background-color: #e1f0ff; color: #3699ff; padding: 5px 12px; border-radius: 6px; }
-.badge-light-primary { background-color: #eee5ff; color: #8950fc; padding: 5px 12px; border-radius: 6px; }
+.badge-light-success {
+    background-color: #c9f7f5;
+    color: #1bc5bd;
+    padding: 5px 12px;
+    border-radius: 6px;
+}
+
+.badge-light-danger {
+    background-color: #ffe2e5;
+    color: #f64e60;
+    padding: 5px 12px;
+    border-radius: 6px;
+}
+
+.badge-light-warning {
+    background-color: #fff4de;
+    color: #ffa800;
+    padding: 5px 12px;
+    border-radius: 6px;
+}
+
+.badge-light-info {
+    background-color: #e1f0ff;
+    color: #3699ff;
+    padding: 5px 12px;
+    border-radius: 6px;
+}
+
+.badge-light-primary {
+    background-color: #eee5ff;
+    color: #8950fc;
+    padding: 5px 12px;
+    border-radius: 6px;
+}
 
 /* ===== ACTION BUTTONS ===== */
 .btn-icon {
@@ -209,11 +262,30 @@
 }
 
 /* ===== ORDER STATUS ===== */
-.status-pending { background-color: #fff4de; color: #ffa800; }
-.status-confirmed { background-color: #e1f0ff; color: #3699ff; }
-.status-shipping { background-color: #eee5ff; color: #8950fc; }
-.status-completed { background-color: #c9f7f5; color: #1bc5bd; }
-.status-cancelled { background-color: #ffe2e5; color: #f64e60; }
+.status-pending {
+    background-color: #fff4de;
+    color: #ffa800;
+}
+
+.status-confirmed {
+    background-color: #e1f0ff;
+    color: #3699ff;
+}
+
+.status-shipping {
+    background-color: #eee5ff;
+    color: #8950fc;
+}
+
+.status-completed {
+    background-color: #c9f7f5;
+    color: #1bc5bd;
+}
+
+.status-cancelled {
+    background-color: #ffe2e5;
+    color: #f64e60;
+}
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 991px) {
@@ -221,23 +293,23 @@
         width: 80px;
         padding: 15px;
     }
-    
+
     .admin-sidebar .sidebar-brand,
     .admin-sidebar small,
     .admin-menu a span {
         display: none;
     }
-    
+
     .admin-menu a {
         justify-content: center;
         padding: 12px;
     }
-    
+
     .admin-menu a i {
         margin: 0;
         font-size: 1.2rem;
     }
-    
+
     .admin-content {
         margin-left: 80px;
     }
@@ -247,14 +319,17 @@
 
 /* Cái chấm đỏ */
 .notification-badge {
-    background-color: #dc3545; /* Màu đỏ chuẩn bootstrap */
+    background-color: #dc3545;
+    /* Màu đỏ chuẩn bootstrap */
     color: white;
     font-size: 11px;
     font-weight: bold;
     padding: 2px 6px;
     border-radius: 10px;
-    margin-left: auto; /* Đẩy sang phải cùng */
-    display: none; /* Mặc định ẩn, có tin mới mới hiện */
+    margin-left: auto;
+    /* Đẩy sang phải cùng */
+    display: none;
+    /* Mặc định ẩn, có tin mới mới hiện */
     box-shadow: 0 2px 4px rgba(220, 53, 69, 0.4);
     min-width: 18px;
     text-align: center;
@@ -271,6 +346,7 @@
 
 /* Khi có tin mới thì dòng user sáng lên tí */
 .user-item.has-new-message {
-    background-color: #fff3cd; /* Màu vàng nhạt */
+    background-color: #fff3cd;
+    /* Màu vàng nhạt */
     font-weight: bold;
 }

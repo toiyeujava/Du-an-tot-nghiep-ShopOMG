@@ -75,39 +75,12 @@
                                     onclick="showQRCode()">
                                 <i class="fas fa-qrcode fs-4 text-primary"></i>
                                 <div>
-                                    <strong class="d-block">QR CODE</strong>
-                                    <small class="text-muted">Quét mã QR qua ứng dụng ngân hàng</small>
+                                    <strong class="d-block">Chuyển khoản qua mã QR</strong>
+                                    <small class="text-muted">Quét QR qua APP Ngân Hàng</small>
                                 </div>
                             </label>
                         </div>
 
-                        <!-- QR Code Details (Hidden by default) -->
-                        <div id="qrCodeDetails" class="mt-4 p-4 border rounded bg-light" style="display: none;">
-                            <div class="text-center mb-3">
-                                <img src="/images/qr-code.jpg" alt="QR Code" class="img-fluid"
-                                    style="max-width: 300px;">
-                            </div>
-                            <div class="row">
-                                <div class="col-12 mb-2">
-                                    <div class="d-flex justify-content-between">
-                                        <strong>Ngân hàng:</strong>
-                                        <span class="text-end">NGÂN HÀNG THƯƠNG MẠI CỔ PHẦN QUÂN ĐỘI</span>
-                                    </div>
-                                </div>
-                                <div class="col-12 mb-2">
-                                    <div class="d-flex justify-content-between">
-                                        <strong>Chủ tài khoản:</strong>
-                                        <span>NGUYỄN MINH HÙNG</span>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="d-flex justify-content-between">
-                                        <strong>Số tài khoản:</strong>
-                                        <span>0961342609</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -147,9 +120,12 @@
                         </div>
 
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control" placeholder="Mã giảm giá">
-                            <button class="btn btn-dark" type="button">Áp dụng</button>
+                            <input type="text" id="couponInput" class="form-control" placeholder="Mã giảm giá"
+                                oninput="resetCoupon()">
+                            <button class="btn btn-dark" type="button" id="couponBtn" onclick="applyCoupon()">Áp
+                                dụng</button>
                         </div>
+                        <div id="couponMsg" class="small mb-2" style="display:none"></div>
 
                         <div class="d-flex justify-content-between mb-1 small">
                             <span class="text-muted">Tạm tính:</span>
@@ -157,11 +133,17 @@
                                 th:text="${#numbers.formatInteger(cartTotal, 0, 'COMMA') + 'đ'}">0đ</span>
                             <span id="subtotalDisplay" th:unless="${checkoutMode == 'CART'}">0đ</span>
                         </div>
+                        <div class="d-flex justify-content-between mb-1 small align-items-center">
+                            <span class="text-muted">Phí vận chuyển:</span>
+                            <span id="shippingDisplay">...đờiến tính địa chỉ</span>
+                        </div>
                         <div class="d-flex justify-content-between mb-1 small">
-                            <span class="text-muted">Phí vận chuyển:</span> <span>30.000đ</span>
+                            <span></span>
+                            <span id="shippingZoneBadge" class="badge" style="font-size:.7rem;opacity:0"></span>
                         </div>
                         <div class="d-flex justify-content-between mb-3 small text-success">
-                            <span>Giảm giá:</span> <span>-0đ</span>
+                            <span>Giảm giá:</span>
+                            <span id="discountDisplay">-0đ</span>
                         </div>
                         <div class="d-flex justify-content-between border-top pt-3 align-items-center">
                             <span class="fw-bold fs-5">Tổng cộng</span>
@@ -171,7 +153,8 @@
                                 th:unless="${checkoutMode == 'CART'}">30.000đ</span>
                         </div>
 
-                        <button type="submit" class="btn btn-dark w-100 py-3 mt-4 fw-bold fs-5 shadow-sm">
+                        <button type="submit" id="submitBtn"
+                            class="btn btn-dark w-100 py-3 mt-4 fw-bold fs-5 shadow-sm">
                             ĐẶT HÀNG NGAY
                         </button>
                     </div>
@@ -182,6 +165,11 @@
             <input type="hidden" name="selectedRecipientName" id="selectedRecipientName">
             <input type="hidden" name="selectedPhone" id="selectedPhone">
             <input type="hidden" name="selectedAddress" id="selectedAddress">
+            <!-- Shipping fee submitted with form -->
+            <input type="hidden" name="shippingFee" id="shippingFeeInput" value="30000">
+            <!-- Coupon discount -->
+            <input type="hidden" name="discountAmount" id="discountAmountInput" value="0">
+            <input type="hidden" name="couponCode" id="couponCodeInput" value="">
 
             <!-- Hidden inputs for Buy Now flow (optional) -->
             <input type="hidden" name="buyNowVariantId" id="buyNowVariantId">
@@ -375,20 +363,52 @@
         </div>
 
         <style>
-            /* Address card styling */
+            /* ═══════════════════════════════════════════
+               CHECKOUT PAGE — Premium Light/Dark Styles
+               Uses theme CSS vars for automatic theming
+               ═══════════════════════════════════════════ */
+
+            /* ── Card-box ── */
+            .card-box {
+                background: var(--card-bg, #fff) !important;
+                border: 1px solid var(--border-color, #eee) !important;
+                border-radius: 18px !important;
+                box-shadow: 0 2px 20px var(--shadow-color, rgba(0, 0, 0, .06)) !important;
+                padding: 28px !important;
+                transition: background .3s, border-color .3s, box-shadow .3s !important;
+            }
+
+            /* ── Section headings ── */
+            .card-box h5.fw-bold {
+                color: var(--text-heading, #2c3e50);
+                font-size: 1rem;
+                padding-bottom: 12px;
+                border-bottom: 2px solid var(--border-color, #eee);
+                margin-bottom: 18px !important;
+                transition: border-color .3s;
+            }
+
+            /* ── Address card ── */
             .address-card {
                 cursor: pointer;
                 transition: all 0.2s;
                 position: relative;
+                border-radius: 12px !important;
+                background: var(--surface-secondary-bg, #f8f9fa) !important;
+                border: 1.5px solid var(--border-color, #eee) !important;
+                margin-bottom: 10px;
             }
 
             .address-card:hover {
-                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+                box-shadow: 0 4px 16px var(--shadow-color, rgba(0, 0, 0, .08));
+                border-color: var(--border-color-strong, #ccc) !important;
+                transform: translateY(-1px);
             }
 
             .address-card.selected {
-                border-color: #000 !important;
-                background-color: #f8f9fa !important;
+                border-color: #e74c3c !important;
+                background: rgba(231, 76, 60, .04) !important;
+                box-shadow: 0 0 0 3px rgba(231, 76, 60, .1) !important;
             }
 
             .address-edit-icon {
@@ -396,102 +416,191 @@
                 top: 12px;
                 right: 12px;
                 cursor: pointer;
-                color: #adb5bd;
-                font-size: 18px;
-                transition: all 0.3s ease;
+                color: var(--text-secondary, #adb5bd);
+                font-size: 17px;
+                transition: all 0.25s ease;
                 padding: 5px;
+                border-radius: 6px;
             }
 
             .address-edit-icon:hover {
-                color: #0d6efd;
-                transform: translateX(3px);
+                color: #e74c3c;
+                background: rgba(231, 76, 60, .08);
+                transform: scale(1.1);
             }
 
-            /* Custom radio button styling - blue filled circle */
+            /* ── Radio buttons (address) ── */
             .address-card .form-check-input[type="radio"] {
                 width: 20px;
                 height: 20px;
-                border: 2px solid #0d6efd;
+                border: 2px solid #e74c3c;
                 cursor: pointer;
                 flex-shrink: 0;
             }
 
             .address-card .form-check-input[type="radio"]:checked {
-                background-color: #0d6efd;
-                border-color: #0d6efd;
-                box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+                background-color: #e74c3c;
+                border-color: #e74c3c;
+                box-shadow: 0 0 0 0.2rem rgba(231, 76, 60, .2);
             }
 
             .address-card .form-check-input[type="radio"]:focus {
-                border-color: #0d6efd;
-                box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+                border-color: #e74c3c;
+                box-shadow: 0 0 0 0.2rem rgba(231, 76, 60, .2);
             }
 
+            /* ── Payment method list ── */
+            .list-group {
+                gap: 8px;
+                display: flex;
+                flex-direction: column;
+                border: none !important;
+            }
 
-            /* Dropdown select styling */
+            .list-group-item {
+                border-radius: 12px !important;
+                border: 1.5px solid var(--border-color, #eee) !important;
+                background: var(--surface-secondary-bg, #f8f9fa) !important;
+                color: var(--text-primary, #333) !important;
+                cursor: pointer;
+                transition: all .2s;
+                padding: 14px 16px !important;
+            }
+
+            .list-group-item:hover {
+                border-color: var(--border-color-strong, #ccc) !important;
+                box-shadow: 0 3px 12px var(--shadow-color, rgba(0, 0, 0, .07));
+                transform: translateY(-1px);
+            }
+
+            .list-group-item:has(input:checked) {
+                border-color: #e74c3c !important;
+                background: rgba(231, 76, 60, .04) !important;
+                box-shadow: 0 0 0 3px rgba(231, 76, 60, .1) !important;
+            }
+
+            /* Payment radio */
+            .list-group-item .form-check-input[type="radio"] {
+                width: 18px;
+                height: 18px;
+                border: 2px solid var(--border-color-strong, #ccc);
+                transition: all .2s;
+            }
+
+            .list-group-item .form-check-input[type="radio"]:checked {
+                background-color: #e74c3c;
+                border-color: #e74c3c;
+                box-shadow: 0 0 0 .2rem rgba(231, 76, 60, .2);
+            }
+
+            /* ── Add new address button ── */
+            .btn.btn-link.text-dark {
+                color: #e74c3c !important;
+                font-weight: 600 !important;
+                font-size: .85rem !important;
+                opacity: .85;
+                transition: opacity .2s;
+            }
+
+            .btn.btn-link.text-dark:hover {
+                opacity: 1;
+            }
+
+            /* ── Order summary (right card) ── */
+            .card-box.bg-light.border-0 {
+                background: var(--surface-secondary-bg, #f8f9fa) !important;
+                border: 1.5px solid var(--border-color, #eee) !important;
+            }
+
+            #orderItemsContainer .border-bottom {
+                border-color: var(--border-color, #eee) !important;
+            }
+
+            #orderItemsContainer img {
+                border-radius: 10px !important;
+                border: 1px solid var(--border-color, #eee);
+                object-fit: cover;
+            }
+
+            /* ── Coupon input group ── */
+            .input-group .form-control {
+                border-radius: 10px 0 0 10px !important;
+                border: 1.5px solid var(--border-color, #eee) !important;
+                background: var(--input-bg, #fff) !important;
+                color: var(--text-primary, #333) !important;
+                font-size: .9rem;
+                transition: all .2s;
+            }
+
+            .input-group .form-control:focus {
+                border-color: #e74c3c !important;
+                box-shadow: none !important;
+            }
+
+            .input-group .btn-dark {
+                border-radius: 0 10px 10px 0 !important;
+                background: var(--text-heading, #2c3e50) !important;
+                border-color: var(--text-heading, #2c3e50) !important;
+                font-size: .88rem;
+                padding: 0 16px;
+            }
+
+            /* ── Total rows ── */
+            .d-flex.justify-content-between.border-top {
+                border-color: var(--border-color, #eee) !important;
+            }
+
+            /* ── Submit button ── */
+            #submitBtn {
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+                border: none !important;
+                border-radius: 12px !important;
+                font-size: 1rem !important;
+                letter-spacing: .04em;
+                box-shadow: 0 4px 18px rgba(231, 76, 60, .35) !important;
+                transition: all .25s !important;
+            }
+
+            #submitBtn:hover {
+                transform: translateY(-2px) !important;
+                box-shadow: 0 8px 28px rgba(231, 76, 60, .5) !important;
+                filter: brightness(1.05);
+            }
+
+            #submitBtn:active {
+                transform: translateY(0) !important;
+            }
+
+            /* ── Address scrollbar ── */
+            .address-scroll-container {
+                max-height: 330px;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+
+            .address-scroll-container::-webkit-scrollbar {
+                width: 5px;
+            }
+
+            .address-scroll-container::-webkit-scrollbar-track {
+                background: var(--scrollbar-track, #f1f1f1);
+                border-radius: 10px;
+            }
+
+            .address-scroll-container::-webkit-scrollbar-thumb {
+                background: var(--scrollbar-thumb, #888);
+                border-radius: 10px;
+            }
+
+            .address-scroll-container::-webkit-scrollbar-thumb:hover {
+                background: #e74c3c;
+            }
+
+            /* ── Dropdown selects ── */
             .form-select {
                 cursor: pointer;
             }
 
-            /* Enhanced Modal Styling */
-            .modal-content {
-                border-radius: 12px;
-                overflow: hidden;
-            }
-
-            .modal-header.bg-primary {
-                padding: 1.25rem 1.5rem;
-            }
-
-            .modal-header .modal-title {
-                font-size: 1.25rem;
-            }
-
-            .modal-body {
-                background-color: #fafbfc;
-            }
-
-            /* Enhanced Form Inputs */
-            .modal-body .form-control,
-            .modal-body .form-select {
-                border-radius: 8px;
-                border: 1.5px solid #dee2e6;
-                padding: 0.625rem 0.875rem;
-                transition: all 0.2s ease;
-                font-size: 0.95rem;
-            }
-
-            .modal-body .form-control:focus,
-            .modal-body .form-select:focus {
-                border-color: #0d6efd;
-                box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-            }
-
-            .modal-body .form-label {
-                font-size: 0.875rem;
-                margin-bottom: 0.5rem;
-                color: #495057;
-            }
-
-            .modal-body textarea.form-control {
-                resize: vertical;
-                min-height: 80px;
-            }
-
-            /* Enhanced Buttons */
-            .modal-footer .btn {
-                border-radius: 8px;
-                font-weight: 500;
-                transition: all 0.2s ease;
-            }
-
-            .modal-footer .btn:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-            }
-
-
-            /* Custom dropdown size - approximately 7 items */
             select.form-select {
                 overflow-y: auto;
             }
@@ -500,33 +609,6 @@
                 padding: 8px 12px;
             }
 
-            /* Address scroll container - max 3 addresses visible */
-            .address-scroll-container {
-                max-height: 330px;
-                /* Approximately 3 address cards */
-                overflow-y: auto;
-                overflow-x: hidden;
-            }
-
-            .address-scroll-container::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            .address-scroll-container::-webkit-scrollbar-track {
-                background: #f1f1f1;
-                border-radius: 10px;
-            }
-
-            .address-scroll-container::-webkit-scrollbar-thumb {
-                background: #888;
-                border-radius: 10px;
-            }
-
-            .address-scroll-container::-webkit-scrollbar-thumb:hover {
-                background: #555;
-            }
-
-            /* Dropdown styling */
             select#city[size],
             select#district[size],
             select#editCity[size],
@@ -537,10 +619,10 @@
                 padding: 0;
                 position: absolute !important;
                 z-index: 1050 !important;
-                background: white;
-                border: 1px solid #ced4da;
-                border-radius: 0.25rem;
-                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                background: var(--dropdown-bg, white);
+                border: 1px solid var(--border-color, #ced4da);
+                border-radius: 10px;
+                box-shadow: 0 8px 24px var(--shadow-strong, rgba(0, 0, 0, .15));
             }
 
             select#city[size] option,
@@ -548,13 +630,105 @@
             select#editCity[size] option,
             select#editDistrict[size] option {
                 padding: 8px 12px;
+                background: var(--dropdown-bg, white);
+                color: var(--text-primary, #333);
+            }
+
+            /* ── Modal ── */
+            .modal-content {
+                border-radius: 16px;
+                overflow: hidden;
+                border: none !important;
+                background: var(--modal-bg, #fff) !important;
+                box-shadow: 0 20px 60px var(--shadow-strong, rgba(0, 0, 0, .2)) !important;
+            }
+
+            .modal-header.bg-primary {
+                background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+                padding: 1.25rem 1.5rem;
+                border: none !important;
+            }
+
+            .modal-header .modal-title {
+                font-size: 1.1rem;
+            }
+
+            .modal-body {
+                background: var(--modal-bg, #fafbfc) !important;
+                color: var(--text-primary, #333) !important;
+            }
+
+            .modal-body .form-control,
+            .modal-body .form-select {
+                border-radius: 10px;
+                border: 1.5px solid var(--border-color, #dee2e6) !important;
+                background: var(--input-bg, #fff) !important;
+                color: var(--text-primary, #333) !important;
+                padding: .6rem .875rem;
+                transition: all .2s;
+                font-size: .93rem;
+            }
+
+            .modal-body .form-control:focus,
+            .modal-body .form-select:focus {
+                border-color: #e74c3c !important;
+                box-shadow: 0 0 0 .2rem rgba(231, 76, 60, .15) !important;
+            }
+
+            .modal-body .form-label {
+                font-size: .875rem;
+                color: var(--text-secondary, #495057);
+                margin-bottom: .4rem;
+            }
+
+            .modal-body textarea.form-control {
+                resize: vertical;
+                min-height: 80px;
+            }
+
+            .modal-footer {
+                background: var(--surface-secondary-bg, #f8f9fa) !important;
+                border: none !important;
+                padding: 1rem 1.5rem;
+            }
+
+            .modal-footer .btn {
+                border-radius: 10px;
+                font-weight: 600;
+                transition: all .2s;
+            }
+
+            .modal-footer .btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, .12));
             }
 
             .modal-dialog {
                 margin-top: 2rem !important;
                 margin-bottom: auto;
             }
+
+            /* ── Dark mode extras ── */
+            [data-theme="dark"] .list-group-item strong {
+                color: var(--text-primary);
+            }
+
+            [data-theme="dark"] .list-group-item .text-muted {
+                color: var(--text-secondary) !important;
+            }
+
+            [data-theme="dark"] #orderItemsContainer img {
+                border-color: var(--border-color);
+            }
+
+            [data-theme="dark"] .address-card .form-check-input[type="radio"] {
+                background-color: var(--input-bg);
+            }
         </style>
+
+
+
+
 
         <script>
             // Vietnam Provinces and Districts Data (2026) - All 63 Provinces
@@ -808,7 +982,7 @@
                     const fullAddress = `${addr.detailAddress}, ${addr.district}, ${addr.city}`;
                     html += `
                         <label class="card p-3 mb-2 border address-card d-flex gap-3 align-items-start ${addr.isDefault ? 'bg-light selected' : ''}" 
-                            onclick="selectAddress(${addr.id}, '${addr.recipientName}', '${addr.phone}', '${fullAddress}')">
+                            onclick="selectAddress(${addr.id}, '${addr.recipientName}', '${addr.phone}', '${fullAddress}', '${addr.city}')">
                             <input class="form-check-input flex-shrink-0 mt-1" type="radio" name="addressId" id="addr${addr.id}" 
                                 ${addr.isDefault ? 'checked' : ''} value="${addr.id}">
                             <div class="flex-grow-1">
@@ -829,12 +1003,13 @@
                 if (addresses.length > 0) {
                     const defaultAddr = addresses.find(a => a.isDefault) || addresses[0];
                     selectAddress(defaultAddr.id, defaultAddr.recipientName, defaultAddr.phone,
-                        `${defaultAddr.detailAddress}, ${defaultAddr.district}, ${defaultAddr.city}`);
+                        `${defaultAddr.detailAddress}, ${defaultAddr.district}, ${defaultAddr.city}`,
+                        defaultAddr.city);
                 }
             }
 
             // Select address
-            function selectAddress(id, name, phone, address) {
+            function selectAddress(id, name, phone, address, city) {
                 document.getElementById('selectedRecipientName').value = name;
                 document.getElementById('selectedPhone').value = phone;
                 document.getElementById('selectedAddress').value = address;
@@ -849,7 +1024,154 @@
                 if (radioButton && radioButton.closest('.address-card')) {
                     radioButton.closest('.address-card').classList.add('selected', 'bg-light');
                 }
+
+                // Update shipping fee based on city
+                if (city) updateShipping(city);
             }
+
+            /* ── Shipping fee by zone ──────────────────────────────────────
+               Shop: Đường Lê Văn Khương, Quận 12, TPHCM
+               Zone 1  – Nội thành TPHCM                   : 15,000đ
+               Zone 2  – Lân cận (BD, ĐN, LA, TN, BRVT)   : 25,000đ
+               Zone 3  – Miền Nam còn lại                  : 35,000đ
+               Zone 4  – Miền Trung                         : 45,000đ
+               Zone 5  – Miền Bắc                           : 60,000đ
+            ────────────────────────────────────────────────────────── */
+            var SHIPPING_ZONES = {
+                // Zone 2 – Lân cận (checked AFTER TPHCM via getZone() logic)
+                'Bình Dương': { fee: 25000, label: 'Tỉnh lân cận', color: 'primary' },
+                'Đồng Nai': { fee: 25000, label: 'Tỉnh lân cận', color: 'primary' },
+                'Long An': { fee: 25000, label: 'Tỉnh lân cận', color: 'primary' },
+                'Tây Ninh': { fee: 25000, label: 'Tỉnh lân cận', color: 'primary' },
+                'Bà Rịa - Vũng Tàu': { fee: 25000, label: 'Tỉnh lân cận', color: 'primary' },
+                'Bình Phước': { fee: 25000, label: 'Tỉnh lân cận', color: 'primary' },
+                // Zone 3 – Miền Nam
+                'Cần Thơ': { fee: 35000, label: 'Miền Nam', color: 'info' },
+                'An Giang': { fee: 35000, label: 'Miền Nam', color: 'info' },
+                'Đồng Tháp': { fee: 35000, label: 'Miền Nam', color: 'info' },
+                'Tiền Giang': { fee: 35000, label: 'Miền Nam', color: 'info' },
+                'Bến Tre': { fee: 35000, label: 'Miền Nam', color: 'info' },
+                'Vĩnh Long': { fee: 35000, label: 'Miền Nam', color: 'info' },
+                'Trà Vinh': { fee: 35000, label: 'Miền Nam', color: 'info' },
+                'Sóc Trăng': { fee: 35000, label: 'Miền Nam', color: 'info' },
+                'Hậu Giang': { fee: 35000, label: 'Miền Nam', color: 'info' },
+                'Kiên Giang': { fee: 35000, label: 'Miền Nam', color: 'info' },
+                'Bạc Liêu': { fee: 35000, label: 'Miền Nam', color: 'info' },
+                'Cà Mau': { fee: 35000, label: 'Miền Nam', color: 'info' },
+                // Zone 4 – Miền Trung (default for remaining central provinces)
+                'Đà Nẵng': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Huế': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Thừa Thiên Huế': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Quảng Nam': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Quảng Ngãi': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Bình Định': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Phú Yên': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Khánh Hòa': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Ninh Thuận': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Bình Thuận': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Quảng Trị': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Quảng Bình': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Nghệ An': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Hà Tĩnh': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Thanh Hóa': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Gia Lai': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Đắk Lắk': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Đắk Nông': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Kon Tum': { fee: 45000, label: 'Miền Trung', color: 'warning' },
+                'Lâm Đồng': { fee: 45000, label: 'Miền Trung', color: 'warning' }
+            };
+            // Zone 5 default (Miền Bắc + unknown)
+            var SHIPPING_DEFAULT = { fee: 60000, label: 'Miền Bắc', color: 'danger' };
+
+            function getZone(city) {
+                if (!city) return SHIPPING_DEFAULT;
+                // Normalize: lowercase, remove accents for substring checks
+                var c = city.toLowerCase().trim();
+                // Zone 1 – TPHCM (any variant: tp.hcm, tp. hồ chí minh, hồ chí minh, ho chi minh...)
+                if (c.indexOf('h\u1ed3 ch\u00ed minh') >= 0 || c.indexOf('hcm') >= 0 ||
+                    c.indexOf('ho chi minh') >= 0 || c === 'tp.hcm' || c === 'tphcm') {
+                    return { fee: 15000, label: 'N\u1ed9i th\u00e0nh TPHCM', color: 'success' };
+                }
+                // Exact (or partial) lookup in SHIPPING_ZONES table
+                for (var key in SHIPPING_ZONES) {
+                    if (city === key || c === key.toLowerCase()) {
+                        return SHIPPING_ZONES[key];
+                    }
+                }
+                return SHIPPING_DEFAULT;
+            }
+
+            var FREE_SHIP_THRESHOLD = 700000;
+
+            function updateShipping(city) {
+                var zone = getZone(city);
+                var subEl = document.getElementById('subtotalDisplay');
+                var sub = parseInt((subEl ? subEl.textContent : '0').replace(/[^0-9]/g, ''), 10) || 0;
+
+                // Free shipping when subtotal >= 700,000đ
+                var fee, badgeLabel, badgeColor;
+                if (sub >= FREE_SHIP_THRESHOLD) {
+                    fee = 0;
+                    badgeLabel = 'Ố Free Ship! Dọn ≥ 700k';
+                    badgeColor = 'success';
+                } else {
+                    fee = zone.fee;
+                    badgeLabel = zone.label;
+                    badgeColor = zone.color;
+                }
+
+                // Update shipping display
+                var dispEl = document.getElementById('shippingDisplay');
+                var badgeEl = document.getElementById('shippingZoneBadge');
+                var totalEl = document.getElementById('totalDisplay');
+
+                if (dispEl) dispEl.textContent = fee === 0 ? 'Miễn phí' : new Intl.NumberFormat('vi-VN').format(fee) + 'đ';
+                if (badgeEl) {
+                    badgeEl.textContent = badgeLabel;
+                    badgeEl.className = 'badge bg-' + badgeColor;
+                    badgeEl.style.opacity = '1';
+                }
+
+                // Recalculate total (re-apply coupon if active)
+                var disc = _couponApplied ? _discountAmount : 0;
+                if (subEl && totalEl) {
+                    totalEl.textContent = new Intl.NumberFormat('vi-VN').format(Math.max(0, sub + fee - disc)) + 'đ';
+                }
+
+                // Store globally
+                window._shippingFee = fee;
+                var feeInput = document.getElementById('shippingFeeInput');
+                if (feeInput) feeInput.value = fee;
+
+                // If coupon was applied, recalculate discount base (sub + new fee)
+                if (_couponApplied && _lastDiscountPercent > 0) {
+                    applyDiscount(_lastDiscountPercent);
+                }
+            }
+
+            // Init with default 30,000đ if no address selected yet
+            window._shippingFee = 30000;
+
+            // Check free-ship eligibility immediately on page load (server-rendered subtotal)
+            document.addEventListener('DOMContentLoaded', function () {
+                var subEl = document.getElementById('subtotalDisplay');
+                var sub = parseInt((subEl ? subEl.textContent : '0').replace(/[^0-9]/g, ''), 10) || 0;
+                if (sub >= FREE_SHIP_THRESHOLD) {
+                    window._shippingFee = 0;
+                    var dispEl = document.getElementById('shippingDisplay');
+                    var badgeEl = document.getElementById('shippingZoneBadge');
+                    var totalEl = document.getElementById('totalDisplay');
+                    if (dispEl) dispEl.textContent = 'Miễn phí';
+                    if (badgeEl) {
+                        badgeEl.textContent = '🎉 Free Ship! Đơn ≥ 700k';
+                        badgeEl.className = 'badge bg-success';
+                        badgeEl.style.opacity = '1';
+                    }
+                    if (totalEl) totalEl.textContent = new Intl.NumberFormat('vi-VN').format(sub) + 'đ';
+                    var feeInput = document.getElementById('shippingFeeInput');
+                    if (feeInput) feeInput.value = 0;
+                }
+            });
 
             // Open address modal
             function openAddressModal() {
@@ -1058,13 +1380,15 @@
                 loadAddresses();
             }
 
-            // Show/Hide QR Code
+            // Show/Hide QR Code section & update button label
             function showQRCode() {
-                document.getElementById('qrCodeDetails').style.display = 'block';
+                var btn = document.getElementById('submitBtn');
+                if (btn) btn.textContent = 'Tiếp tục thanh toán';
             }
 
             function hideQRCode() {
-                document.getElementById('qrCodeDetails').style.display = 'none';
+                var btn = document.getElementById('submitBtn');
+                if (btn) btn.textContent = 'ĐẶT HÀNG NGAY';
             }
 
             // Filter select options based on search input
@@ -1149,6 +1473,95 @@
                     document.getElementById('buyNowVariantId').value = '';
                     document.getElementById('buyNowQuantity').value = '';
                 }
+            }
+
+
+            /* ════════════════════════════
+               COUPON - OPENING 20% off
+               ════════════════════════════ */
+            var _couponApplied = false;
+            var _discountAmount = 0;
+
+            function applyCoupon() {
+                var code = (document.getElementById('couponInput').value || '').trim().toUpperCase();
+                var msgEl = document.getElementById('couponMsg');
+                var btn = document.getElementById('couponBtn');
+
+                if (!code) {
+                    showCouponMsg('Vui lòng nhập mã giảm giá.', 'warning');
+                    return;
+                }
+
+                // Disable button while checking
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                fetch('/checkout/validate-coupon?code=' + encodeURIComponent(code))
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        btn.disabled = false;
+                        btn.textContent = 'Áp dụng';
+                        if (data.valid) {
+                            _couponApplied = true;
+                            applyDiscount(data.discountPercent);
+                            document.getElementById('couponCodeInput').value = code;
+                            showCouponMsg('✅ ' + data.message, 'success');
+                        } else {
+                            _couponApplied = false;
+                            applyDiscount(0);
+                            document.getElementById('couponCodeInput').value = '';
+                            showCouponMsg('❌ ' + data.message, 'danger');
+                        }
+                    })
+                    .catch(function () {
+                        btn.disabled = false;
+                        btn.textContent = 'Áp dụng';
+                        showCouponMsg('Lỗi kết nối. Vui lòng thử lại.', 'danger');
+                    });
+            }
+
+            // Track last discount % so we can recalculate when shipping changes
+            var _lastDiscountPercent = 0;
+
+            function applyDiscount(percent) {
+                _lastDiscountPercent = percent;
+
+                var subEl = document.getElementById('subtotalDisplay');
+                var discEl = document.getElementById('discountDisplay');
+                var totalEl = document.getElementById('totalDisplay');
+                var hidDisc = document.getElementById('discountAmountInput');
+
+                var sub = parseInt((subEl ? subEl.textContent : '0').replace(/[^0-9]/g, ''), 10) || 0;
+                var ship = window._shippingFee || 0;
+
+                // Discount base = subtotal + shipping fee
+                var disc = percent > 0 ? Math.round((sub + ship) * percent / 100) : 0;
+                _discountAmount = disc;
+
+                if (discEl) discEl.textContent = '-' + new Intl.NumberFormat('vi-VN').format(disc) + 'đ';
+                if (hidDisc) hidDisc.value = disc;
+                if (totalEl) totalEl.textContent =
+                    new Intl.NumberFormat('vi-VN').format(Math.max(0, sub + ship - disc)) + 'đ';
+
+                // Also update discountAmountInput for form submit
+                var discInput = document.getElementById('discountAmountInput');
+                if (discInput) discInput.value = disc;
+            }
+
+            function resetCoupon() {
+                if (!_couponApplied) return; // only reset if coupon was applied
+                _couponApplied = false;
+                applyDiscount(0);
+                document.getElementById('couponCodeInput').value = '';
+                document.getElementById('couponMsg').style.display = 'none';
+            }
+
+            function showCouponMsg(msg, type) {
+                var el = document.getElementById('couponMsg');
+                if (!el) return;
+                el.textContent = msg;
+                el.className = 'small mb-2 text-' + type;
+                el.style.display = 'block';
             }
 
             // Load product when page loads

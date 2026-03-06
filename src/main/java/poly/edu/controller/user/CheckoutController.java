@@ -6,18 +6,27 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import poly.edu.entity.Account;
 import poly.edu.entity.Cart;
 import poly.edu.entity.Order;
 import poly.edu.repository.AccountRepository;
+import poly.edu.repository.OrderRepository;
 import poly.edu.service.AccountService;
 import poly.edu.service.CartService;
 import poly.edu.service.OrderCommandService;
 
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * CheckoutController - Handles the checkout flow.
@@ -43,10 +52,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CheckoutController {
 
+    // VietQR constants
+    private static final String VIETQR_BASE = "https://img.vietqr.io/image/MB-0961342609-compact.png";
+
     private final CartService cartService;
     private final OrderCommandService orderCommandService;
     private final AccountRepository accountRepository;
     private final AccountService accountService;
+    private final OrderRepository orderRepository;
 
     /**
      * Display checkout page with cart summary.
@@ -92,6 +105,52 @@ public class CheckoutController {
         return "user/checkout";
     }
 
+    // ─── COUPON CONSTANTS ────────────────────────────────────────────────────
+    private static final String COUPON_CODE = "OPENING";
+    private static final int COUPON_PERCENT = 20; // 20% off
+
+    /**
+     * AJAX endpoint: validate coupon code.
+     * Returns JSON: { valid, discountPercent, message }
+     * Rules:
+     * - Code must be "OPENING" (case-insensitive)
+     * - Account must have NO previous orders (first order only)
+     */
+    @GetMapping("/checkout/validate-coupon")
+    @ResponseBody
+    public Map<String, Object> validateCoupon(
+            @RequestParam("code") String code,
+            Principal principal) {
+
+        Map<String, Object> result = new HashMap<>();
+        Account account = getAuthenticatedAccount(principal);
+
+        if (account == null) {
+            result.put("valid", false);
+            result.put("message", "Bạn cần đăng nhập để dùng mã giảm giá.");
+            return result;
+        }
+
+        if (!COUPON_CODE.equalsIgnoreCase(code == null ? "" : code.trim())) {
+            result.put("valid", false);
+            result.put("message", "Mã giảm giá không hợp lệ.");
+            return result;
+        }
+
+        // Check first order: account must have 0 previous orders
+        long orderCount = orderRepository.findByAccountId(account.getId()).size();
+        if (orderCount > 0) {
+            result.put("valid", false);
+            result.put("message", "Mã OPENING chỉ áp dụng cho đơn hàng đầu tiên.");
+            return result;
+        }
+
+        result.put("valid", true);
+        result.put("discountPercent", COUPON_PERCENT);
+        result.put("message", "Áp dụng thành công! Giảm " + COUPON_PERCENT + "% cho đơn hàng đầu tiên.");
+        return result;
+    }
+
     /**
      * Process checkout - create order from cart or buy-now.
      *
@@ -115,6 +174,9 @@ public class CheckoutController {
             @RequestParam(value = "buyNowVariantId", required = false) Integer buyNowVariantId,
             @RequestParam(value = "buyNowQuantity", required = false) Integer buyNowQuantity,
             @RequestParam(value = "cartItemIds", required = false) String cartItemIdsStr,
+            @RequestParam(value = "payment", required = false, defaultValue = "COD") String paymentMethod,
+            @RequestParam(value = "shippingFee", required = false, defaultValue = "30000") Long shippingFee,
+            @RequestParam(value = "discountAmount", required = false, defaultValue = "0") Long discountAmount,
             Principal principal,
             Model model) {
 
@@ -155,6 +217,15 @@ public class CheckoutController {
                 }
             }
 
+            // Route by payment method
+            if ("QR".equalsIgnoreCase(paymentMethod)) {
+                long safeFee = (shippingFee != null && shippingFee > 0) ? shippingFee : 30000L;
+                long safeDiscount = (discountAmount != null && discountAmount > 0) ? discountAmount : 0L;
+                return "redirect:/checkout/qr/" + order.getId()
+                        + "?shippingFee=" + safeFee
+                        + "&discountAmount=" + safeDiscount;
+            }
+
             String maskedPhone = maskPhoneNumber(phone);
             model.addAttribute("pageTitle", "Đặt hàng thành công");
             model.addAttribute("recipientName", recipientName != null ? recipientName : "Chưa chọn địa chỉ");
@@ -166,6 +237,50 @@ public class CheckoutController {
             model.addAttribute("error", e.getMessage());
             return "redirect:/checkout?error=stock";
         }
+    }
+
+    /**
+     * Display QR payment page for a given order.
+     * Generates a VietQR URL dynamically with the order amount and code.
+     */
+    @GetMapping("/checkout/qr/{orderId}")
+    public String qrPaymentPage(
+            @PathVariable Integer orderId,
+            @RequestParam(value = "shippingFee", required = false, defaultValue = "30000") Long shippingFee,
+            @RequestParam(value = "discountAmount", required = false, defaultValue = "0") Long discountAmount,
+            Model model, Principal principal) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return "redirect:/login";
+        }
+
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null) {
+            return "redirect:/account/orders";
+        }
+
+        String orderCode = "OMG-" + orderId;
+        BigDecimal productAmount = order.getFinalAmount() != null ? order.getFinalAmount() : BigDecimal.ZERO;
+        long safeFee = (shippingFee != null && shippingFee > 0) ? shippingFee : 30000L;
+        long safeDiscount = (discountAmount != null && discountAmount > 0) ? discountAmount : 0L;
+        // Final QR amount = product total + shipping - discount
+        long amountLong = Math.max(0, productAmount.longValue() + safeFee - safeDiscount);
+
+        // Build VietQR URL with dynamic amount and description
+        String encodedDesc;
+        try {
+            encodedDesc = URLEncoder.encode(orderCode, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            encodedDesc = orderCode;
+        }
+        String qrUrl = VIETQR_BASE + "?amount=" + amountLong + "&addInfo=" + encodedDesc;
+
+        model.addAttribute("pageTitle", "Thanh toán QR - " + orderCode);
+        model.addAttribute("orderId", orderId);
+        model.addAttribute("orderCode", orderCode);
+        model.addAttribute("amount", amountLong);
+        model.addAttribute("qrUrl", qrUrl);
+        return "user/qr-payment";
     }
 
     // ===== PRIVATE HELPERS =====

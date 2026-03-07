@@ -13,8 +13,11 @@ import poly.edu.dto.CategoryCountDTO;
 import poly.edu.entity.Product;
 import poly.edu.repository.CategoryRepository;
 import poly.edu.repository.ProductRepository;
+import poly.edu.service.ProductReviewService;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * HomeController - Handles the homepage only.
@@ -41,6 +44,7 @@ public class HomeController {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductReviewService reviewService;
 
     /**
      * Homepage with featured products and filter sidebar.
@@ -66,6 +70,16 @@ public class HomeController {
 
         model.addAttribute("products", productPage);
         model.addAttribute("categories", categories);
+        Map<Integer, Double> ratingMap = new HashMap<>();
+        Map<Integer, Long> reviewCountMap = new HashMap<>();
+        for (Product p : productPage.getContent()) {
+            Double avg = reviewService.getAverageRating(p.getId());
+            long cnt = reviewService.getReviewsByProduct(p.getId()).size();
+            ratingMap.put(p.getId(), avg != null ? avg : 0.0);
+            reviewCountMap.put(p.getId(), cnt);
+        }
+        model.addAttribute("ratingMap", ratingMap);
+        model.addAttribute("reviewCountMap", reviewCountMap);
         model.addAttribute("keyword", keyword);
         model.addAttribute("selectedGender", gender);
         model.addAttribute("selectedCategory", categoryId);

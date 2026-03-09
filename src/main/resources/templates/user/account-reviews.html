@@ -55,12 +55,12 @@
 
                         <!-- Top: product info + star badge -->
                         <div class="d-flex align-items-center gap-3 p-4 pb-3" style="border-bottom:1px solid #f8f8f8;">
-                            <a th:href="@{/product/{id}(id=${review.product.id})}" class="flex-shrink-0">
+                            <a th:href="@{/product/{slug}(slug=${review.product.slug})}" class="flex-shrink-0">
                                 <img th:src="@{${review.product.image}}" alt="product"
                                     style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #eee;">
                             </a>
                             <div class="flex-grow-1 min-width-0">
-                                <a th:href="@{/product/{id}(id=${review.product.id})}"
+                                <a th:href="@{/product/{slug}(slug=${review.product.slug})}"
                                     class="fw-semibold text-dark text-decoration-none d-block text-truncate"
                                     style="font-size:.95rem;" th:text="${review.product.name}">Tên SP</a>
                                 <small class="text-muted">

@@ -290,6 +290,7 @@
                 -webkit-appearance: none;
                 margin: 0;
             }
+
             /* --- STAR RATING ON PRODUCT CARD --- */
             .star-rating {
                 display: flex;
@@ -297,25 +298,33 @@
                 gap: 1px;
                 margin-bottom: 4px;
             }
+
             .star-rating .star {
                 font-size: 1.2rem;
                 color: #e0e0e0;
                 line-height: 1;
             }
-            .star-rating .star.filled { color: #FFC107; }
+
+            .star-rating .star.filled {
+                color: #FFC107;
+            }
+
             .star-rating .star.half {
                 position: relative;
                 color: #e0e0e0;
             }
+
             .star-rating .star.half::before {
                 content: '\2605';
                 position: absolute;
-                left: 0; top: 0;
+                left: 0;
+                top: 0;
                 width: 50%;
                 overflow: hidden;
                 color: #FFC107;
                 display: inline-block;
             }
+
             .star-rating .rating-count {
                 font-size: 0.7rem;
                 color: #999;
@@ -582,7 +591,7 @@
                                         style="z-index: 10;" th:if="${product.discount > 0}"
                                         th:text="'-' + ${product.discount} + '%'"></div>
                                     <div class="img-wrapper bg-light">
-                                        <a th:href="@{/product/{id}(id=${product.id})}" class="product-link">
+                                        <a th:href="@{/product/{slug}(slug=${product.slug})}" class="product-link">
                                             <img th:src="${product.image}"
                                                 onerror="this.src='https://placehold.co/600x600?text=No+Image'"
                                                 alt="Product">
@@ -604,7 +613,7 @@
                                     </div>
                                     <div class="card-body p-3">
                                         <h6 class="card-title fw-bold text-truncate mb-2">
-                                            <a th:href="@{/product/{id}(id=${product.id})}"
+                                            <a th:href="@{/product/{slug}(slug=${product.slug})}"
                                                 class="text-dark text-decoration-none" th:text="${product.name}">Tên sản
                                                 phẩm</a>
                                         </h6>
@@ -708,7 +717,7 @@
                                         style="z-index: 10;" th:if="${product.discount > 0}"
                                         th:text="'-' + ${product.discount} + '%'"></div>
                                     <div class="img-wrapper bg-light">
-                                        <a th:href="@{/product/{id}(id=${product.id})}" class="product-link">
+                                        <a th:href="@{/product/{slug}(slug=${product.slug})}" class="product-link">
                                             <img th:src="${product.image}"
                                                 onerror="this.src='https://placehold.co/600x600?text=No+Image'"
                                                 alt="Product">
@@ -730,7 +739,7 @@
                                     </div>
                                     <div class="card-body p-3">
                                         <h6 class="card-title fw-bold text-truncate mb-2">
-                                            <a th:href="@{/product/{id}(id=${product.id})}"
+                                            <a th:href="@{/product/{slug}(slug=${product.slug})}"
                                                 class="text-dark text-decoration-none" th:text="${product.name}">Tên sản
                                                 phẩm</a>
                                         </h6>

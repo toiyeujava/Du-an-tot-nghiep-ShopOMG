@@ -1,6 +1,8 @@
 package poly.edu.service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -8,10 +10,12 @@ import org.springframework.transaction.annotation.Transactional;
 import poly.edu.entity.Product;
 import poly.edu.repository.OrderRepository;
 import poly.edu.repository.ProductRepository;
+import poly.edu.utils.SlugUtils;
 
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -35,6 +39,15 @@ public class ProductService {
      */
     public Optional<Product> getProductById(Integer id) {
         return productRepository.findById(id);
+    }
+
+    /**
+     * Get product by slug
+     * Algorithm: Direct lookup by unique slug
+     * Time Complexity: O(1)
+     */
+    public Optional<Product> getProductBySlug(String slug) {
+        return productRepository.findBySlug(slug);
     }
 
     /**
@@ -66,6 +79,11 @@ public class ProductService {
             product.setViewCount(0);
         }
 
+        // Auto-generate slug from product name
+        if (product.getSlug() == null || product.getSlug().isBlank()) {
+            product.setSlug(generateUniqueSlug(product.getName(), null));
+        }
+
         return productRepository.save(product);
     }
 
@@ -80,6 +98,8 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
 
         // Update fields
+        boolean nameChanged = productDetails.getName() != null
+                && !productDetails.getName().equals(product.getName());
         if (productDetails.getName() != null) {
             product.setName(productDetails.getName());
         }
@@ -109,6 +129,11 @@ public class ProductService {
         }
         if (productDetails.getIsActive() != null) {
             product.setIsActive(productDetails.getIsActive());
+        }
+
+        // Re-generate slug if name changed or slug is empty
+        if (nameChanged || product.getSlug() == null || product.getSlug().isBlank()) {
+            product.setSlug(generateUniqueSlug(product.getName(), product.getId()));
         }
 
         return productRepository.save(product);
@@ -197,5 +222,52 @@ public class ProductService {
         return productRepository.findAll().stream()
                 .filter(p -> p.getIsActive() != null && p.getIsActive())
                 .count();
+    }
+
+    // ===== SLUG HELPERS =====
+
+    /**
+     * Generate a unique slug from the product name.
+     * If a slug collision occurs, appends -2, -3, etc.
+     *
+     * @param name      the product name
+     * @param excludeId product ID to exclude from collision check (for updates)
+     */
+    private String generateUniqueSlug(String name, Integer excludeId) {
+        String baseSlug = SlugUtils.toSlug(name);
+        String candidateSlug = baseSlug;
+        int counter = 2;
+
+        while (true) {
+            Optional<Product> existing = productRepository.findBySlug(candidateSlug);
+            if (existing.isEmpty() || existing.get().getId().equals(excludeId)) {
+                break;
+            }
+            candidateSlug = baseSlug + "-" + counter;
+            counter++;
+        }
+
+        return candidateSlug;
+    }
+
+    /**
+     * Populate slugs for existing products that have empty/null slug.
+     * Runs once on application startup.
+     */
+    @PostConstruct
+    @Transactional
+    public void initSlugs() {
+        List<Product> productsWithoutSlug = productRepository.findAll().stream()
+                .filter(p -> p.getSlug() == null || p.getSlug().isBlank())
+                .toList();
+
+        if (!productsWithoutSlug.isEmpty()) {
+            log.info("Generating slugs for {} products...", productsWithoutSlug.size());
+            for (Product product : productsWithoutSlug) {
+                product.setSlug(generateUniqueSlug(product.getName(), product.getId()));
+                productRepository.save(product);
+            }
+            log.info("Slug generation complete.");
+        }
     }
 }

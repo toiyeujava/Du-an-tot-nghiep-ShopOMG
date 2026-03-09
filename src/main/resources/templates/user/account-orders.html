@@ -70,7 +70,7 @@
                             <div th:each="detail : ${order.orderDetails}"
                                 class="d-flex align-items-center mb-3 order-detail-item"
                                 th:attr="data-product-id=${detail.productVariant.product.id},data-product-name=${detail.productName},data-product-image=${detail.productVariant.product.image},data-product-color=${detail.productVariant.color},data-product-size=${detail.productVariant.size},data-product-qty=${detail.quantity}">
-                                <a th:href="@{/product/{id}(id=${detail.productVariant.product.id})}"
+                                <a th:href="@{/product/{slug}(slug=${detail.productVariant.product.slug})}"
                                     class="text-decoration-none d-flex align-items-center flex-grow-1 text-dark">
                                     <img th:src="@{${detail.productVariant.product.image}}" alt="Product"
                                         class="order-img rounded border">
@@ -118,7 +118,7 @@
                                             <i class="fas fa-check-circle me-1"></i>Xem đánh giá
                                         </a>
                                     </span>
-                                    <a th:href="@{/product/{id}(id=${order.orderDetails[0].productVariant.product.id})}"
+                                    <a th:href="@{/product/{slug}(slug=${order.orderDetails[0].productVariant.product.slug})}"
                                         class="btn btn-dark btn-sm px-4">Mua lại</a>
                                 </div>
                             </div>

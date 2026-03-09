@@ -209,7 +209,7 @@
                             </div>
 
                             <div class="img-wrapper position-relative overflow-hidden">
-                                <a th:href="@{/product/{id}(id=${product.id})}">
+                                <a th:href="@{/product/{slug}(slug=${product.slug})}">
                                     <img th:src="${product.image}" class="card-img-top"
                                         style="height: 250px; object-fit: cover;"
                                         onerror="this.src='https://placehold.co/600x400?text=No+Image'">
@@ -227,7 +227,7 @@
                             </div>
                             <div class="card-body text-center">
                                 <h6 class="card-title fw-bold text-truncate">
-                                    <a th:href="@{/product/{id}(id=${product.id})}"
+                                    <a th:href="@{/product/{slug}(slug=${product.slug})}"
                                         class="text-dark text-decoration-none" th:text="${product.name}"></a>
                                 </h6>
                                 <div class="fw-bold text-danger">
@@ -242,27 +242,27 @@
                     </div>
                 </div>
 
-				<nav class="mt-5 d-flex justify-content-center" th:if="${products.totalPages > 1}">
-				    <ul class="pagination">
-				        <li class="page-item" th:classappend="${products.first} ? 'disabled'">
-				            <a class="page-link text-dark"
-				                th:href="@{/products(page=${products.number - 1}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}">«</a>
-				        </li>
+                <nav class="mt-5 d-flex justify-content-center" th:if="${products.totalPages > 1}">
+                    <ul class="pagination">
+                        <li class="page-item" th:classappend="${products.first} ? 'disabled'">
+                            <a class="page-link text-dark"
+                                th:href="@{/products(page=${products.number - 1}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}">«</a>
+                        </li>
 
-				        <li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
-				            th:classappend="${i == products.number} ? 'active'">
-				            <a class="page-link"
-				                th:href="@{/products(page=${i}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}"
-				                th:text="${i + 1}"
-				                th:classappend="${i == products.number} ? 'bg-dark border-dark text-white' : 'text-dark'"></a>
-				        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
+                            th:classappend="${i == products.number} ? 'active'">
+                            <a class="page-link"
+                                th:href="@{/products(page=${i}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}"
+                                th:text="${i + 1}"
+                                th:classappend="${i == products.number} ? 'bg-dark border-dark text-white' : 'text-dark'"></a>
+                        </li>
 
-				        <li class="page-item" th:classappend="${products.last} ? 'disabled'">
-				            <a class="page-link text-dark"
-				                th:href="@{/products(page=${products.number + 1}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}">»</a>
-				        </li>
-				    </ul>
-				</nav>
+                        <li class="page-item" th:classappend="${products.last} ? 'disabled'">
+                            <a class="page-link text-dark"
+                                th:href="@{/products(page=${products.number + 1}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, sort=${selectedSort}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}">»</a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </article>

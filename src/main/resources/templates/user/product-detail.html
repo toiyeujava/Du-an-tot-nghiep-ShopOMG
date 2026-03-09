@@ -193,7 +193,7 @@
         <input type="hidden" id="data-variants" th:value="${jsonVariants}">
 
         <!-- Include Guest Login Modal -->
-        <div th:replace="~{fragments/guest-login-modal :: guestLoginModal(redirectUrl='/product/' + ${product.id})}">
+        <div th:replace="~{fragments/guest-login-modal :: guestLoginModal(redirectUrl='/product/' + ${product.slug})}">
         </div>
 
         <script>
@@ -447,199 +447,241 @@
                 element.classList.add('active');
             }
         </script>
-			
-			<!-- ============================================================
+
+        <!-- ============================================================
      PHẦN ĐÁNH GIÁ SẢN PHẨM - dán vào product-detail.html
      Vị trí: trước thẻ </article> cuối cùng
      ============================================================ -->
 
-<!-- Hidden: productId để JS đọc -->
-<input type="hidden" id="reviewProductId" th:value="${product.id}">
+        <!-- Hidden: productId để JS đọc -->
+        <input type="hidden" id="reviewProductId" th:value="${product.id}">
 
-<hr class="my-5">
+        <hr class="my-5">
 
-<!-- ── SECTION TIÊU ĐỀ ────────────────────────────────────── -->
-<div class="d-flex align-items-center gap-3 mb-4">
-    <h4 class="fw-bold mb-0 text-uppercase" style="letter-spacing:.5px;font-family:'Georgia',serif;">
-        Đánh Giá Sản Phẩm
-    </h4>
-    <div style="flex:1;height:1px;background:linear-gradient(to right,#e8d5d5,transparent);"></div>
-</div>
+        <!-- ── SECTION TIÊU ĐỀ ────────────────────────────────────── -->
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <h4 class="fw-bold mb-0 text-uppercase" style="letter-spacing:.5px;font-family:'Georgia',serif;">
+                Đánh Giá Sản Phẩm
+            </h4>
+            <div style="flex:1;height:1px;background:linear-gradient(to right,#e8d5d5,transparent);"></div>
+        </div>
 
-<!-- ── TỔNG HỢP ĐIỂM ──────────────────────────────────────── -->
-<div id="reviewSummary"
-     style="background:linear-gradient(135deg,#fff 55%,#f9ecec);
+        <!-- ── TỔNG HỢP ĐIỂM ──────────────────────────────────────── -->
+        <div id="reviewSummary" style="background:linear-gradient(135deg,#fff 55%,#f9ecec);
             border:1px solid #e8d5d5;border-radius:12px;
             padding:20px 24px;margin-bottom:20px;
             display:flex;align-items:center;gap:32px;flex-wrap:wrap;">
-    <!-- Điểm lớn -->
-    <div class="text-center" style="min-width:90px;">
-        <div id="avgScore"
-             style="font-family:'Georgia',serif;font-size:52px;font-weight:700;
+            <!-- Điểm lớn -->
+            <div class="text-center" style="min-width:90px;">
+                <div id="avgScore" style="font-family:'Georgia',serif;font-size:52px;font-weight:700;
                     color:#8B0000;line-height:1;">--</div>
-        <div style="font-size:12px;color:#999;margin-top:2px;">trên 5</div>
-        <div id="avgStars" class="mt-2"></div>
-    </div>
-    <!-- Thanh bar -->
-    <div style="flex:1;min-width:200px;" id="starBars"></div>
-    <!-- Nút viết đánh giá -->
-    <div id="reviewActionArea"></div>
-</div>
+                <div style="font-size:12px;color:#999;margin-top:2px;">trên 5</div>
+                <div id="avgStars" class="mt-2"></div>
+            </div>
+            <!-- Thanh bar -->
+            <div style="flex:1;min-width:200px;" id="starBars"></div>
+            <!-- Nút viết đánh giá -->
+            <div id="reviewActionArea"></div>
+        </div>
 
-<!-- ── BỘ LỌC ─────────────────────────────────────────────── -->
-<div id="reviewFilters" class="d-flex gap-2 flex-wrap mb-4"></div>
+        <!-- ── BỘ LỌC ─────────────────────────────────────────────── -->
+        <div id="reviewFilters" class="d-flex gap-2 flex-wrap mb-4"></div>
 
-<!-- ── DANH SÁCH REVIEW ───────────────────────────────────── -->
-<div id="reviewList" class="d-flex flex-column gap-0"></div>
+        <!-- ── DANH SÁCH REVIEW ───────────────────────────────────── -->
+        <div id="reviewList" class="d-flex flex-column gap-0"></div>
 
-<!-- ── EMPTY STATE ────────────────────────────────────────── -->
-<div id="reviewEmpty" style="display:none;text-align:center;padding:52px 0;color:#999;">
-    <div style="font-size:42px;margin-bottom:12px;">⭐</div>
-    <div style="font-family:'Georgia',serif;font-size:18px;color:#1a1a1a;margin-bottom:6px;">
-        Chưa có đánh giá nào
-    </div>
-    <div style="font-size:13px;">Hãy là người đầu tiên chia sẻ trải nghiệm!</div>
-</div>
+        <!-- ── EMPTY STATE ────────────────────────────────────────── -->
+        <div id="reviewEmpty" style="display:none;text-align:center;padding:52px 0;color:#999;">
+            <div style="font-size:42px;margin-bottom:12px;">⭐</div>
+            <div style="font-family:'Georgia',serif;font-size:18px;color:#1a1a1a;margin-bottom:6px;">
+                Chưa có đánh giá nào
+            </div>
+            <div style="font-size:13px;">Hãy là người đầu tiên chia sẻ trải nghiệm!</div>
+        </div>
 
 
-<!-- ============================================================
+        <!-- ============================================================
      MODAL VIẾT / CẬP NHẬT ĐÁNH GIÁ
      ============================================================ -->
-<div class="modal fade" id="writeReviewModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
-        <div class="modal-content border-0 shadow-lg" style="border-radius:12px;overflow:hidden;">
+        <div class="modal fade" id="writeReviewModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
+                <div class="modal-content border-0 shadow-lg" style="border-radius:12px;overflow:hidden;">
 
-            <div class="modal-header border-0 px-4 pt-4 pb-2">
-                <h5 class="modal-title fw-bold" id="writeReviewTitle"
-                    style="font-family:'Georgia',serif;font-size:20px;">
-                    Đánh Giá Sản Phẩm
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body px-4 pb-4">
-                <!-- Chọn sao -->
-                <div class="text-center mb-4">
-                    <div class="d-flex justify-content-center gap-2 mb-1" id="modalStars">
-                        <span class="modal-star" data-v="1" style="font-size:36px;cursor:pointer;">☆</span>
-                        <span class="modal-star" data-v="2" style="font-size:36px;cursor:pointer;">☆</span>
-                        <span class="modal-star" data-v="3" style="font-size:36px;cursor:pointer;">☆</span>
-                        <span class="modal-star" data-v="4" style="font-size:36px;cursor:pointer;">☆</span>
-                        <span class="modal-star" data-v="5" style="font-size:36px;cursor:pointer;">☆</span>
+                    <div class="modal-header border-0 px-4 pt-4 pb-2">
+                        <h5 class="modal-title fw-bold" id="writeReviewTitle"
+                            style="font-family:'Georgia',serif;font-size:20px;">
+                            Đánh Giá Sản Phẩm
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div id="modalStarLabel"
-                         style="color:#C0392B;font-weight:600;font-size:14px;min-height:20px;"></div>
-                </div>
 
-                <!-- Nhận xét -->
-                <div class="mb-3" style="position:relative;">
-                    <textarea id="modalComment" class="form-control" rows="4" maxlength="1000"
-                              placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
-                              style="border:1px solid #e8d5d5;border-radius:8px;
+                    <div class="modal-body px-4 pb-4">
+                        <!-- Chọn sao -->
+                        <div class="text-center mb-4">
+                            <div class="d-flex justify-content-center gap-2 mb-1" id="modalStars">
+                                <span class="modal-star" data-v="1" style="font-size:36px;cursor:pointer;">☆</span>
+                                <span class="modal-star" data-v="2" style="font-size:36px;cursor:pointer;">☆</span>
+                                <span class="modal-star" data-v="3" style="font-size:36px;cursor:pointer;">☆</span>
+                                <span class="modal-star" data-v="4" style="font-size:36px;cursor:pointer;">☆</span>
+                                <span class="modal-star" data-v="5" style="font-size:36px;cursor:pointer;">☆</span>
+                            </div>
+                            <div id="modalStarLabel"
+                                style="color:#C0392B;font-weight:600;font-size:14px;min-height:20px;"></div>
+                        </div>
+
+                        <!-- Nhận xét -->
+                        <div class="mb-3" style="position:relative;">
+                            <textarea id="modalComment" class="form-control" rows="4" maxlength="1000"
+                                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..." style="border:1px solid #e8d5d5;border-radius:8px;
                                      font-size:14px;resize:none;padding-bottom:26px;
                                      outline:none;"></textarea>
-                    <span id="modalCharCount"
-                          style="position:absolute;bottom:8px;right:12px;
+                            <span id="modalCharCount" style="position:absolute;bottom:8px;right:12px;
                                  font-size:11px;color:#aaa;">0/1000</span>
-                </div>
+                        </div>
 
-                <!-- Nút gửi -->
-                <button id="modalSubmitBtn" type="button"
-                        class="btn w-100 fw-bold py-2"
-                        style="border-radius:24px;background:#8B0000;color:#fff;
+                        <!-- Nút gửi -->
+                        <button id="modalSubmitBtn" type="button" class="btn w-100 fw-bold py-2" style="border-radius:24px;background:#8B0000;color:#fff;
                                border:none;font-size:15px;letter-spacing:.4px;
                                transition:background .2s;">
-                    Gửi Đánh Giá
-                </button>
+                            Gửi Đánh Giá
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Toast -->
-<div id="rvToast"
-     style="display:none;position:fixed;bottom:24px;right:24px;z-index:9999;
+        <!-- Toast -->
+        <div id="rvToast" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9999;
             padding:12px 20px;border-radius:10px;font-size:.9rem;
             box-shadow:0 4px 16px rgba(0,0,0,.15);
             align-items:center;gap:10px;min-width:240px;"></div>
 
 
-<!-- ============================================================
+        <!-- ============================================================
      STYLES
      ============================================================ -->
-<style>
-    .rv-card { padding:22px 0; border-bottom:1px solid #f2e8e8; transition:background .15s; }
-    .rv-chip {
-        padding:6px 16px; border-radius:20px; font-size:13px; cursor:pointer;
-        border:1px solid #e8d5d5; background:#fff; color:#555;
-        transition:all .18s; white-space:nowrap;
-    }
-    .rv-chip.active {
-        border-color:#8B0000; background:#8B0000; color:#fff; font-weight:600;
-    }
-    .rv-star-bar { flex:1; height:7px; background:#f0e0e0; border-radius:4px; overflow:hidden; }
-    .rv-star-bar-fill { height:100%; background:#C0392B; border-radius:4px; transition:width .6s ease; }
-    .modal-star { transition:transform .15s; color:#e0c8c8; }
-    .modal-star.lit { color:#C0392B; }
-    #modalSubmitBtn:hover { background:#6a0000 !important; }
-    @keyframes rvFadeUp {
-        from { opacity:0; transform:translateY(10px); }
-        to   { opacity:1; transform:translateY(0); }
-    }
-    .rv-card { animation: rvFadeUp .3s ease both; }
-</style>
+        <style>
+            .rv-card {
+                padding: 22px 0;
+                border-bottom: 1px solid #f2e8e8;
+                transition: background .15s;
+            }
+
+            .rv-chip {
+                padding: 6px 16px;
+                border-radius: 20px;
+                font-size: 13px;
+                cursor: pointer;
+                border: 1px solid #e8d5d5;
+                background: #fff;
+                color: #555;
+                transition: all .18s;
+                white-space: nowrap;
+            }
+
+            .rv-chip.active {
+                border-color: #8B0000;
+                background: #8B0000;
+                color: #fff;
+                font-weight: 600;
+            }
+
+            .rv-star-bar {
+                flex: 1;
+                height: 7px;
+                background: #f0e0e0;
+                border-radius: 4px;
+                overflow: hidden;
+            }
+
+            .rv-star-bar-fill {
+                height: 100%;
+                background: #C0392B;
+                border-radius: 4px;
+                transition: width .6s ease;
+            }
+
+            .modal-star {
+                transition: transform .15s;
+                color: #e0c8c8;
+            }
+
+            .modal-star.lit {
+                color: #C0392B;
+            }
+
+            #modalSubmitBtn:hover {
+                background: #6a0000 !important;
+            }
+
+            @keyframes rvFadeUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .rv-card {
+                animation: rvFadeUp .3s ease both;
+            }
+        </style>
 
 
-<!-- ============================================================
+        <!-- ============================================================
      SCRIPT
      ============================================================ -->
-<script th:inline="javascript">
-(function () {
-    const PRODUCT_ID = parseInt(document.getElementById('reviewProductId').value);
-    const STAR_LABELS = ['','Rất tệ','Tệ','Bình thường','Tốt','Xuất sắc'];
-    const ACCENT = '#8B0000';
+        <script th:inline="javascript">
+            (function () {
+                const PRODUCT_ID = parseInt(document.getElementById('reviewProductId').value);
+                const STAR_LABELS = ['', 'Rất tệ', 'Tệ', 'Bình thường', 'Tốt', 'Xuất sắc'];
+                const ACCENT = '#8B0000';
 
-    let allReviews   = [];
-    let activeFilter = 'all';
-    let modalRating  = 0;
+                let allReviews = [];
+                let activeFilter = 'all';
+                let modalRating = 0;
 
-    // ── Helpers ──────────────────────────────────────────────────
-    function stars(n, size) {
-        size = size || 16;
-        return [1,2,3,4,5].map(i =>
-            `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="display:inline;">
+                // ── Helpers ──────────────────────────────────────────────────
+                function stars(n, size) {
+                    size = size || 16;
+                    return [1, 2, 3, 4, 5].map(i =>
+                        `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="display:inline;">
                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                     fill="${i<=n?'#C0392B':'#e0c8c8'}"/>
+                     fill="${i <= n ? '#C0392B' : '#e0c8c8'}"/>
              </svg>`
-        ).join('');
-    }
+                    ).join('');
+                }
 
-    function initials(name) {
-        return (name || '?').split(' ').map(w=>w[0]).join('').toUpperCase().substring(0,2);
-    }
+                function initials(name) {
+                    return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+                }
 
-    function showToast(msg, ok) {
-        const t = document.getElementById('rvToast');
-        t.textContent = msg;
-        t.style.display = 'flex';
-        t.style.background = ok ? '#1b5e20' : '#b71c1c';
-        t.style.color = '#fff';
-        clearTimeout(t._t);
-        t._t = setTimeout(() => t.style.display = 'none', 3000);
-    }
+                function showToast(msg, ok) {
+                    const t = document.getElementById('rvToast');
+                    t.textContent = msg;
+                    t.style.display = 'flex';
+                    t.style.background = ok ? '#1b5e20' : '#b71c1c';
+                    t.style.color = '#fff';
+                    clearTimeout(t._t);
+                    t._t = setTimeout(() => t.style.display = 'none', 3000);
+                }
 
-    // ── Render summary ────────────────────────────────────────────
-    function renderSummary(data) {
-        const avg = parseFloat(data.average || 0).toFixed(1);
-        document.getElementById('avgScore').textContent = avg;
-        document.getElementById('avgStars').innerHTML = stars(Math.round(avg), 18);
+                // ── Render summary ────────────────────────────────────────────
+                function renderSummary(data) {
+                    const avg = parseFloat(data.average || 0).toFixed(1);
+                    document.getElementById('avgScore').textContent = avg;
+                    document.getElementById('avgStars').innerHTML = stars(Math.round(avg), 18);
 
-        const sc = data.starCounts || [0,0,0,0,0,0];
-        const total = data.total || 0;
-        let barsHtml = '';
-        for (let s = 5; s >= 1; s--) {
-            const pct = total ? ((sc[s] / total) * 100).toFixed(1) : 0;
-            barsHtml += `
+                    const sc = data.starCounts || [0, 0, 0, 0, 0, 0];
+                    const total = data.total || 0;
+                    let barsHtml = '';
+                    for (let s = 5; s >= 1; s--) {
+                        const pct = total ? ((sc[s] / total) * 100).toFixed(1) : 0;
+                        barsHtml += `
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
                 <span style="font-size:12px;color:#555;width:32px;text-align:right;">${s} ★</span>
                 <div class="rv-star-bar">
@@ -647,14 +689,14 @@
                 </div>
                 <span style="font-size:12px;color:#999;width:20px;">${sc[s]}</span>
               </div>`;
-        }
-        document.getElementById('starBars').innerHTML = barsHtml;
+                    }
+                    document.getElementById('starBars').innerHTML = barsHtml;
 
-        // Nút viết đánh giá
-        const area = document.getElementById('reviewActionArea');
-        if (data.canReview) {
-            const label = data.hasReviewed ? '✏ Sửa đánh giá' : '✍ Viết đánh giá';
-            area.innerHTML = `
+                    // Nút viết đánh giá
+                    const area = document.getElementById('reviewActionArea');
+                    if (data.canReview) {
+                        const label = data.hasReviewed ? '✏ Sửa đánh giá' : '✍ Viết đánh giá';
+                        area.innerHTML = `
               <button onclick="openWriteModal()"
                       style="background:${ACCENT};color:#fff;border:none;border-radius:8px;
                              padding:13px 22px;cursor:pointer;font-size:14px;font-weight:600;
@@ -662,57 +704,57 @@
                              transition:all .2s;"
                       onmouseover="this.style.background='#6a0000'"
                       onmouseout="this.style.background='${ACCENT}'">${label}</button>`;
-        } else if (data.canReview === false && !data.hasReviewed) {
-            area.innerHTML = `
+                    } else if (data.canReview === false && !data.hasReviewed) {
+                        area.innerHTML = `
               <div style="font-size:12px;color:#999;text-align:center;max-width:130px;line-height:1.4;">
                 Mua hàng để có thể đánh giá
               </div>`;
-        }
-    }
+                    }
+                }
 
-    // ── Render filters ────────────────────────────────────────────
-    function renderFilters(data) {
-        const sc    = data.starCounts || [0,0,0,0,0,0];
-        const total = data.total || 0;
-        const withComment = allReviews.filter(r => r.comment && r.comment.trim()).length;
+                // ── Render filters ────────────────────────────────────────────
+                function renderFilters(data) {
+                    const sc = data.starCounts || [0, 0, 0, 0, 0, 0];
+                    const total = data.total || 0;
+                    const withComment = allReviews.filter(r => r.comment && r.comment.trim()).length;
 
-        const chips = [
-            { key:'all',     label:`Tất Cả (${total})` },
-            { key:'5',       label:`5 Sao (${sc[5]})` },
-            { key:'4',       label:`4 Sao (${sc[4]})` },
-            { key:'3',       label:`3 Sao (${sc[3]})` },
-            { key:'2',       label:`2 Sao (${sc[2]})` },
-            { key:'1',       label:`1 Sao (${sc[1]})` },
-            { key:'comment', label:`Có Bình Luận (${withComment})` },
-        ];
+                    const chips = [
+                        { key: 'all', label: `Tất Cả (${total})` },
+                        { key: '5', label: `5 Sao (${sc[5]})` },
+                        { key: '4', label: `4 Sao (${sc[4]})` },
+                        { key: '3', label: `3 Sao (${sc[3]})` },
+                        { key: '2', label: `2 Sao (${sc[2]})` },
+                        { key: '1', label: `1 Sao (${sc[1]})` },
+                        { key: 'comment', label: `Có Bình Luận (${withComment})` },
+                    ];
 
-        document.getElementById('reviewFilters').innerHTML = chips.map(c =>
-            `<button class="rv-chip ${activeFilter===c.key?'active':''}"
+                    document.getElementById('reviewFilters').innerHTML = chips.map(c =>
+                        `<button class="rv-chip ${activeFilter === c.key ? 'active' : ''}"
                      onclick="setFilter('${c.key}')">${c.label}</button>`
-        ).join('');
-    }
+                    ).join('');
+                }
 
-    // ── Render list ───────────────────────────────────────────────
-    function renderList() {
-        const filtered = allReviews.filter(r => {
-            if (activeFilter === 'all')     return true;
-            if (activeFilter === 'comment') return r.comment && r.comment.trim();
-            return r.rating === parseInt(activeFilter);
-        });
+                // ── Render list ───────────────────────────────────────────────
+                function renderList() {
+                    const filtered = allReviews.filter(r => {
+                        if (activeFilter === 'all') return true;
+                        if (activeFilter === 'comment') return r.comment && r.comment.trim();
+                        return r.rating === parseInt(activeFilter);
+                    });
 
-        const list  = document.getElementById('reviewList');
-        const empty = document.getElementById('reviewEmpty');
+                    const list = document.getElementById('reviewList');
+                    const empty = document.getElementById('reviewEmpty');
 
-        if (filtered.length === 0) {
-            list.innerHTML = '';
-            empty.style.display = 'block';
-            return;
-        }
-        empty.style.display = 'none';
+                    if (filtered.length === 0) {
+                        list.innerHTML = '';
+                        empty.style.display = 'block';
+                        return;
+                    }
+                    empty.style.display = 'none';
 
-        list.innerHTML = filtered.map((r, idx) => {
-            const avatarHtml = r.avatar
-                ? `<img src="${r.avatar}" alt="${r.fullName}"
+                    list.innerHTML = filtered.map((r, idx) => {
+                        const avatarHtml = r.avatar
+                            ? `<img src="${r.avatar}" alt="${r.fullName}"
                         style="width:44px;height:44px;border-radius:50%;object-fit:cover;
                                border:2px solid #e8d5d5;flex-shrink:0;"
                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
@@ -721,18 +763,18 @@
                                align-items:center;justify-content:center;flex-shrink:0;
                                font-family:Georgia,serif;border:2px solid #e8d5d5;">
                      ${initials(r.fullName)}</div>`
-                : `<div style="width:44px;height:44px;border-radius:50%;
+                            : `<div style="width:44px;height:44px;border-radius:50%;
                                background:${ACCENT};color:#fff;font-weight:700;font-size:15px;
                                display:flex;align-items:center;justify-content:center;flex-shrink:0;
                                font-family:Georgia,serif;border:2px solid #e8d5d5;">
                      ${initials(r.fullName)}</div>`;
 
-            const commentHtml = r.comment && r.comment.trim()
-                ? `<p style="margin:0 0 12px;font-size:14px;color:#555;line-height:1.65;">${r.comment}</p>`
-                : `<p style="margin:0 0 12px;font-size:13px;color:#aaa;font-style:italic;">Không có nhận xét</p>`;
+                        const commentHtml = r.comment && r.comment.trim()
+                            ? `<p style="margin:0 0 12px;font-size:14px;color:#555;line-height:1.65;">${r.comment}</p>`
+                            : `<p style="margin:0 0 12px;font-size:13px;color:#aaa;font-style:italic;">Không có nhận xét</p>`;
 
-            return `
-              <div class="rv-card" style="animation-delay:${idx*0.04}s">
+                        return `
+              <div class="rv-card" style="animation-delay:${idx * 0.04}s">
                 <div style="display:flex;gap:14px;align-items:flex-start;">
                   <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
                     ${avatarHtml}
@@ -747,101 +789,101 @@
                   </div>
                 </div>
               </div>`;
-        }).join('');
-    }
+                    }).join('');
+                }
 
-    // ── Load từ API ───────────────────────────────────────────────
-    function loadReviews() {
-        fetch(`/api/reviews/${PRODUCT_ID}`)
-            .then(r => r.json())
-            .then(data => {
-                allReviews = data.reviews || [];
-                renderSummary(data);
-                renderFilters(data);
-                renderList();
-            })
-            .catch(() => console.error('Không tải được đánh giá'));
-    }
+                // ── Load từ API ───────────────────────────────────────────────
+                function loadReviews() {
+                    fetch(`/api/reviews/${PRODUCT_ID}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            allReviews = data.reviews || [];
+                            renderSummary(data);
+                            renderFilters(data);
+                            renderList();
+                        })
+                        .catch(() => console.error('Không tải được đánh giá'));
+                }
 
-    // ── Filter ─────────────────────────────────────────────────
-    window.setFilter = function(key) {
-        activeFilter = key;
-        fetch(`/api/reviews/${PRODUCT_ID}`)
-            .then(r => r.json())
-            .then(data => { renderFilters(data); renderList(); });
-    };
+                // ── Filter ─────────────────────────────────────────────────
+                window.setFilter = function (key) {
+                    activeFilter = key;
+                    fetch(`/api/reviews/${PRODUCT_ID}`)
+                        .then(r => r.json())
+                        .then(data => { renderFilters(data); renderList(); });
+                };
 
-    // ── Modal viết đánh giá ───────────────────────────────────
-    window.openWriteModal = function() {
-        modalRating = 0;
-        updateModalStars(0);
-        document.getElementById('modalComment').value = '';
-        document.getElementById('modalCharCount').textContent = '0/1000';
-        document.getElementById('modalStarLabel').textContent = '';
-        new bootstrap.Modal(document.getElementById('writeReviewModal')).show();
-    };
+                // ── Modal viết đánh giá ───────────────────────────────────
+                window.openWriteModal = function () {
+                    modalRating = 0;
+                    updateModalStars(0);
+                    document.getElementById('modalComment').value = '';
+                    document.getElementById('modalCharCount').textContent = '0/1000';
+                    document.getElementById('modalStarLabel').textContent = '';
+                    new bootstrap.Modal(document.getElementById('writeReviewModal')).show();
+                };
 
-    function updateModalStars(n) {
-        document.querySelectorAll('.modal-star').forEach(s => {
-            const v = parseInt(s.getAttribute('data-v'));
-            s.textContent = v <= n ? '★' : '☆';
-            s.classList.toggle('lit', v <= n);
-        });
-        document.getElementById('modalStarLabel').textContent =
-            n > 0 ? STAR_LABELS[n] : '';
-    }
+                function updateModalStars(n) {
+                    document.querySelectorAll('.modal-star').forEach(s => {
+                        const v = parseInt(s.getAttribute('data-v'));
+                        s.textContent = v <= n ? '★' : '☆';
+                        s.classList.toggle('lit', v <= n);
+                    });
+                    document.getElementById('modalStarLabel').textContent =
+                        n > 0 ? STAR_LABELS[n] : '';
+                }
 
-    // Star interaction
-    document.querySelectorAll('.modal-star').forEach(s => {
-        s.addEventListener('mouseenter', () => updateModalStars(parseInt(s.getAttribute('data-v'))));
-        s.addEventListener('mouseleave', () => updateModalStars(modalRating));
-        s.addEventListener('click',      () => { modalRating = parseInt(s.getAttribute('data-v')); updateModalStars(modalRating); });
-    });
+                // Star interaction
+                document.querySelectorAll('.modal-star').forEach(s => {
+                    s.addEventListener('mouseenter', () => updateModalStars(parseInt(s.getAttribute('data-v'))));
+                    s.addEventListener('mouseleave', () => updateModalStars(modalRating));
+                    s.addEventListener('click', () => { modalRating = parseInt(s.getAttribute('data-v')); updateModalStars(modalRating); });
+                });
 
-    // Char counter
-    document.getElementById('modalComment').addEventListener('input', function() {
-        document.getElementById('modalCharCount').textContent = this.value.length + '/1000';
-    });
+                // Char counter
+                document.getElementById('modalComment').addEventListener('input', function () {
+                    document.getElementById('modalCharCount').textContent = this.value.length + '/1000';
+                });
 
-    // Submit
-    document.getElementById('modalSubmitBtn').addEventListener('click', function() {
-        if (modalRating === 0) { showToast('Vui lòng chọn số sao!', false); return; }
-        const btn = this;
-        btn.disabled = true;
-        btn.textContent = 'Đang gửi...';
+                // Submit
+                document.getElementById('modalSubmitBtn').addEventListener('click', function () {
+                    if (modalRating === 0) { showToast('Vui lòng chọn số sao!', false); return; }
+                    const btn = this;
+                    btn.disabled = true;
+                    btn.textContent = 'Đang gửi...';
 
-        fetch('/account/reviews/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                productId: PRODUCT_ID,
-                rating:    modalRating,
-                comment:   document.getElementById('modalComment').value.trim()
-            })
-        })
-        .then(r => r.json())
-        .then(data => {
-            btn.disabled = false;
-            btn.textContent = 'Gửi Đánh Giá';
-            if (data.success) {
-                bootstrap.Modal.getInstance(document.getElementById('writeReviewModal')).hide();
-                showToast('✓ Đánh giá đã được lưu thành công!', true);
-                loadReviews(); // reload để cập nhật
-            } else {
-                showToast(data.error || 'Đã xảy ra lỗi', false);
-            }
-        })
-        .catch(() => {
-            btn.disabled = false;
-            btn.textContent = 'Gửi Đánh Giá';
-            showToast('Lỗi kết nối, vui lòng thử lại.', false);
-        });
-    });
+                    fetch('/account/reviews/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            productId: PRODUCT_ID,
+                            rating: modalRating,
+                            comment: document.getElementById('modalComment').value.trim()
+                        })
+                    })
+                        .then(r => r.json())
+                        .then(data => {
+                            btn.disabled = false;
+                            btn.textContent = 'Gửi Đánh Giá';
+                            if (data.success) {
+                                bootstrap.Modal.getInstance(document.getElementById('writeReviewModal')).hide();
+                                showToast('✓ Đánh giá đã được lưu thành công!', true);
+                                loadReviews(); // reload để cập nhật
+                            } else {
+                                showToast(data.error || 'Đã xảy ra lỗi', false);
+                            }
+                        })
+                        .catch(() => {
+                            btn.disabled = false;
+                            btn.textContent = 'Gửi Đánh Giá';
+                            showToast('Lỗi kết nối, vui lòng thử lại.', false);
+                        });
+                });
 
-    // ── Bootstrap ─────────────────────────────────────────────
-    loadReviews();
-})();
-</script>
+                // ── Bootstrap ─────────────────────────────────────────────
+                loadReviews();
+            })();
+        </script>
 
     </article>
 </body>

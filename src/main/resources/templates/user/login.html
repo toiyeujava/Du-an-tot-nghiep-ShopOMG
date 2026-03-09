@@ -148,28 +148,139 @@
                 text-align: center;
             }
 
-            .form-control:focus {
-                box-shadow: none;
+            /* ===== FLOATING LABEL INPUT (Uiverse.io) ===== */
+            .input-box {
+                position: relative;
+                width: 100%;
+                margin-bottom: 1.25rem;
+            }
+
+            .input-box .input {
+                position: relative;
+                width: 100%;
+                padding: 1rem 1.25rem;
+                background: none;
+                border: solid 1.5px #9e9e9e;
+                border-radius: 0.6rem;
+                color: var(--font-color, #323232);
+                font-size: 1rem;
+                outline: none;
+                transition: border-color 0.3s;
+            }
+
+            .input-box .input:focus {
                 border-color: #000;
             }
 
-            /* Nút mắt ẩn/hiện */
-            .btn-toggle-pass {
-                border-color: #ced4da;
-                border-left: none;
-                background: #fff;
-                color: #6c757d;
-                border-top-right-radius: 0.375rem !important;
-                border-bottom-right-radius: 0.375rem !important;
+            .input-box .label {
+                position: absolute;
+                pointer-events: none;
+                left: 1rem;
+                top: 0.875rem;
+                white-space: nowrap;
+                overflow: hidden;
+                line-height: 1.25rem;
+                padding: 0 0.35rem;
+                font-size: 1rem;
+                color: #9e9e9e;
+                background: var(--bg-color, #fff);
+                transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
             }
 
-            .btn-toggle-pass:hover {
-                background: #f8f9fa;
+            .input-box .input:focus~.label,
+            .input-box .input:not(:placeholder-shown)~.label {
+                top: -0.5rem;
+                left: 0.75rem;
+                font-size: 0.8rem;
                 color: #000;
             }
 
-            .form-control-pass {
-                border-right: none;
+            /* Password input-box with toggle button */
+            .input-box-pass {
+                position: relative;
+                width: 100%;
+                margin-bottom: 0.25rem;
+            }
+
+            .input-box-pass .input {
+                position: relative;
+                width: 100%;
+                padding: 1rem 3rem 1rem 1.25rem;
+                background: none;
+                border: solid 1.5px #9e9e9e;
+                border-radius: 0.6rem;
+                color: var(--font-color, #323232);
+                font-size: 1rem;
+                outline: none;
+                transition: border-color 0.3s;
+            }
+
+            .input-box-pass .input:focus {
+                border-color: #000;
+            }
+
+            .input-box-pass .label {
+                position: absolute;
+                pointer-events: none;
+                left: 1rem;
+                top: 0.875rem;
+                white-space: nowrap;
+                overflow: hidden;
+                line-height: 1.25rem;
+                padding: 0 0.35rem;
+                font-size: 1rem;
+                color: #9e9e9e;
+                background: var(--bg-color, #fff);
+                transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .input-box-pass .input:focus~.label,
+            .input-box-pass .input:not(:placeholder-shown)~.label {
+                top: -0.5rem;
+                left: 0.75rem;
+                font-size: 0.8rem;
+                color: #000;
+            }
+
+            .input-box-pass .btn-toggle-pass {
+                position: absolute;
+                right: 0.5rem;
+                top: 50%;
+                transform: translateY(-50%);
+                background: none;
+                border: none;
+                color: #9e9e9e;
+                cursor: pointer;
+                padding: 0.25rem;
+                z-index: 2;
+            }
+
+            .input-box-pass .btn-toggle-pass:hover {
+                color: #000;
+            }
+
+            /* Dark mode floating labels */
+            [data-theme="dark"] .input-box .input,
+            [data-theme="dark"] .input-box-pass .input {
+                color: #e0e0e0;
+                border-color: #555;
+            }
+
+            [data-theme="dark"] .input-box .input:focus,
+            [data-theme="dark"] .input-box-pass .input:focus {
+                border-color: #aaa;
+            }
+
+            [data-theme="dark"] .input-box .label,
+            [data-theme="dark"] .input-box-pass .label {
+                background: var(--bg-color, #1e1e1e);
+            }
+
+            [data-theme="dark"] .input-box .input:focus~.label,
+            [data-theme="dark"] .input-box .input:not(:placeholder-shown)~.label,
+            [data-theme="dark"] .input-box-pass .input:focus~.label,
+            [data-theme="dark"] .input-box-pass .input:not(:placeholder-shown)~.label {
+                color: #ccc;
             }
 
             /* Style nút Social */
@@ -299,25 +410,20 @@
                                         th:text="${minutesUntilUnlock != null ? minutesUntilUnlock + ' phút' : '15 phút'}"></strong>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="loginEmail"
-                                        class="form-label small fw-bold text-uppercase text-muted">Email / Tên đăng
-                                        nhập</label>
-                                    <input type="text" class="form-control" id="loginEmail" name="email"
-                                        placeholder="example@email.com" th:value="${email}" required>
+                                <div class="input-box">
+                                    <input type="text" class="input" id="loginEmail" name="email" placeholder=" "
+                                        th:value="${email}" required>
+                                    <label class="label">Email / Tên đăng nhập<sup>*</sup></label>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="loginPassword"
-                                        class="form-label small fw-bold text-uppercase text-muted">Mật khẩu</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control form-control-pass" id="loginPassword"
-                                            name="password" placeholder="Nhập mật khẩu" required>
-                                        <button class="btn btn-toggle-pass" type="button"
-                                            onclick="togglePassword('loginPassword', this)">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
+                                <div class="input-box-pass mb-3">
+                                    <input type="password" class="input" id="loginPassword" name="password"
+                                        placeholder=" " required>
+                                    <label class="label">Mật khẩu<sup>*</sup></label>
+                                    <button class="btn-toggle-pass" type="button"
+                                        onclick="togglePassword('loginPassword', this)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
                                 </div>
 
                                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -379,77 +485,65 @@
 
                             <form th:action="@{/account/sign-up}" th:object="${form}" method="post" id="registerForm">
 
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-uppercase text-muted">Họ và tên</label>
-                                    <input type="text" class="form-control" th:field="*{fullName}"
-                                        placeholder="Nhập họ tên của bạn">
+                                <div class="input-box">
+                                    <input type="text" class="input" th:field="*{fullName}" placeholder=" ">
+                                    <label class="label">Họ và tên<sup>*</sup></label>
                                     <small class="text-danger" th:if="${#fields.hasErrors('fullName')}"
                                         th:errors="*{fullName}"></small>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-uppercase text-muted">Email</label>
-                                    <input type="email" class="form-control" th:field="*{email}"
-                                        placeholder="example@email.com">
+                                <div class="input-box">
+                                    <input type="email" class="input" th:field="*{email}" placeholder=" ">
+                                    <label class="label">Email<sup>*</sup></label>
                                     <small class="text-danger" th:if="${#fields.hasErrors('email')}"
                                         th:errors="*{email}"></small>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-uppercase text-muted">Tên đăng
-                                        nhập</label>
-                                    <input type="text" class="form-control" th:field="*{username}"
-                                        placeholder="Chọn tên đăng nhập">
+                                <div class="input-box">
+                                    <input type="text" class="input" th:field="*{username}" placeholder=" ">
+                                    <label class="label">Tên đăng nhập<sup>*</sup></label>
                                     <small class="text-danger" th:if="${#fields.hasErrors('username')}"
                                         th:errors="*{username}"></small>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-uppercase text-muted">Mật khẩu</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control form-control-pass" id="regPassword"
-                                            th:field="*{password}" placeholder="Nhập mật khẩu"
-                                            onkeyup="checkPasswordStrength()">
-                                        <button class="btn btn-toggle-pass" type="button"
-                                            onclick="togglePassword('regPassword', this)">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
+                                <div class="input-box-pass">
+                                    <input type="password" class="input" id="regPassword" th:field="*{password}"
+                                        placeholder=" " onkeyup="checkPasswordStrength()">
+                                    <label class="label">Mật khẩu<sup>*</sup></label>
+                                    <button class="btn-toggle-pass" type="button"
+                                        onclick="togglePassword('regPassword', this)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
 
-                                    <div class="mt-2 ps-1" id="password-rules">
-                                        <div class="validation-item" id="rule-length">
-                                            <i class="fas fa-circle"></i> Tối thiểu 8 ký tự
-                                        </div>
-                                        <div class="validation-item" id="rule-case">
-                                            <i class="fas fa-circle"></i> Chữ hoa &amp; chữ thường
-                                        </div>
-                                        <div class="validation-item" id="rule-special">
-                                            <i class="fas fa-circle"></i> Số và ký tự đặc biệt (@$!%*?&amp;)
-                                        </div>
+                                <div class="mt-1 mb-3 ps-1" id="password-rules">
+                                    <div class="validation-item" id="rule-length">
+                                        <i class="fas fa-circle"></i> Tối thiểu 8 ký tự
                                     </div>
-
+                                    <div class="validation-item" id="rule-case">
+                                        <i class="fas fa-circle"></i> Chữ hoa &amp; chữ thường
+                                    </div>
+                                    <div class="validation-item" id="rule-special">
+                                        <i class="fas fa-circle"></i> Số và ký tự đặc biệt (@$!%*?&amp;)
+                                    </div>
                                     <small class="text-danger" th:if="${#fields.hasErrors('password')}"
                                         th:errors="*{password}"></small>
                                 </div>
 
-                                <div class="mb-4">
-                                    <label class="form-label small fw-bold text-uppercase text-muted">Xác nhận mật
-                                        khẩu</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control form-control-pass"
-                                            id="confirmPassword" th:field="*{confirmPassword}"
-                                            placeholder="Nhập lại mật khẩu" onkeyup="checkConfirmPassword()">
-                                        <button class="btn btn-toggle-pass" type="button"
-                                            onclick="togglePassword('confirmPassword', this)">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                    <div class="validation-item mt-1 ps-1 d-none" id="rule-match">
-                                        <i class="fas fa-circle"></i> Mật khẩu khớp
-                                    </div>
-                                    <small class="text-danger" th:if="${#fields.hasErrors('confirmPassword')}"
-                                        th:errors="*{confirmPassword}"></small>
+                                <div class="input-box-pass">
+                                    <input type="password" class="input" id="confirmPassword"
+                                        th:field="*{confirmPassword}" placeholder=" " onkeyup="checkConfirmPassword()">
+                                    <label class="label">Xác nhận mật khẩu<sup>*</sup></label>
+                                    <button class="btn-toggle-pass" type="button"
+                                        onclick="togglePassword('confirmPassword', this)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
                                 </div>
+                                <div class="validation-item mt-1 mb-3 ps-1 d-none" id="rule-match">
+                                    <i class="fas fa-circle"></i> Mật khẩu khớp
+                                </div>
+                                <small class="text-danger" th:if="${#fields.hasErrors('confirmPassword')}"
+                                    th:errors="*{confirmPassword}"></small>
 
                                 <button type="submit" class="btn btn-dark w-100 fw-bold py-2 mb-3">ĐĂNG KÝ NGAY</button>
 

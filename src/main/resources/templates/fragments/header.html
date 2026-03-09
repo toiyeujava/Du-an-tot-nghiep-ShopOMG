@@ -32,23 +32,85 @@
         }
 
         @media all and (min-width: 992px) {
-            .navbar .nav-item.dropdown:hover .dropdown-menu {
-                display: block;
-                visibility: visible;
-                opacity: 1;
-                margin-top: 0;
-                transition: all 0.3s ease;
-            }
-        }
 
-        /* --- Đoạn cần thêm cho hover giỏ hàng --- */
-        @media all and (min-width: 992px) {
-            .nav-item.dropdown.cart-dropdown:hover .dropdown-menu {
-                display: block;
+            /* 1. Base style cho khối container dropdown */
+            .navbar .dropdown .dropdown-menu {
+                display: block !important;
+                visibility: hidden;
+                opacity: 0;
+                pointer-events: none;
+                margin-top: 0;
+                clip-path: inset(10% 50% 90% 50% round 10px);
+                transition: visibility 0.4s, opacity 0.4s, clip-path 0.4s;
+            }
+
+            /* 2. Hover lên nav-item để mở container dropdown */
+            .navbar .dropdown:hover .dropdown-menu {
                 visibility: visible;
                 opacity: 1;
-                margin-top: 0;
-                transition: all 0.3s ease;
+                pointer-events: auto;
+                clip-path: inset(0% 0% 0% 0% round 10px);
+            }
+
+            /* 3. Dropdown items khởi tạo (tương ứng .menu-list) ẩn và kéo xuống */
+            .navbar .dropdown ul.dropdown-menu>li {
+                --delay: 0.1s;
+                --trdelay: 0.08s;
+                transform: translateY(30px);
+                opacity: 0;
+                transition: transform 0.2s, opacity 0.2s;
+                /* khi hover out thì rút nhanh về */
+            }
+
+            /* Vừa hiển thị khi nav-item được hover, kéo lên vị trí 0,0 */
+            .navbar .dropdown:hover ul.dropdown-menu>li {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            /* 4. Animation Stagger (thứ tự rớt xuống) theo từng phần tử */
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(1) {
+                transition: transform 0.4s var(--delay), opacity 0.4s var(--delay);
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(2) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 1)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 1));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(3) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 2)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 2));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(4) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 3)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 3));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(5) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 4)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 4));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(6) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 5)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 5));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(7) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 6)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 6));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(8) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 7)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 7));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(9) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 8)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 8));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(10) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 9)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 9));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(n+11) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 10)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 10));
             }
         }
     </style>

@@ -237,17 +237,47 @@
 
                         <!-- Star Rating -->
                         <div class="text-center mb-2" id="reviewStarSection">
-                            <div class="d-flex justify-content-center gap-3 mb-1" id="reviewStars">
-                                <i class="star-icon far fa-star" data-star="1"
-                                    style="font-size:2rem; cursor:pointer; color:#ccc; transition:color .15s;"></i>
-                                <i class="star-icon far fa-star" data-star="2"
-                                    style="font-size:2rem; cursor:pointer; color:#ccc; transition:color .15s;"></i>
-                                <i class="star-icon far fa-star" data-star="3"
-                                    style="font-size:2rem; cursor:pointer; color:#ccc; transition:color .15s;"></i>
-                                <i class="star-icon far fa-star" data-star="4"
-                                    style="font-size:2rem; cursor:pointer; color:#ccc; transition:color .15s;"></i>
-                                <i class="star-icon far fa-star" data-star="5"
-                                    style="font-size:2rem; cursor:pointer; color:#ccc; transition:color .15s;"></i>
+                            <div class="rating justify-content-center mb-1" id="reviewStars">
+                                <input type="radio" id="star-5" name="star-radio" value="5">
+                                <label for="star-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                        <path pathLength="360"
+                                            d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z">
+                                        </path>
+                                    </svg>
+                                </label>
+                                <input type="radio" id="star-4" name="star-radio" value="4">
+                                <label for="star-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                        <path pathLength="360"
+                                            d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z">
+                                        </path>
+                                    </svg>
+                                </label>
+                                <input type="radio" id="star-3" name="star-radio" value="3">
+                                <label for="star-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                        <path pathLength="360"
+                                            d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z">
+                                        </path>
+                                    </svg>
+                                </label>
+                                <input type="radio" id="star-2" name="star-radio" value="2">
+                                <label for="star-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                        <path pathLength="360"
+                                            d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z">
+                                        </path>
+                                    </svg>
+                                </label>
+                                <input type="radio" id="star-1" name="star-radio" value="1">
+                                <label for="star-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                        <path pathLength="360"
+                                            d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z">
+                                        </path>
+                                    </svg>
+                                </label>
                             </div>
                             <div id="starRequiredMsg" class="text-danger small mb-1"
                                 style="display:none; font-weight:600;">&#272;&#226;y l&#224; m&#7909;c b&#7855;t
@@ -411,13 +441,89 @@
             }
 
             /* ===== Review Modal CSS ===== */
-            #reviewStars .star-icon:hover,
-            #reviewStars .star-icon.hovered {
-                color: #f5a623 !important;
+            .rating {
+                display: flex;
+                flex-direction: row-reverse;
+                gap: 0.3rem;
+                --stroke: #666;
+                --fill: #ffc73a;
             }
 
-            #reviewStars .star-icon.selected {
-                color: #f5a623 !important;
+            .rating input {
+                appearance: unset;
+            }
+
+            .rating label {
+                cursor: pointer;
+            }
+
+            .rating svg {
+                width: 2rem;
+                height: 2rem;
+                overflow: visible;
+                fill: transparent;
+                stroke: var(--stroke);
+                stroke-linejoin: bevel;
+                stroke-dasharray: 12;
+                animation: idle 4s linear infinite;
+                transition: stroke 0.2s, fill 0.5s;
+            }
+
+            @keyframes idle {
+                from {
+                    stroke-dashoffset: 24;
+                }
+            }
+
+            .rating label:hover svg {
+                stroke: var(--fill);
+            }
+
+            .rating input:checked~label svg {
+                transition: 0s;
+                animation: idle 4s linear infinite, yippee 0.75s backwards;
+                fill: var(--fill);
+                stroke: var(--fill);
+                stroke-opacity: 0;
+                stroke-dasharray: 0;
+                stroke-linejoin: miter;
+                stroke-width: 8px;
+            }
+
+            @keyframes yippee {
+                0% {
+                    transform: scale(1);
+                    fill: var(--fill);
+                    fill-opacity: 0;
+                    stroke-opacity: 1;
+                    stroke: var(--stroke);
+                    stroke-dasharray: 10;
+                    stroke-width: 1px;
+                    stroke-linejoin: bevel;
+                }
+
+                30% {
+                    transform: scale(0);
+                    fill: var(--fill);
+                    fill-opacity: 0;
+                    stroke-opacity: 1;
+                    stroke: var(--stroke);
+                    stroke-dasharray: 10;
+                    stroke-width: 1px;
+                    stroke-linejoin: bevel;
+                }
+
+                30.1% {
+                    stroke: var(--fill);
+                    stroke-dasharray: 0;
+                    stroke-linejoin: miter;
+                    stroke-width: 8px;
+                }
+
+                60% {
+                    transform: scale(1.2);
+                    fill: var(--fill);
+                }
             }
 
             .review-product-item {
@@ -650,10 +756,7 @@
 
                 // Reset modal state
                 currentStarValue = 0;
-                document.querySelectorAll('.star-icon').forEach(s => {
-                    s.classList.remove('selected', 'hovered');
-                    s.style.color = '#ccc';
-                });
+                document.querySelectorAll('.rating input[type="radio"]').forEach(r => r.checked = false);
                 document.getElementById('starLabel').innerHTML = 'Chấm điểm đơn hàng của bạn <span class="text-danger">*</span>';
                 document.getElementById('starRequiredMsg').style.display = 'none';
                 document.getElementById('reviewText').value = '';
@@ -695,26 +798,9 @@
             });
 
             // Star rating — hover
-            document.querySelectorAll('.star-icon').forEach(star => {
-                star.addEventListener('mouseenter', function () {
-                    const hov = parseInt(this.getAttribute('data-star'));
-                    document.querySelectorAll('.star-icon').forEach(s => {
-                        const v = parseInt(s.getAttribute('data-star'));
-                        s.style.color = v <= hov ? '#f5a623' : (v <= currentStarValue ? '#f5a623' : '#ccc');
-                    });
-                });
-                star.addEventListener('mouseleave', function () {
-                    document.querySelectorAll('.star-icon').forEach(s => {
-                        const v = parseInt(s.getAttribute('data-star'));
-                        s.style.color = v <= currentStarValue ? '#f5a623' : '#ccc';
-                    });
-                });
-                star.addEventListener('click', function () {
-                    currentStarValue = parseInt(this.getAttribute('data-star'));
-                    document.querySelectorAll('.star-icon').forEach(s => {
-                        const v = parseInt(s.getAttribute('data-star'));
-                        s.style.color = v <= currentStarValue ? '#f5a623' : '#ccc';
-                    });
+            document.querySelectorAll('.rating input[type="radio"]').forEach(radio => {
+                radio.addEventListener('change', function () {
+                    currentStarValue = parseInt(this.value);
                     document.getElementById('starLabel').innerHTML =
                         STAR_LABELS[currentStarValue - 1] + ' <span class="text-danger">*</span>';
                     document.getElementById('starRequiredMsg').style.display = 'none';

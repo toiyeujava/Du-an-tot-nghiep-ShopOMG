@@ -204,6 +204,52 @@
             </div>
         </div>
 
+        <!-- Product Description & Info Section -->
+        <div class="row mt-5 mb-4" th:if="${product}">
+            <div class="col-12">
+                <ul class="nav nav-tabs" id="productTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-bold" id="desc-tab" data-bs-toggle="tab"
+                            data-bs-target="#desc" type="button" role="tab" aria-controls="desc" aria-selected="true">Mô
+                            Tả Sản Phẩm</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold" id="info-tab" data-bs-toggle="tab" data-bs-target="#info"
+                            type="button" role="tab" aria-controls="info" aria-selected="false">Thông Tin Chi
+                            Tiết</button>
+                    </li>
+                </ul>
+                <div class="tab-content p-4 border border-top-0 rounded-bottom bg-white" id="productTabContent">
+                    <div class="tab-pane fade show active" id="desc" role="tabpanel" aria-labelledby="desc-tab">
+                        <p style="white-space: pre-line; line-height: 1.8;" th:if="${product.description}"
+                            th:text="${product.description}"></p>
+                        <p th:unless="${product.description}" class="text-muted fst-italic">Thông tin mô tả đang được
+                            cập nhật.</p>
+                    </div>
+                    <div class="tab-pane fade" id="info" role="tabpanel" aria-labelledby="info-tab">
+                        <table class="table table-bordered mb-0">
+                            <tbody>
+                                <tr>
+                                    <th class="bg-light" style="width: 200px;">Chất liệu</th>
+                                    <td th:text="${product.material} ?: 'Đang cập nhật'"></td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Xuất xứ</th>
+                                    <td th:text="${product.origin} ?: 'Đang cập nhật'"></td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Phù hợp với</th>
+                                    <td
+                                        th:text="${product.gender == 'Nam' ? 'Nam' : (product.gender == 'Nu' ? 'Nữ' : 'Unisex')}">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <input type="hidden" id="data-variants" th:value="${jsonVariants}">
 
         <!-- Include Guest Login Modal -->
@@ -481,10 +527,7 @@
         </div>
 
         <!-- ── TỔNG HỢP ĐIỂM ──────────────────────────────────────── -->
-        <div id="reviewSummary" style="background:linear-gradient(135deg,#fff 55%,#f9ecec);
-            border:1px solid #e8d5d5;border-radius:12px;
-            padding:20px 24px;margin-bottom:20px;
-            display:flex;align-items:center;gap:32px;flex-wrap:wrap;">
+        <div id="reviewSummary" class="review-summary">
             <!-- Điểm lớn -->
             <div class="text-center" style="min-width:90px;">
                 <div id="avgScore" style="font-family:'Georgia',serif;font-size:52px;font-weight:700;
@@ -507,7 +550,7 @@
         <!-- ── EMPTY STATE ────────────────────────────────────────── -->
         <div id="reviewEmpty" style="display:none;text-align:center;padding:52px 0;color:#999;">
             <div style="font-size:42px;margin-bottom:12px;">⭐</div>
-            <div style="font-family:'Georgia',serif;font-size:18px;color:#1a1a1a;margin-bottom:6px;">
+            <div class="rv-empty-title" style="font-family:'Georgia',serif;font-size:18px;margin-bottom:6px;">
                 Chưa có đánh giá nào
             </div>
             <div style="font-size:13px;">Hãy là người đầu tiên chia sẻ trải nghiệm!</div>
@@ -546,7 +589,7 @@
                         <!-- Nhận xét -->
                         <div class="mb-3" style="position:relative;">
                             <textarea id="modalComment" class="form-control" rows="4" maxlength="1000"
-                                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..." style="border:1px solid #e8d5d5;border-radius:8px;
+                                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..." style="border-radius:8px;
                                      font-size:14px;resize:none;padding-bottom:26px;
                                      outline:none;"></textarea>
                             <span id="modalCharCount" style="position:absolute;bottom:8px;right:12px;
@@ -575,10 +618,31 @@
      STYLES
      ============================================================ -->
         <style>
+            .review-summary {
+                background: linear-gradient(135deg, #fff 55%, #f9ecec);
+                border: 1px solid #e8d5d5;
+                border-radius: 12px;
+                padding: 20px 24px;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 32px;
+                flex-wrap: wrap;
+            }
+
+            [data-theme="dark"] .review-summary {
+                background: var(--surface-bg);
+                border-color: var(--border-color);
+            }
+
             .rv-card {
                 padding: 22px 0;
                 border-bottom: 1px solid #f2e8e8;
                 transition: background .15s;
+            }
+
+            [data-theme="dark"] .rv-card {
+                border-bottom: 1px solid var(--border-color);
             }
 
             .rv-chip {
@@ -593,11 +657,23 @@
                 white-space: nowrap;
             }
 
+            [data-theme="dark"] .rv-chip {
+                background: var(--surface-bg);
+                border-color: var(--border-color);
+                color: var(--text-secondary);
+            }
+
             .rv-chip.active {
                 border-color: #8B0000;
                 background: #8B0000;
                 color: #fff;
                 font-weight: 600;
+            }
+
+            [data-theme="dark"] .rv-chip.active {
+                border-color: #8B0000;
+                background: #8B0000;
+                color: #fff;
             }
 
             .rv-star-bar {
@@ -606,6 +682,10 @@
                 background: #f0e0e0;
                 border-radius: 4px;
                 overflow: hidden;
+            }
+
+            [data-theme="dark"] .rv-star-bar {
+                background: var(--surface-secondary-bg);
             }
 
             .rv-star-bar-fill {
@@ -620,7 +700,15 @@
                 color: #e0c8c8;
             }
 
+            [data-theme="dark"] .modal-star {
+                color: #555;
+            }
+
             .modal-star.lit {
+                color: #C0392B;
+            }
+
+            [data-theme="dark"] .modal-star.lit {
                 color: #C0392B;
             }
 
@@ -642,6 +730,62 @@
 
             .rv-card {
                 animation: rvFadeUp .3s ease both;
+            }
+
+            /* --- PRODUCT DETAIL DARK TABS & TABLES --- */
+            [data-theme="dark"] .nav-tabs .nav-link {
+                color: var(--text-secondary);
+                border-color: transparent;
+            }
+
+            [data-theme="dark"] .nav-tabs .nav-link:hover {
+                border-color: var(--border-color) var(--border-color) transparent;
+            }
+
+            [data-theme="dark"] .nav-tabs .nav-link.active {
+                color: var(--text-primary);
+                background-color: var(--surface-bg);
+                border-color: var(--border-color) var(--border-color) var(--surface-bg);
+            }
+
+            [data-theme="dark"] .nav-tabs {
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            [data-theme="dark"] #productTabContent {
+                background-color: var(--surface-bg) !important;
+                border-color: var(--border-color) !important;
+                color: var(--text-primary);
+            }
+
+            [data-theme="dark"] #productTabContent p {
+                color: var(--text-primary) !important;
+            }
+
+            [data-theme="dark"] .table {
+                background-color: transparent !important;
+                color: var(--text-primary) !important;
+            }
+
+            [data-theme="dark"] .table-bordered,
+            [data-theme="dark"] .table-bordered th,
+            [data-theme="dark"] .table-bordered td {
+                background-color: transparent !important;
+                border-color: var(--border-color) !important;
+                color: var(--text-primary) !important;
+            }
+
+            [data-theme="dark"] .table th.bg-light {
+                background-color: var(--surface-secondary-bg) !important;
+                color: var(--text-primary) !important;
+            }
+
+            [data-theme="dark"] .rv-empty-title {
+                color: var(--text-primary) !important;
+            }
+
+            .rv-empty-title {
+                color: #1a1a1a;
             }
         </style>
 
@@ -784,8 +928,8 @@
                      ${initials(r.fullName)}</div>`;
 
                         const commentHtml = r.comment && r.comment.trim()
-                            ? `<p style="margin:0 0 12px;font-size:14px;color:#555;line-height:1.65;">${r.comment}</p>`
-                            : `<p style="margin:0 0 12px;font-size:13px;color:#aaa;font-style:italic;">Không có nhận xét</p>`;
+                            ? `<p class="text-muted" style="margin:0 0 12px;font-size:14px;line-height:1.65;">${r.comment}</p>`
+                            : `<p class="text-muted" style="margin:0 0 12px;font-size:13px;font-style:italic;">Không có nhận xét</p>`;
 
                         return `
               <div class="rv-card" style="animation-delay:${idx * 0.04}s">
@@ -795,7 +939,7 @@
                   </div>
                   <div style="flex:1;">
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-                      <span style="font-weight:700;font-size:14px;color:#1a1a1a;">${r.fullName}</span>
+                      <span class="text-dark" style="font-weight:700;font-size:14px;">${r.fullName}</span>
                       <span style="font-size:11px;color:#999;">${r.reviewDate}</span>
                     </div>
                     <div style="margin-bottom:8px;">${stars(r.rating, 14)}</div>

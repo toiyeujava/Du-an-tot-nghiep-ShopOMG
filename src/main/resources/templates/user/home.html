@@ -290,6 +290,37 @@
                 -webkit-appearance: none;
                 margin: 0;
             }
+            /* --- STAR RATING ON PRODUCT CARD --- */
+            .star-rating {
+                display: flex;
+                align-items: center;
+                gap: 1px;
+                margin-bottom: 4px;
+            }
+            .star-rating .star {
+                font-size: 1.2rem;
+                color: #e0e0e0;
+                line-height: 1;
+            }
+            .star-rating .star.filled { color: #FFC107; }
+            .star-rating .star.half {
+                position: relative;
+                color: #e0e0e0;
+            }
+            .star-rating .star.half::before {
+                content: '\2605';
+                position: absolute;
+                left: 0; top: 0;
+                width: 50%;
+                overflow: hidden;
+                color: #FFC107;
+                display: inline-block;
+            }
+            .star-rating .rating-count {
+                font-size: 0.7rem;
+                color: #999;
+                margin-left: 4px;
+            }
         </style>
 
         <!-- ==========================================
@@ -577,6 +608,13 @@
                                                 class="text-dark text-decoration-none" th:text="${product.name}">Tên sản
                                                 phẩm</a>
                                         </h6>
+                                        <div class="star-rating"
+                                            th:with="avg=${ratingMap[product.id] != null ? ratingMap[product.id] : 0},
+                                                     cnt=${reviewCountMap[product.id] != null ? reviewCountMap[product.id] : 0}">
+                                            <span th:each="i : ${#numbers.sequence(1, 5)}"
+                                                th:class="${i <= avg} ? 'star filled' : (${(i - 0.5) <= avg} ? 'star half' : 'star')">&#9733;</span>
+                                            <span class="rating-count" th:text="'(' + ${cnt} + ')'"></span>
+                                        </div>
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="fw-bold text-danger fs-5"
                                                 th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
@@ -696,6 +734,13 @@
                                                 class="text-dark text-decoration-none" th:text="${product.name}">Tên sản
                                                 phẩm</a>
                                         </h6>
+                                        <div class="star-rating"
+                                            th:with="avg=${ratingMap[product.id] != null ? ratingMap[product.id] : 0},
+                                                     cnt=${reviewCountMap[product.id] != null ? reviewCountMap[product.id] : 0}">
+                                            <span th:each="i : ${#numbers.sequence(1, 5)}"
+                                                th:class="${i <= avg} ? 'star filled' : (${(i - 0.5) <= avg} ? 'star half' : 'star')">&#9733;</span>
+                                            <span class="rating-count" th:text="'(' + ${cnt} + ')'"></span>
+                                        </div>
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="fw-bold text-danger fs-5"
                                                 th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>

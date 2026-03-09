@@ -39,9 +39,15 @@ const CategoryManager = {
         const method = this.isEditMode ? 'PUT' : 'POST';
 
         try {
+            const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+            const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+
             const response = await fetch(url, {
                 method: method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
                 body: JSON.stringify({ name, image, isActive: true })
             });
 
@@ -62,9 +68,15 @@ const CategoryManager = {
         if (!force && !confirm('Bạn có chắc muốn xóa loại này?')) return;
 
         try {
+            const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+            const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+
             const url = force ? `/admin/categories/${id}?force=true` : `/admin/categories/${id}`;
             const response = await fetch(url, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
             });
 
             const result = await response.json();
@@ -90,8 +102,14 @@ const CategoryManager = {
         if (!confirm('Bạn có chắc muốn khôi phục loại này cùng các sản phẩm bên trong?')) return;
 
         try {
+            const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+            const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+
             const response = await fetch(`/admin/categories/${id}/restore`, {
-                method: 'PUT'
+                method: 'PUT',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
             });
 
             const result = await response.json();
@@ -111,8 +129,14 @@ const CategoryManager = {
         if (!confirm('Hành động này sẽ XÓA VĨNH VIỄN loại sản phẩm này và không thể khôi phục. Bạn có chắc chắn?')) return;
 
         try {
+            const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+            const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+
             const response = await fetch(`/admin/categories/${id}/hard`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
             });
 
             const result = await response.json();

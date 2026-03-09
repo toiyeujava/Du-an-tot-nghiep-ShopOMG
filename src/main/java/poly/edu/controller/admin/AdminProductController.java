@@ -7,11 +7,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import poly.edu.dto.admin.ProductRequestDTO;
 import poly.edu.entity.Product;
 import poly.edu.service.CategoryService;
 import poly.edu.service.ProductService;
+import jakarta.validation.Valid;
 
 /**
  * AdminProductController - Handles product CRUD for admin.
@@ -81,7 +84,7 @@ public class AdminProductController {
     @GetMapping("/create")
     public String createProductForm(Model model) {
         model.addAttribute("pageTitle", "Thêm sản phẩm mới");
-        model.addAttribute("product", new Product());
+        model.addAttribute("product", new ProductRequestDTO());
         model.addAttribute("categories", categoryService.getAllCategories());
         return "admin/product-form";
     }
@@ -100,8 +103,18 @@ public class AdminProductController {
      * - Flash attributes survive the redirect
      */
     @PostMapping
-    public String createProduct(@ModelAttribute Product product, RedirectAttributes redirectAttributes) {
+    public String createProduct(@Valid @ModelAttribute("product") ProductRequestDTO dto,
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        if (result.hasErrors()) {
+            model.addAttribute("pageTitle", "Thêm sản phẩm mới");
+            model.addAttribute("categories", categoryService.getAllCategories());
+            return "admin/product-form";
+        }
+
         try {
+            Product product = dto.toEntity(null);
             productService.createProduct(product);
             redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm thành công!");
         } catch (Exception e) {
@@ -118,8 +131,22 @@ public class AdminProductController {
         Product product = productService.getProductById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
+        ProductRequestDTO dto = new ProductRequestDTO();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setSlug(product.getSlug());
+        dto.setDescription(product.getDescription());
+        dto.setMaterial(product.getMaterial());
+        dto.setOrigin(product.getOrigin());
+        dto.setCategoryId(product.getCategoryId());
+        dto.setImage(product.getImage());
+        dto.setGender(product.getGender());
+        dto.setPrice(product.getPrice());
+        dto.setDiscount(product.getDiscount());
+        dto.setIsActive(product.getIsActive());
+
         model.addAttribute("pageTitle", "Chỉnh sửa sản phẩm");
-        model.addAttribute("product", product);
+        model.addAttribute("product", dto);
         model.addAttribute("categories", categoryService.getAllCategories());
         return "admin/product-form";
     }
@@ -137,10 +164,23 @@ public class AdminProductController {
      * - Reduces data transfer
      */
     @PostMapping("/{id}")
-    public String updateProduct(@PathVariable Integer id, @ModelAttribute Product product,
+    public String updateProduct(@PathVariable Integer id,
+            @Valid @ModelAttribute("product") ProductRequestDTO dto,
+            BindingResult result,
+            Model model,
             RedirectAttributes redirectAttributes) {
+        if (result.hasErrors()) {
+            model.addAttribute("pageTitle", "Chỉnh sửa sản phẩm");
+            model.addAttribute("categories", categoryService.getAllCategories());
+            return "admin/product-form";
+        }
+
         try {
-            productService.updateProduct(id, product);
+            Product existingProduct = productService.getProductById(id)
+                    .orElseThrow(() -> new RuntimeException("Product not found"));
+
+            Product updatedProduct = dto.toEntity(existingProduct);
+            productService.updateProduct(id, updatedProduct);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật sản phẩm thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());

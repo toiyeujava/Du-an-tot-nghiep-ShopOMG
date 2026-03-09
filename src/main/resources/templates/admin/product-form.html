@@ -1,99 +1,126 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+    th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+
 <head>
-    <title>Thêm sản phẩm - Admin</title>
+    <title th:text="${pageTitle}">Thêm sản phẩm - Admin</title>
 </head>
+
 <body>
     <article>
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold m-0">Thêm sản phẩm mới</h4>
-            <div>
-                <a href="/admin/products" class="btn btn-light border fw-bold me-2">Hủy bỏ</a>
-                <button class="btn btn-dark fw-bold px-4">Lưu sản phẩm</button>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-body p-4">
-                        <h6 class="fw-bold mb-3">Thông tin chung</h6>
-                        <div class="mb-3">
-                            <label class="form-label">Tên sản phẩm</label>
-                            <input type="text" class="form-control bg-light border-0" placeholder="VD: Áo thun nam...">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Mô tả chi tiết</label>
-                            <textarea class="form-control bg-light border-0" rows="5"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-body p-4">
-                        <h6 class="fw-bold mb-3">Dữ liệu & Giá</h6>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Giá gốc (VNĐ)</label>
-                                <input type="number" class="form-control bg-light border-0">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Giảm giá (%)</label>
-                                <input type="number" class="form-control bg-light border-0" value="0">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Mã SKU (Tự động nếu để trống)</label>
-                                <input type="text" class="form-control bg-light border-0">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Tồn kho ban đầu</label>
-                                <input type="number" class="form-control bg-light border-0" value="100">
-                            </div>
-                        </div>
-                    </div>
+        <form method="post" th:action="@{${product.id == null ? '/admin/products' : '/admin/products/' + product.id}}"
+            th:object="${product}">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold m-0" th:text="${pageTitle}">Thêm sản phẩm mới</h4>
+                <div>
+                    <a href="/admin/products" class="btn btn-light border fw-bold me-2">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-dark fw-bold px-4">Lưu sản phẩm</button>
                 </div>
             </div>
 
-            <div class="col-lg-4">
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-body p-4">
-                        <h6 class="fw-bold mb-3">Phân loại</h6>
-                        <div class="mb-3">
-                            <label class="form-label">Danh mục</label>
-                            <select class="form-select bg-light border-0">
-                                <option>-- Chọn danh mục --</option>
-                                <option>Áo thun</option>
-                                <option>Quần Jean</option>
-                            </select>
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-3">Thông tin chung</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Tên sản phẩm *</label>
+                                <input type="text" class="form-control bg-light border-0" th:field="*{name}"
+                                    placeholder="VD: Áo thun nam...">
+                                <span class="text-danger small" th:if="${#fields.hasErrors('name')}"
+                                    th:errors="*{name}"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Mô tả chi tiết</label>
+                                <textarea class="form-control bg-light border-0" rows="5"
+                                    th:field="*{description}"></textarea>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Chất liệu</label>
+                                    <input type="text" class="form-control bg-light border-0" th:field="*{material}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Xuất xứ</label>
+                                    <input type="text" class="form-control bg-light border-0" th:field="*{origin}">
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Giới tính</label>
-                            <select class="form-select bg-light border-0">
-                                <option>Nam</option>
-                                <option>Nữ</option>
-                                <option>Unisex</option>
-                            </select>
+                    </div>
+
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-3">Dữ liệu & Giá</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Giá gốc (VNĐ) *</label>
+                                    <input type="number" step="0.01" class="form-control bg-light border-0"
+                                        th:field="*{price}">
+                                    <span class="text-danger small" th:if="${#fields.hasErrors('price')}"
+                                        th:errors="*{price}"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Giảm giá (%) *</label>
+                                    <input type="number" class="form-control bg-light border-0" th:field="*{discount}">
+                                    <span class="text-danger small" th:if="${#fields.hasErrors('discount')}"
+                                        th:errors="*{discount}"></span>
+                                </div>
+                                <div class="col-md-6 mt-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="isActive"
+                                            th:field="*{isActive}">
+                                        <label class="form-check-label" for="isActive">Kích hoạt (Hiển thị cho
+                                            khách)</label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-body p-4">
-                        <h6 class="fw-bold mb-3">Ảnh sản phẩm</h6>
-                        <div class="text-center p-4 border-2 border-dashed rounded-3 bg-light" style="border-style: dashed; border-color: #ddd;">
-                            <i class="fas fa-cloud-upload-alt fs-1 text-muted mb-2"></i>
-                            <p class="small text-muted mb-2">Kéo thả hoặc click để tải ảnh</p>
-                            <button class="btn btn-sm btn-outline-dark">Chọn ảnh</button>
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-3">Phân loại</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Danh mục *</label>
+                                <select class="form-select bg-light border-0" th:field="*{categoryId}">
+                                    <option value="">-- Chọn danh mục --</option>
+                                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}">
+                                    </option>
+                                </select>
+                                <span class="text-danger small" th:if="${#fields.hasErrors('categoryId')}"
+                                    th:errors="*{categoryId}"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Giới tính</label>
+                                <select class="form-select bg-light border-0" th:field="*{gender}">
+                                    <option value="Male">Nam</option>
+                                    <option value="Female">Nữ</option>
+                                    <option value="Unisex">Unisex</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="d-flex mt-3 gap-2">
-                            <img src="https://via.placeholder.com/60" class="rounded border">
-                            <img src="https://via.placeholder.com/60" class="rounded border">
+                    </div>
+
+                    <div class="card border-0 shadow-sm rounded-4 gap-3">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-3">Ảnh sản phẩm chính (URL)</h6>
+                            <div class="mb-3">
+                                <input type="text" class="form-control bg-light border-0" placeholder="https://..."
+                                    th:field="*{image}">
+                            </div>
+                            <div class="d-flex mt-3 gap-2"
+                                th:if="${product.image != null and !product.image.isEmpty()}">
+                                <img th:src="${product.image}" class="rounded border"
+                                    style="max-height: 100px; max-width: 100%;">
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
     </article>
 </body>
+
 </html>

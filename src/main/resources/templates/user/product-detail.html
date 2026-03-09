@@ -58,6 +58,20 @@
             }
         </style>
 
+        <!-- Breadcrumb Navigation -->
+        <nav aria-label="breadcrumb" class="mb-4" th:if="${product}">
+            <ol class="breadcrumb" style="font-size: 0.9rem;">
+                <li class="breadcrumb-item"><a href="/home" class="text-dark text-decoration-none"><i
+                            class="fas fa-home me-1"></i>Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="/home#productRow" class="text-dark text-decoration-none">Cửa
+                        hàng</a></li>
+                <li class="breadcrumb-item" th:if="${categoryName}"><a
+                        th:href="'/home?category=' + ${product.categoryId} + '#productRow'"
+                        class="text-dark text-decoration-none" th:text="${categoryName}">Danh mục</a></li>
+                <li class="breadcrumb-item active" aria-current="page" th:text="${product.name}">Tên sản phẩm</li>
+            </ol>
+        </nav>
+
         <div class="row" th:if="${product}">
             <div class="col-md-6 mb-4">
                 <div class="main-image-container mb-3 text-center border rounded bg-light">

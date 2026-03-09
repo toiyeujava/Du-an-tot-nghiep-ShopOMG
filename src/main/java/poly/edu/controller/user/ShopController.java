@@ -127,6 +127,12 @@ public class ShopController {
             model.addAttribute("product", product);
             model.addAttribute("pageTitle", product.getName());
 
+            // Breadcrumb: load category name
+            if (product.getCategoryId() != null) {
+                categoryRepository.findById(product.getCategoryId())
+                        .ifPresent(cat -> model.addAttribute("categoryName", cat.getName()));
+            }
+
             List<ProductVariant> variants = product.getVariants();
             if (variants == null)
                 variants = new ArrayList<>();

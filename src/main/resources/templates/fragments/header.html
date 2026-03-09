@@ -71,67 +71,63 @@
                     <ul class="navbar-nav mx-auto">
                         <li class="nav-item"><a class="nav-link" href="/home">Trang chủ</a></li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link fw-bold dropdown-toggle" th:href="@{/home(gender='Nam')}"
+                            <a class="nav-link fw-bold dropdown-toggle" href="/home?gender=Nam"
                                 data-bs-toggle="dropdown">Nam</a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item fw-bold" th:href="@{/home(gender='Nam')}">Tất cả Nam</a>
+                                <li><a class="dropdown-item fw-bold" href="/home?gender=Nam">Tất cả Nam</a>
                                 </li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li th:each="cat : ${categories}">
-                                    <a class="dropdown-item"
-                                        th:href="@{/home(gender='Nam', category=${cat.id}, color='', sale='', min='', max='', sort='newest', keyword='')}"
+                                    <a class="dropdown-item" th:href="'/home?gender=Nam&category=' + ${cat.id}"
                                         th:text="${cat.name}">Tên danh mục</a>
                                 </li>
                             </ul>
                         </li>
 
                         <li class="nav-item dropdown">
-                            <a class="nav-link fw-bold dropdown-toggle" th:href="@{/home(gender='Nữ')}"
+                            <a class="nav-link fw-bold dropdown-toggle" href="/home?gender=Nữ"
                                 data-bs-toggle="dropdown">Nữ</a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item fw-bold" th:href="@{/home(gender='Nữ')}">Tất cả Nữ</a></li>
+                                <li><a class="dropdown-item fw-bold" href="/home?gender=Nữ">Tất cả Nữ</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li th:each="cat : ${categories}">
-                                    <a class="dropdown-item"
-                                        th:href="@{/home(gender='Nữ', category=${cat.id}, color='', sale='', min='', max='', sort='newest', keyword='')}"
+                                    <a class="dropdown-item" th:href="'/home?gender=Nữ&category=' + ${cat.id}"
                                         th:text="${cat.name}">Tên danh mục</a>
                                 </li>
                             </ul>
                         </li>
 
                         <li class="nav-item dropdown">
-                            <a class="nav-link fw-bold dropdown-toggle" th:href="@{/home(gender='Unisex')}"
+                            <a class="nav-link fw-bold dropdown-toggle" href="/home?gender=Unisex"
                                 data-bs-toggle="dropdown">Unisex</a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item fw-bold" th:href="@{/home(gender='Unisex')}">Tất cả
+                                <li><a class="dropdown-item fw-bold" href="/home?gender=Unisex">Tất cả
                                         Unisex</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li th:each="cat : ${categories}">
-                                    <a class="dropdown-item"
-                                        th:href="@{/home(gender='Unisex', category=${cat.id}, color='', sale='', min='', max='', sort='newest', keyword='')}"
+                                    <a class="dropdown-item" th:href="'/home?gender=Unisex&category=' + ${cat.id}"
                                         th:text="${cat.name}">Tên danh mục</a>
                                 </li>
                             </ul>
                         </li>
 
                         <li class="nav-item dropdown">
-                            <a class="nav-link fw-bold text-danger dropdown-toggle" th:href="@{/home(sale=true)}"
+                            <a class="nav-link fw-bold text-danger dropdown-toggle" href="/home?sale=true"
                                 data-bs-toggle="dropdown">Sale</a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item fw-bold text-danger" th:href="@{/home(sale=true)}">Tất cả
+                                <li><a class="dropdown-item fw-bold text-danger" href="/home?sale=true">Tất cả
                                         hàng Sale</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li th:each="cat : ${categories}">
-                                    <a class="dropdown-item"
-                                        th:href="@{/home(sale=true, category=${cat.id}, color='', gender='', min='', max='', sort='newest', keyword='')}"
+                                    <a class="dropdown-item" th:href="'/home?sale=true&category=' + ${cat.id}"
                                         th:text="${cat.name}">Tên danh mục</a>
                                 </li>
                             </ul>
@@ -143,14 +139,6 @@
                             <input type="text" name="keyword" th:value="${keyword}"
                                 class="form-control form-control-sm rounded-pill ps-3 pe-5 border-dark"
                                 placeholder="Tìm sản phẩm..." style="width: 200px;">
-
-                            <input type="hidden" name="gender" th:value="${selectedGender}">
-                            <input type="hidden" name="category" th:value="${selectedCategory}">
-                            <input type="hidden" name="color" th:value="${selectedColor}">
-                            <input type="hidden" name="sort" th:value="${selectedSort}">
-                            <input type="hidden" name="min" th:value="${minPrice}">
-                            <input type="hidden" name="max" th:value="${maxPrice}">
-                            <input type="hidden" name="sale" th:value="${isSale}">
 
                             <button type="submit"
                                 class="btn btn-sm position-absolute end-0 top-0 mt-1 me-2 border-0 bg-transparent">

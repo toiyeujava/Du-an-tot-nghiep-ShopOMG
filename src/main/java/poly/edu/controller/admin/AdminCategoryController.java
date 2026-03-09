@@ -4,8 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import poly.edu.dto.admin.CategoryRequestDTO;
 import poly.edu.entity.Category;
 import poly.edu.service.CategoryService;
+import jakarta.validation.Valid;
+import org.springframework.validation.BindingResult;
 
 import java.util.Map;
 
@@ -68,9 +71,15 @@ public class AdminCategoryController {
      */
     @PostMapping
     @ResponseBody
-    public Map<String, Object> createCategory(@RequestBody Category category) {
+    public Map<String, Object> createCategory(@Valid @RequestBody CategoryRequestDTO dto, BindingResult result) {
+        if (result.hasErrors()) {
+            return Map.of(
+                    "success", false,
+                    "message", result.getAllErrors().get(0).getDefaultMessage());
+        }
+
         try {
-            Category saved = categoryService.createCategory(category);
+            Category saved = categoryService.createCategory(dto.toEntity(null));
             return Map.of(
                     "success", true,
                     "message", "Thêm danh mục thành công!",
@@ -92,9 +101,19 @@ public class AdminCategoryController {
      */
     @PutMapping("/{id}")
     @ResponseBody
-    public Map<String, Object> updateCategory(@PathVariable Integer id, @RequestBody Category category) {
+    public Map<String, Object> updateCategory(@PathVariable Integer id, @Valid @RequestBody CategoryRequestDTO dto,
+            BindingResult result) {
+        if (result.hasErrors()) {
+            return Map.of(
+                    "success", false,
+                    "message", result.getAllErrors().get(0).getDefaultMessage());
+        }
+
         try {
-            Category updated = categoryService.updateCategory(id, category);
+            Category existingCategory = categoryService.getCategoryById(id)
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+
+            Category updated = categoryService.updateCategory(id, dto.toEntity(existingCategory));
             return Map.of(
                     "success", true,
                     "message", "Cập nhật danh mục thành công!",

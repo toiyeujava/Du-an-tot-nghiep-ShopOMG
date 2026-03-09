@@ -9,6 +9,9 @@ import poly.edu.entity.Product;
 import poly.edu.entity.ProductVariant;
 import poly.edu.service.ProductService;
 import poly.edu.service.ProductVariantService;
+import poly.edu.dto.admin.ProductVariantRequestDTO;
+import jakarta.validation.Valid;
+import org.springframework.validation.BindingResult;
 
 /**
  * AdminProductVariantController - Manages product variant CRUD for admin.
@@ -75,10 +78,16 @@ public class AdminProductVariantController {
      */
     @PostMapping
     public String addVariant(@PathVariable Integer productId,
-            @ModelAttribute ProductVariant variant,
+            @Valid @ModelAttribute("newVariant") ProductVariantRequestDTO dto,
+            BindingResult result,
             RedirectAttributes redirectAttributes) {
+        if (result.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Lỗi: " + result.getAllErrors().get(0).getDefaultMessage());
+            return "redirect:/admin/products/" + productId + "/variants";
+        }
         try {
-            productVariantService.createVariant(productId, variant);
+            productVariantService.createVariant(productId, dto.toEntity(null));
             redirectAttributes.addFlashAttribute("successMessage", "Thêm biến thể thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
@@ -92,10 +101,21 @@ public class AdminProductVariantController {
     @PostMapping("/{variantId}")
     public String updateVariant(@PathVariable Integer productId,
             @PathVariable Integer variantId,
-            @ModelAttribute ProductVariant variant,
+            @Valid @ModelAttribute("newVariant") ProductVariantRequestDTO dto,
+            BindingResult result,
             RedirectAttributes redirectAttributes) {
+        if (result.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Lỗi: " + result.getAllErrors().get(0).getDefaultMessage());
+            return "redirect:/admin/products/" + productId + "/variants";
+        }
         try {
-            productVariantService.updateVariant(variantId, variant);
+            ProductVariant existingVariant = productVariantService.getVariantById(variantId).orElse(null);
+            if (existingVariant == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Không tìm thấy biến thể");
+                return "redirect:/admin/products/" + productId + "/variants";
+            }
+            productVariantService.updateVariant(variantId, dto.toEntity(existingVariant));
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật biến thể thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());

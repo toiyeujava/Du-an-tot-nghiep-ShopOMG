@@ -32,7 +32,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-        		.csrf(csrf -> csrf.disable())
+        		//.csrf(csrf -> csrf.disable())
                 .userDetailsService(userDetailsService)
                 // FORCE EAGER CSRF TOKEN LOADING TO FIX THYMELEAF SESSION COMMIT EXCEPTIONS
                 .addFilterAfter(new OncePerRequestFilter() {
@@ -48,6 +48,8 @@ public class SecurityConfig {
                 }, CsrfFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/sales/**").hasAnyRole("SALES", "ADMIN")
+                        .requestMatchers("/warehouse/**").hasAnyRole("WAREHOUSE", "ADMIN")
                         .requestMatchers("/account/sign-up", "/register", "/login",
                                 "/forgot-password", "/reset-password",
                                 "/verify-email", "/verify-email-sent", "/resend-verification",
@@ -101,12 +103,20 @@ public class SecurityConfig {
         return (request, response, authentication) -> {
             boolean isAdmin = authentication.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            boolean isSales = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_SALES"));
+            boolean isWarehouse = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_WAREHOUSE"));
 
             String contextPath = request.getContextPath();
             String redirectUrl = "/home";
 
             if (isAdmin) {
                 redirectUrl = "/admin/dashboard";
+            } else if (isSales) {
+                redirectUrl = "/sales/dashboard";
+            } else if (isWarehouse) {
+                redirectUrl = "/warehouse/dashboard";
             } else {
                 // Check for pending redirect (guest tried to access restricted page)
                 jakarta.servlet.http.HttpSession session = request.getSession(false);

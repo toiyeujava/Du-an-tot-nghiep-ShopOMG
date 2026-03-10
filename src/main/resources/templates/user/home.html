@@ -25,30 +25,31 @@
                 transform: rotate(180deg);
             }
 
-            /* --- Sidebar + Main responsive layout --- */
-            #sidebarFilter,
-            #mainProducts {
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            /* --- Filter toggle bar (always full-width) --- */
+            #filterToggleBar {
+                cursor: pointer;
+                transition: all 0.3s ease;
             }
 
-            /* When sidebar collapsed: full-width header bar + centered products */
-            #sidebarFilter.filter-collapsed {
-                flex: 0 0 100% !important;
-                max-width: 100% !important;
-                width: 100% !important;
-                margin-bottom: 16px;
+            #filterToggleBar:hover {
+                background-color: rgba(255, 255, 255, 0.1) !important;
             }
 
-            #mainProducts.products-expanded {
-                flex: 0 0 100% !important;
-                max-width: 100% !important;
-                width: 100% !important;
+            /* --- Sidebar animation --- */
+            #sidebarFilter {
+                animation: slideIn 0.3s ease forwards;
             }
 
-            /* When collapsed, make the filter header horizontal */
-            #sidebarFilter.filter-collapsed .filter-section {
-                position: relative;
-                top: auto;
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(-30px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
             }
 
             .color-dot {
@@ -290,6 +291,7 @@
                 -webkit-appearance: none;
                 margin: 0;
             }
+
             /* --- STAR RATING ON PRODUCT CARD --- */
             .star-rating {
                 display: flex;
@@ -297,25 +299,33 @@
                 gap: 1px;
                 margin-bottom: 4px;
             }
+
             .star-rating .star {
                 font-size: 1.2rem;
                 color: #e0e0e0;
                 line-height: 1;
             }
-            .star-rating .star.filled { color: #FFC107; }
+
+            .star-rating .star.filled {
+                color: #FFC107;
+            }
+
             .star-rating .star.half {
                 position: relative;
                 color: #e0e0e0;
             }
+
             .star-rating .star.half::before {
                 content: '\2605';
                 position: absolute;
-                left: 0; top: 0;
+                left: 0;
+                top: 0;
                 width: 50%;
                 overflow: hidden;
                 color: #FFC107;
                 display: inline-block;
             }
+
             .star-rating .rating-count {
                 font-size: 0.7rem;
                 color: #999;
@@ -441,7 +451,18 @@
              PRODUCT LISTING
              ========================================== -->
         <div class="row justify-content-center" id="productRow">
-            <aside class="col-lg-3 d-none d-lg-block" id="sidebarFilter">
+            <!-- Full-width toggle bar (always visible) -->
+            <div class="col-12 mb-3">
+                <div id="filterToggleBar"
+                    class="d-flex justify-content-between align-items-center p-3 border rounded-3 bg-white shadow-sm"
+                    onclick="toggleFilterSidebar()">
+                    <h5 class="fw-bold mb-0 text-uppercase ls-1"><i class="fas fa-filter me-2"></i>Bộ lọc</h5>
+                    <i class="fas fa-chevron-down transition-icon" id="filterToggleIcon"></i>
+                </div>
+            </div>
+
+            <!-- Sidebar filter panel (slides in/out, NO header) -->
+            <aside class="col-lg-3 d-none" id="sidebarFilter">
                 <div class="filter-section p-4 border rounded-3 bg-white shadow-sm" th:with="isFiltering=${(selectedGender != null and selectedGender != '') 
                                          or (selectedCategory != null) 
                                          or (selectedColor != null and selectedColor != '') 
@@ -450,241 +471,243 @@
                                          or (isSale == true) 
                                          or (keyword != null and keyword != '')}">
 
-                    <div class="d-flex justify-content-between align-items-center" style="cursor: pointer;"
-                        data-bs-toggle="collapse" data-bs-target="#filterContent"
-                        th:attr="aria-expanded=${isFiltering} ? 'true' : 'false'" aria-controls="filterContent">
-                        <h5 class="fw-bold mb-0 text-uppercase ls-1"><i class="fas fa-filter me-2"></i>Bộ lọc</h5>
-                        <i class="fas fa-chevron-down transition-icon"></i>
+                    <div th:if="${isFiltering}" th:remove="tag">
+                        <!-- Auto-open sidebar when filters active (handled by JS below) -->
                     </div>
-
-                    <div class="collapse mt-4" id="filterContent" th:classappend="${isFiltering} ? 'show'">
-                        <div class="mb-4">
-                            <h6 class="fw-bold mb-3 small text-uppercase text-muted">Đối tượng</h6>
-                            <div class="list-group list-group-flush">
-                                <a th:href="@{/home(gender='', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                    class="list-group-item list-group-item-action border-0 px-0 py-2"
-                                    th:classappend="${selectedGender == null or selectedGender == ''} ? 'fw-bold text-dark' : 'text-secondary'">Tất
-                                    cả</a>
-                                <a th:href="@{/home(gender='Nam', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                    class="list-group-item list-group-item-action border-0 px-0 py-2"
-                                    th:classappend="${selectedGender == 'Nam'} ? 'fw-bold text-dark' : 'text-secondary'">Nam</a>
-                                <a th:href="@{/home(gender='Nữ', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                    class="list-group-item list-group-item-action border-0 px-0 py-2"
-                                    th:classappend="${selectedGender == 'Nữ'} ? 'fw-bold text-dark' : 'text-secondary'">Nữ</a>
-                                <a th:href="@{/home(gender='Unisex', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                    class="list-group-item list-group-item-action border-0 px-0 py-2"
-                                    th:classappend="${selectedGender == 'Unisex'} ? 'fw-bold text-dark' : 'text-secondary'">Unisex</a>
-                            </div>
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3 small text-uppercase text-muted">Đối tượng</h6>
+                        <div class="list-group list-group-flush">
+                            <a th:href="@{/home(gender='', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="list-group-item list-group-item-action border-0 px-0 py-2"
+                                th:classappend="${selectedGender == null or selectedGender == ''} ? 'fw-bold text-dark' : 'text-secondary'">Tất
+                                cả</a>
+                            <a th:href="@{/home(gender='Nam', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="list-group-item list-group-item-action border-0 px-0 py-2"
+                                th:classappend="${selectedGender == 'Nam'} ? 'fw-bold text-dark' : 'text-secondary'">Nam</a>
+                            <a th:href="@{/home(gender='Nữ', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="list-group-item list-group-item-action border-0 px-0 py-2"
+                                th:classappend="${selectedGender == 'Nữ'} ? 'fw-bold text-dark' : 'text-secondary'">Nữ</a>
+                            <a th:href="@{/home(gender='Unisex', category=${selectedCategory}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="list-group-item list-group-item-action border-0 px-0 py-2"
+                                th:classappend="${selectedGender == 'Unisex'} ? 'fw-bold text-dark' : 'text-secondary'">Unisex</a>
                         </div>
-                        <div class="mb-4">
-                            <a th:href="@{/home(sale=${isSale == true ? false : true}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                class="btn w-100 fw-bold py-2"
-                                th:classappend="${isSale} ? 'btn-danger' : 'btn-outline-danger'"><i
-                                    class="fas fa-fire me-2"></i>SĂN SALE SỐC</a>
+                    </div>
+                    <div class="mb-4">
+                        <a th:href="@{/home(sale=${isSale == true ? false : true}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                            class="btn w-100 fw-bold py-2"
+                            th:classappend="${isSale} ? 'btn-danger' : 'btn-outline-danger'"><i
+                                class="fas fa-fire me-2"></i>SĂN SALE SỐC</a>
+                    </div>
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3 small text-uppercase text-muted">Danh mục</h6>
+                        <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                            <a th:href="@{/home(category='', gender=${selectedGender}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="list-group-item list-group-item-action border-0 px-0 py-2"
+                                th:classappend="${selectedCategory == null} ? 'fw-bold text-dark' : 'text-secondary'">Tất
+                                cả</a>
+                            <a th:each="cat : ${categories}"
+                                th:href="@{/home(category=${cat.id}, gender=${selectedGender}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="list-group-item list-group-item-action border-0 px-0 py-2 d-flex justify-content-between align-items-center"
+                                th:classappend="${selectedCategory == cat.id} ? 'fw-bold text-dark' : 'text-secondary'">
+                                <span th:text="${cat.name}"></span> <span
+                                    class="badge rounded-pill bg-light text-dark border" th:text="${cat.count}">0</span>
+                            </a>
                         </div>
-                        <div class="mb-4">
-                            <h6 class="fw-bold mb-3 small text-uppercase text-muted">Danh mục</h6>
-                            <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
-                                <a th:href="@{/home(category='', gender=${selectedGender}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                    class="list-group-item list-group-item-action border-0 px-0 py-2"
-                                    th:classappend="${selectedCategory == null} ? 'fw-bold text-dark' : 'text-secondary'">Tất
-                                    cả</a>
-                                <a th:each="cat : ${categories}"
-                                    th:href="@{/home(category=${cat.id}, gender=${selectedGender}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                    class="list-group-item list-group-item-action border-0 px-0 py-2 d-flex justify-content-between align-items-center"
-                                    th:classappend="${selectedCategory == cat.id} ? 'fw-bold text-dark' : 'text-secondary'">
-                                    <span th:text="${cat.name}"></span> <span
-                                        class="badge rounded-pill bg-light text-dark border"
-                                        th:text="${cat.count}">0</span> </a>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <h6 class="fw-bold mb-3 small text-uppercase text-muted">Khoảng giá (đ)</h6>
-                            <form th:action="@{/home}" method="get">
-                                <input type="hidden" name="gender" th:value="${selectedGender}"> <input type="hidden"
-                                    name="category" th:value="${selectedCategory}"> <input type="hidden" name="color"
-                                    th:value="${selectedColor}"> <input type="hidden" name="sort"
-                                    th:value="${selectedSort}"> <input type="hidden" name="keyword"
-                                    th:value="${keyword}"> <input type="hidden" name="sale" th:value="${isSale}">
-                                <div class="d-flex align-items-center gap-2 mb-3"> <input type="number" name="min"
-                                        class="form-control form-control-sm" placeholder="Từ" th:value="${minPrice}">
-                                    <span>-</span> <input type="number" name="max" class="form-control form-control-sm"
-                                        placeholder="Đến" th:value="${maxPrice}">
-                                </div> <button type="submit" class="btn btn-dark btn-sm w-100">Áp dụng</button>
-                            </form>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-3 small text-uppercase text-muted">Màu sắc</h6>
-                            <div class="d-flex flex-wrap gap-2">
-                                <a th:href="@{/home(color='', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                    class="btn btn-sm btn-outline-secondary px-2 py-0 d-flex align-items-center"
-                                    style="height: 25px;"
-                                    th:classappend="${selectedColor == null or selectedColor == ''} ? 'active bg-dark text-white' : ''">All</a>
-                                <a th:href="@{/home(color='Đen', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                    class="color-dot" style="background: #000;" title="Đen"
-                                    th:classappend="${selectedColor == 'Đen'} ? 'border-primary border-2 active' : ''"></a>
-                                <a th:href="@{/home(color='Trắng', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                    class="color-dot" style="background: #fff;" title="Trắng"
-                                    th:classappend="${selectedColor == 'Trắng'} ? 'border-primary border-2 active' : ''"></a>
-                                <a th:href="@{/home(color='Đỏ', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                    class="color-dot" style="background: red;" title="Đỏ"
-                                    th:classappend="${selectedColor == 'Đỏ'} ? 'border-primary border-2 active' : ''"></a>
-                                <a th:href="@{/home(color='Xanh', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
-                                    class="color-dot" style="background: blue;" title="Xanh"
-                                    th:classappend="${selectedColor == 'Xanh'} ? 'border-primary border-2 active' : ''"></a>
-                            </div>
+                    </div>
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3 small text-uppercase text-muted">Khoảng giá (đ)</h6>
+                        <form id="homePriceForm" onsubmit="return false;">
+                            <input type="hidden" name="gender" th:value="${selectedGender}"> <input type="hidden"
+                                name="category" th:value="${selectedCategory}"> <input type="hidden" name="color"
+                                th:value="${selectedColor}"> <input type="hidden" name="sort"
+                                th:value="${selectedSort}"> <input type="hidden" name="keyword" th:value="${keyword}">
+                            <input type="hidden" name="sale" th:value="${isSale}">
+                            <div class="d-flex align-items-center gap-2 mb-3"> <input type="number" name="min"
+                                    class="form-control form-control-sm" placeholder="Từ" th:value="${minPrice}">
+                                <span>-</span> <input type="number" name="max" class="form-control form-control-sm"
+                                    placeholder="Đến" th:value="${maxPrice}">
+                            </div> <button type="button" class="btn btn-dark btn-sm w-100"
+                                onclick="homeAjaxPriceFilter()">Áp dụng</button>
+                        </form>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-3 small text-uppercase text-muted">Màu sắc</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a th:href="@{/home(color='', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="btn btn-sm btn-outline-secondary px-2 py-0 d-flex align-items-center"
+                                style="height: 25px;"
+                                th:classappend="${selectedColor == null or selectedColor == ''} ? 'active bg-dark text-white' : ''">All</a>
+                            <a th:href="@{/home(color='Đen', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="color-dot" style="background: #000;" title="Đen"
+                                th:classappend="${selectedColor == 'Đen'} ? 'border-primary border-2 active' : ''"></a>
+                            <a th:href="@{/home(color='Trắng', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="color-dot" style="background: #fff;" title="Trắng"
+                                th:classappend="${selectedColor == 'Trắng'} ? 'border-primary border-2 active' : ''"></a>
+                            <a th:href="@{/home(color='Đỏ', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="color-dot" style="background: red;" title="Đỏ"
+                                th:classappend="${selectedColor == 'Đỏ'} ? 'border-primary border-2 active' : ''"></a>
+                            <a th:href="@{/home(color='Xanh', gender=${selectedGender}, category=${selectedCategory}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
+                                class="color-dot" style="background: blue;" title="Xanh"
+                                th:classappend="${selectedColor == 'Xanh'} ? 'border-primary border-2 active' : ''"></a>
                         </div>
                     </div>
                 </div>
             </aside>
 
-            <main class="col-lg-9" id="mainProducts">
+            <main class="col-lg-12" id="mainProducts">
+                <div id="homeAjaxContent">
 
-                <div id="productList"
-                    class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border">
-                    <div class="mb-3 mb-md-0">
-                        <h4 class="fw-bold mb-1">
-                            <span th:if="${keyword != null and keyword != ''}"
-                                th:text="'Kết quả: ' + ${keyword}"></span>
-                            <span th:unless="${keyword != null and keyword != ''}">Tất cả sản phẩm</span>
-                        </h4>
-                        <small class="text-muted" th:text="${products.totalElements} + ' sản phẩm tìm thấy'">0 sản
-                            phẩm</small>
+                    <div id="productList"
+                        class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border">
+                        <div class="mb-3 mb-md-0">
+                            <h4 class="fw-bold mb-1">
+                                <span th:if="${keyword != null and keyword != ''}"
+                                    th:text="'Kết quả: ' + ${keyword}"></span>
+                                <span th:unless="${keyword != null and keyword != ''}">Tất cả sản phẩm</span>
+                            </h4>
+                            <small class="text-muted" th:text="${products.totalElements} + ' sản phẩm tìm thấy'">0 sản
+                                phẩm</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <label class="me-2 text-nowrap small fw-bold text-muted">Sắp xếp theo:</label>
+                            <select id="homeSortSelect" class="form-select form-select-sm border-0 bg-light fw-bold"
+                                style="width: 160px; cursor: pointer;" onchange="homeAjaxSort(this.value)">
+                                <option value="newest" th:selected="${selectedSort == 'newest'}">Mới nhất</option>
+                                <option value="price_asc" th:selected="${selectedSort == 'price_asc'}">Giá tăng dần
+                                </option>
+                                <option value="price_desc" th:selected="${selectedSort == 'price_desc'}">Giá giảm dần
+                                </option>
+                                <option value="name_asc" th:selected="${selectedSort == 'name_asc'}">Tên A-Z</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="d-flex align-items-center">
-                        <label class="me-2 text-nowrap small fw-bold text-muted">Sắp xếp theo:</label>
-                        <select class="form-select form-select-sm border-0 bg-light fw-bold"
-                            style="width: 160px; cursor: pointer;" onchange="location = this.value;">
-                            <option
-                                th:value="@{/home(sort='newest', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}"
-                                th:selected="${selectedSort == 'newest'}">Mới nhất</option>
-                            <option
-                                th:value="@{/home(sort='price_asc', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}"
-                                th:selected="${selectedSort == 'price_asc'}">Giá tăng dần</option>
-                            <option
-                                th:value="@{/home(sort='price_desc', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}"
-                                th:selected="${selectedSort == 'price_desc'}">Giá giảm dần</option>
-                            <option
-                                th:value="@{/home(sort='name_asc', keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sale=${isSale})}"
-                                th:selected="${selectedSort == 'name_asc'}">Tên A-Z</option>
-                        </select>
-                    </div>
-                </div>
 
-                <!-- SECTION 1: SẢN PHẨM BÁN CHẠY NHẤT -->
-                <div class="mb-5" th:if="${products.totalElements > 0}">
-                    <h3 class="fw-bold mb-4 mt-2 text-uppercase">Sản Phẩm Bán Chạy Nhất</h3>
-                    <div class="row g-3 g-md-4">
-                        <th:block th:each="product, iterStat : ${products.content}" th:if="${iterStat.index < 6}">
-                            <div class="col-6 col-md-4">
-                                <div class="card product-card h-100 border-0 shadow-sm">
-                                    <div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold shadow-sm"
-                                        style="z-index: 10;" th:if="${product.discount > 0}"
-                                        th:text="'-' + ${product.discount} + '%'"></div>
-                                    <div class="img-wrapper bg-light">
-                                        <a th:href="@{/product/{id}(id=${product.id})}" class="product-link">
-                                            <img th:src="${product.image}"
-                                                onerror="this.src='https://placehold.co/600x600?text=No+Image'"
-                                                alt="Product">
-                                        </a>
-                                        <div class="action-buttons">
-                                            <button type="button" class="btn-action btn-cart-hover shadow-sm"
-                                                onclick="setModalAction(this, 'cart')" data-bs-toggle="modal"
-                                                th:data-bs-target="'#quickViewModal-' + ${product.id}">
-                                                <i class="fas fa-cart-plus"></i>
-                                                <span>Thêm giỏ</span>
-                                            </button>
-                                            <button type="button" class="btn-action btn-buy-hover shadow-sm"
-                                                onclick="setModalAction(this, 'buy')" data-bs-toggle="modal"
-                                                th:data-bs-target="'#quickViewModal-' + ${product.id}">
-                                                <i class="fas fa-bolt"></i>
-                                                <span>Mua ngay</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="card-body p-3">
-                                        <h6 class="card-title fw-bold text-truncate mb-2">
-                                            <a th:href="@{/product/{id}(id=${product.id})}"
-                                                class="text-dark text-decoration-none" th:text="${product.name}">Tên sản
-                                                phẩm</a>
-                                        </h6>
-                                        <div class="star-rating"
-                                            th:with="avg=${ratingMap[product.id] != null ? ratingMap[product.id] : 0},
-                                                     cnt=${reviewCountMap[product.id] != null ? reviewCountMap[product.id] : 0}">
-                                            <span th:each="i : ${#numbers.sequence(1, 5)}"
-                                                th:class="${i <= avg} ? 'star filled' : (${(i - 0.5) <= avg} ? 'star half' : 'star')">&#9733;</span>
-                                            <span class="rating-count" th:text="'(' + ${cnt} + ')'"></span>
-                                        </div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="fw-bold text-danger fs-5"
-                                                th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
-                                            <small class="text-muted text-decoration-line-through"
-                                                th:if="${product.discount > 0}"
-                                                th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Quick View Modal -->
-                                <div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}"
-                                    tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered modal-xl">
-                                        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                                            <div class="modal-header border-0 pb-0 position-absolute top-0 end-0 p-3"
-                                                style="z-index: 20;">
-                                                <button type="button" class="btn-close bg-white shadow-sm"
-                                                    data-bs-dismiss="modal"></button>
+                    <!-- SECTION 1: SẢN PHẨM BÁN CHẠY NHẤT -->
+                    <div class="mb-5" th:if="${products.totalElements > 0}">
+                        <h3 class="fw-bold mb-4 mt-2 text-uppercase">Sản Phẩm Bán Chạy Nhất</h3>
+                        <div class="row g-3 g-md-4">
+                            <th:block th:each="product, iterStat : ${products.content}" th:if="${iterStat.index < 6}">
+                                <div class="col-6 col-md-4">
+                                    <div class="card product-card h-100 border-0 shadow-sm">
+                                        <div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold shadow-sm"
+                                            style="z-index: 10;" th:if="${product.discount > 0}"
+                                            th:text="'-' + ${product.discount} + '%'"></div>
+                                        <div class="img-wrapper bg-light">
+                                            <a th:href="@{/product/{slug}(slug=${product.slug})}" class="product-link">
+                                                <img th:src="${product.image}"
+                                                    onerror="this.src='https://placehold.co/600x600?text=No+Image'"
+                                                    alt="Product">
+                                            </a>
+                                            <div class="action-buttons">
+                                                <button type="button" class="btn-action btn-cart-hover shadow-sm"
+                                                    onclick="setModalAction(this, 'cart')" data-bs-toggle="modal"
+                                                    th:data-bs-target="'#quickViewModal-' + ${product.id}">
+                                                    <i class="fas fa-cart-plus"></i>
+                                                    <span>Thêm giỏ</span>
+                                                </button>
+                                                <button type="button" class="btn-action btn-buy-hover shadow-sm"
+                                                    onclick="setModalAction(this, 'buy')" data-bs-toggle="modal"
+                                                    th:data-bs-target="'#quickViewModal-' + ${product.id}">
+                                                    <i class="fas fa-bolt"></i>
+                                                    <span>Mua ngay</span>
+                                                </button>
                                             </div>
-                                            <div class="modal-body p-0">
-                                                <div class="row g-0">
-                                                    <div
-                                                        class="col-5 bg-light d-flex align-items-center justify-content-center">
-                                                        <img th:src="${product.image}"
-                                                            class="img-fluid object-fit-cover w-100 h-100"
-                                                            style="min-height: 350px;"
-                                                            onerror="this.src='https://placehold.co/300x300'">
-                                                    </div>
-                                                    <div class="col-7 p-4">
-                                                        <h5 class="modal-title fw-bold mb-2" th:text="${product.name}">
-                                                        </h5>
-                                                        <div class="price text-danger fw-bold fs-4 mb-4"
-                                                            th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <h6 class="card-title fw-bold text-truncate mb-2">
+                                                <a th:href="@{/product/{slug}(slug=${product.slug})}"
+                                                    class="text-dark text-decoration-none" th:text="${product.name}">Tên
+                                                    sản
+                                                    phẩm</a>
+                                            </h6>
+                                            <div class="star-rating"
+                                                th:with="avg=${ratingMap[product.id] != null ? ratingMap[product.id] : 0},
+                                                     cnt=${reviewCountMap[product.id] != null ? reviewCountMap[product.id] : 0}">
+                                                <span th:each="i : ${#numbers.sequence(1, 5)}"
+                                                    th:class="${i <= avg} ? 'star filled' : (${(i - 0.5) <= avg} ? 'star half' : 'star')">&#9733;</span>
+                                                <span class="rating-count" th:text="'(' + ${cnt} + ')'"></span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="fw-bold text-danger fs-5"
+                                                    th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                                                <small class="text-muted text-decoration-line-through"
+                                                    th:if="${product.discount > 0}"
+                                                    th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Quick View Modal -->
+                                    <div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}"
+                                        tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-xl">
+                                            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                                <div class="modal-header border-0 pb-0 position-absolute top-0 end-0 p-3"
+                                                    style="z-index: 20;">
+                                                    <button type="button" class="btn-close bg-white shadow-sm"
+                                                        data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body p-0">
+                                                    <div class="row g-0">
+                                                        <div
+                                                            class="col-5 bg-light d-flex align-items-center justify-content-center">
+                                                            <img th:src="${product.image}"
+                                                                class="img-fluid object-fit-cover w-100 h-100"
+                                                                style="min-height: 350px;"
+                                                                onerror="this.src='https://placehold.co/300x300'">
                                                         </div>
-                                                        <div class="variant-wrapper" th:data-product-id="${product.id}"
-                                                            data-action-mode="cart">
-                                                            <div class="d-none"><span th:each="v : ${product.variants}"
-                                                                    class="variant-data" th:data-id="${v.id}"
-                                                                    th:data-color="${v.color}" th:data-size="${v.size}"
-                                                                    th:data-qty="${v.quantity}"></span></div>
-                                                            <div class="mb-3"><label
-                                                                    class="fw-bold small mb-2 text-muted text-uppercase">Màu
-                                                                    sắc</label>
-                                                                <div class="color-options d-flex flex-wrap gap-2"></div>
+                                                        <div class="col-7 p-4">
+                                                            <h5 class="modal-title fw-bold mb-2"
+                                                                th:text="${product.name}">
+                                                            </h5>
+                                                            <div class="price text-danger fw-bold fs-4 mb-4"
+                                                                th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
                                                             </div>
-                                                            <div class="mb-4"><label
-                                                                    class="fw-bold small mb-2 text-muted text-uppercase">Kích
-                                                                    thước</label>
-                                                                <div class="size-options d-flex flex-wrap gap-2"></div>
-                                                            </div>
-                                                            <div
-                                                                class="d-flex align-items-center justify-content-between bg-light p-2 rounded mb-3">
-                                                                <div
-                                                                    class="input-group input-group-sm w-auto flex-nowrap">
-                                                                    <button class="btn btn-white border" type="button"
-                                                                        onclick="adjustModalQty(this, -1)">-</button>
-                                                                    <input type="number"
-                                                                        class="form-control text-center qty-input border-top border-bottom"
-                                                                        value="1" min="1" style="width: 40px;" disabled>
-                                                                    <button class="btn btn-white border" type="button"
-                                                                        onclick="adjustModalQty(this, 1)">+</button>
+                                                            <div class="variant-wrapper"
+                                                                th:data-product-id="${product.id}"
+                                                                data-action-mode="cart">
+                                                                <div class="d-none"><span
+                                                                        th:each="v : ${product.variants}"
+                                                                        class="variant-data" th:data-id="${v.id}"
+                                                                        th:data-color="${v.color}"
+                                                                        th:data-size="${v.size}"
+                                                                        th:data-qty="${v.quantity}"></span></div>
+                                                                <div class="mb-3"><label
+                                                                        class="fw-bold small mb-2 text-muted text-uppercase">Màu
+                                                                        sắc</label>
+                                                                    <div class="color-options d-flex flex-wrap gap-2">
+                                                                    </div>
                                                                 </div>
-                                                                <span class="stock-msg small text-muted">Vui lòng chọn
-                                                                    phân loại</span>
+                                                                <div class="mb-4"><label
+                                                                        class="fw-bold small mb-2 text-muted text-uppercase">Kích
+                                                                        thước</label>
+                                                                    <div class="size-options d-flex flex-wrap gap-2">
+                                                                    </div>
+                                                                </div>
+                                                                <div
+                                                                    class="d-flex align-items-center justify-content-between bg-light p-2 rounded mb-3">
+                                                                    <div
+                                                                        class="input-group input-group-sm w-auto flex-nowrap">
+                                                                        <button class="btn btn-white border"
+                                                                            type="button"
+                                                                            onclick="adjustModalQty(this, -1)">-</button>
+                                                                        <input type="number"
+                                                                            class="form-control text-center qty-input border-top border-bottom"
+                                                                            value="1" min="1" style="width: 40px;"
+                                                                            disabled>
+                                                                        <button class="btn btn-white border"
+                                                                            type="button"
+                                                                            onclick="adjustModalQty(this, 1)">+</button>
+                                                                    </div>
+                                                                    <span class="stock-msg small text-muted">Vui lòng
+                                                                        chọn
+                                                                        phân loại</span>
+                                                                </div>
+                                                                <input type="hidden" class="selected-variant-id">
+                                                                <button
+                                                                    class="btn btn-dark w-100 fw-bold py-2 add-btn rounded-pill submit-action-btn"
+                                                                    disabled onclick="submitQuickAdd(this)">Thêm vào giỏ
+                                                                    hàng</button>
                                                             </div>
-                                                            <input type="hidden" class="selected-variant-id">
-                                                            <button
-                                                                class="btn btn-dark w-100 fw-bold py-2 add-btn rounded-pill submit-action-btn"
-                                                                disabled onclick="submitQuickAdd(this)">Thêm vào giỏ
-                                                                hàng</button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -692,125 +715,136 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </th:block>
+                            </th:block>
+                        </div>
                     </div>
-                </div>
 
-                <!-- SECTION 2: GỢI Ý CHO BẠN -->
-                <div th:if="${products.totalElements > 0}">
-                    <h3 class="fw-bold mb-4 pt-2 text-uppercase">Gợi Ý Cho Bạn</h3>
-                    <div class="row g-3 g-md-4">
-                        <th:block th:each="product, iterStat : ${products.content}" th:if="${iterStat.index >= 6}">
-                            <div class="col-6 col-md-4">
-                                <div class="card product-card h-100 border-0 shadow-sm">
-                                    <div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold shadow-sm"
-                                        style="z-index: 10;" th:if="${product.discount > 0}"
-                                        th:text="'-' + ${product.discount} + '%'"></div>
-                                    <div class="img-wrapper bg-light">
-                                        <a th:href="@{/product/{id}(id=${product.id})}" class="product-link">
-                                            <img th:src="${product.image}"
-                                                onerror="this.src='https://placehold.co/600x600?text=No+Image'"
-                                                alt="Product">
-                                        </a>
-                                        <div class="action-buttons">
-                                            <button type="button" class="btn-action btn-cart-hover shadow-sm"
-                                                onclick="setModalAction(this, 'cart')" data-bs-toggle="modal"
-                                                th:data-bs-target="'#quickViewModal-' + ${product.id}">
-                                                <i class="fas fa-cart-plus"></i>
-                                                <span>Thêm giỏ</span>
-                                            </button>
-                                            <button type="button" class="btn-action btn-buy-hover shadow-sm"
-                                                onclick="setModalAction(this, 'buy')" data-bs-toggle="modal"
-                                                th:data-bs-target="'#quickViewModal-' + ${product.id}">
-                                                <i class="fas fa-bolt"></i>
-                                                <span>Mua ngay</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="card-body p-3">
-                                        <h6 class="card-title fw-bold text-truncate mb-2">
-                                            <a th:href="@{/product/{id}(id=${product.id})}"
-                                                class="text-dark text-decoration-none" th:text="${product.name}">Tên sản
-                                                phẩm</a>
-                                        </h6>
-                                        <div class="star-rating"
-                                            th:with="avg=${ratingMap[product.id] != null ? ratingMap[product.id] : 0},
-                                                     cnt=${reviewCountMap[product.id] != null ? reviewCountMap[product.id] : 0}">
-                                            <span th:each="i : ${#numbers.sequence(1, 5)}"
-                                                th:class="${i <= avg} ? 'star filled' : (${(i - 0.5) <= avg} ? 'star half' : 'star')">&#9733;</span>
-                                            <span class="rating-count" th:text="'(' + ${cnt} + ')'"></span>
-                                        </div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="fw-bold text-danger fs-5"
-                                                th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
-                                            <small class="text-muted text-decoration-line-through"
-                                                th:if="${product.discount > 0}"
-                                                th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Quick View Modal -->
-                                <div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}"
-                                    tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered modal-xl">
-                                        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                                            <div class="modal-header border-0 pb-0 position-absolute top-0 end-0 p-3"
-                                                style="z-index: 20;">
-                                                <button type="button" class="btn-close bg-white shadow-sm"
-                                                    data-bs-dismiss="modal"></button>
+                    <!-- SECTION 2: GỢI Ý CHO BẠN -->
+                    <div th:if="${products.totalElements > 0}">
+                        <h3 class="fw-bold mb-4 pt-2 text-uppercase">Gợi Ý Cho Bạn</h3>
+                        <div class="row g-3 g-md-4">
+                            <th:block th:each="product, iterStat : ${products.content}" th:if="${iterStat.index >= 6}">
+                                <div class="col-6 col-md-4">
+                                    <div class="card product-card h-100 border-0 shadow-sm">
+                                        <div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold shadow-sm"
+                                            style="z-index: 10;" th:if="${product.discount > 0}"
+                                            th:text="'-' + ${product.discount} + '%'"></div>
+                                        <div class="img-wrapper bg-light">
+                                            <a th:href="@{/product/{slug}(slug=${product.slug})}" class="product-link">
+                                                <img th:src="${product.image}"
+                                                    onerror="this.src='https://placehold.co/600x600?text=No+Image'"
+                                                    alt="Product">
+                                            </a>
+                                            <div class="action-buttons">
+                                                <button type="button" class="btn-action btn-cart-hover shadow-sm"
+                                                    onclick="setModalAction(this, 'cart')" data-bs-toggle="modal"
+                                                    th:data-bs-target="'#quickViewModal-' + ${product.id}">
+                                                    <i class="fas fa-cart-plus"></i>
+                                                    <span>Thêm giỏ</span>
+                                                </button>
+                                                <button type="button" class="btn-action btn-buy-hover shadow-sm"
+                                                    onclick="setModalAction(this, 'buy')" data-bs-toggle="modal"
+                                                    th:data-bs-target="'#quickViewModal-' + ${product.id}">
+                                                    <i class="fas fa-bolt"></i>
+                                                    <span>Mua ngay</span>
+                                                </button>
                                             </div>
-                                            <div class="modal-body p-0">
-                                                <div class="row g-0">
-                                                    <div
-                                                        class="col-5 bg-light d-flex align-items-center justify-content-center">
-                                                        <img th:src="${product.image}"
-                                                            class="img-fluid object-fit-cover w-100 h-100"
-                                                            style="min-height: 350px;"
-                                                            onerror="this.src='https://placehold.co/300x300'">
-                                                    </div>
-                                                    <div class="col-7 p-4">
-                                                        <h5 class="modal-title fw-bold mb-2" th:text="${product.name}">
-                                                        </h5>
-                                                        <div class="price text-danger fw-bold fs-4 mb-4"
-                                                            th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <h6 class="card-title fw-bold text-truncate mb-2">
+                                                <a th:href="@{/product/{slug}(slug=${product.slug})}"
+                                                    class="text-dark text-decoration-none" th:text="${product.name}">Tên
+                                                    sản
+                                                    phẩm</a>
+                                            </h6>
+                                            <div class="star-rating"
+                                                th:with="avg=${ratingMap[product.id] != null ? ratingMap[product.id] : 0},
+                                                     cnt=${reviewCountMap[product.id] != null ? reviewCountMap[product.id] : 0}">
+                                                <span th:each="i : ${#numbers.sequence(1, 5)}"
+                                                    th:class="${i <= avg} ? 'star filled' : (${(i - 0.5) <= avg} ? 'star half' : 'star')">&#9733;</span>
+                                                <span class="rating-count" th:text="'(' + ${cnt} + ')'"></span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="fw-bold text-danger fs-5"
+                                                    th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                                                <small class="text-muted text-decoration-line-through"
+                                                    th:if="${product.discount > 0}"
+                                                    th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Quick View Modal -->
+                                    <div class="modal fade quick-view-modal" th:id="'quickViewModal-' + ${product.id}"
+                                        tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-xl">
+                                            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                                <div class="modal-header border-0 pb-0 position-absolute top-0 end-0 p-3"
+                                                    style="z-index: 20;">
+                                                    <button type="button" class="btn-close bg-white shadow-sm"
+                                                        data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body p-0">
+                                                    <div class="row g-0">
+                                                        <div
+                                                            class="col-5 bg-light d-flex align-items-center justify-content-center">
+                                                            <img th:src="${product.image}"
+                                                                class="img-fluid object-fit-cover w-100 h-100"
+                                                                style="min-height: 350px;"
+                                                                onerror="this.src='https://placehold.co/300x300'">
                                                         </div>
-                                                        <div class="variant-wrapper" th:data-product-id="${product.id}"
-                                                            data-action-mode="cart">
-                                                            <div class="d-none"><span th:each="v : ${product.variants}"
-                                                                    class="variant-data" th:data-id="${v.id}"
-                                                                    th:data-color="${v.color}" th:data-size="${v.size}"
-                                                                    th:data-qty="${v.quantity}"></span></div>
-                                                            <div class="mb-3"><label
-                                                                    class="fw-bold small mb-2 text-muted text-uppercase">Màu
-                                                                    sắc</label>
-                                                                <div class="color-options d-flex flex-wrap gap-2"></div>
+                                                        <div class="col-7 p-4">
+                                                            <h5 class="modal-title fw-bold mb-2"
+                                                                th:text="${product.name}">
+                                                            </h5>
+                                                            <div class="price text-danger fw-bold fs-4 mb-4"
+                                                                th:text="${#numbers.formatDecimal(product.price * (100 - (product.discount != null ? product.discount : 0)) / 100, 0, 'COMMA', 0, 'POINT')} + ' đ'">
                                                             </div>
-                                                            <div class="mb-4"><label
-                                                                    class="fw-bold small mb-2 text-muted text-uppercase">Kích
-                                                                    thước</label>
-                                                                <div class="size-options d-flex flex-wrap gap-2"></div>
-                                                            </div>
-                                                            <div
-                                                                class="d-flex align-items-center justify-content-between bg-light p-2 rounded mb-3">
-                                                                <div
-                                                                    class="input-group input-group-sm w-auto flex-nowrap">
-                                                                    <button class="btn btn-white border" type="button"
-                                                                        onclick="adjustModalQty(this, -1)">-</button>
-                                                                    <input type="number"
-                                                                        class="form-control text-center qty-input border-top border-bottom"
-                                                                        value="1" min="1" style="width: 40px;" disabled>
-                                                                    <button class="btn btn-white border" type="button"
-                                                                        onclick="adjustModalQty(this, 1)">+</button>
+                                                            <div class="variant-wrapper"
+                                                                th:data-product-id="${product.id}"
+                                                                data-action-mode="cart">
+                                                                <div class="d-none"><span
+                                                                        th:each="v : ${product.variants}"
+                                                                        class="variant-data" th:data-id="${v.id}"
+                                                                        th:data-color="${v.color}"
+                                                                        th:data-size="${v.size}"
+                                                                        th:data-qty="${v.quantity}"></span></div>
+                                                                <div class="mb-3"><label
+                                                                        class="fw-bold small mb-2 text-muted text-uppercase">Màu
+                                                                        sắc</label>
+                                                                    <div class="color-options d-flex flex-wrap gap-2">
+                                                                    </div>
                                                                 </div>
-                                                                <span class="stock-msg small text-muted">Vui lòng chọn
-                                                                    phân loại</span>
+                                                                <div class="mb-4"><label
+                                                                        class="fw-bold small mb-2 text-muted text-uppercase">Kích
+                                                                        thước</label>
+                                                                    <div class="size-options d-flex flex-wrap gap-2">
+                                                                    </div>
+                                                                </div>
+                                                                <div
+                                                                    class="d-flex align-items-center justify-content-between bg-light p-2 rounded mb-3">
+                                                                    <div
+                                                                        class="input-group input-group-sm w-auto flex-nowrap">
+                                                                        <button class="btn btn-white border"
+                                                                            type="button"
+                                                                            onclick="adjustModalQty(this, -1)">-</button>
+                                                                        <input type="number"
+                                                                            class="form-control text-center qty-input border-top border-bottom"
+                                                                            value="1" min="1" style="width: 40px;"
+                                                                            disabled>
+                                                                        <button class="btn btn-white border"
+                                                                            type="button"
+                                                                            onclick="adjustModalQty(this, 1)">+</button>
+                                                                    </div>
+                                                                    <span class="stock-msg small text-muted">Vui lòng
+                                                                        chọn
+                                                                        phân loại</span>
+                                                                </div>
+                                                                <input type="hidden" class="selected-variant-id">
+                                                                <button
+                                                                    class="btn btn-dark w-100 fw-bold py-2 add-btn rounded-pill submit-action-btn"
+                                                                    disabled onclick="submitQuickAdd(this)">Thêm vào giỏ
+                                                                    hàng</button>
                                                             </div>
-                                                            <input type="hidden" class="selected-variant-id">
-                                                            <button
-                                                                class="btn btn-dark w-100 fw-bold py-2 add-btn rounded-pill submit-action-btn"
-                                                                disabled onclick="submitQuickAdd(this)">Thêm vào giỏ
-                                                                hàng</button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -818,37 +852,37 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </th:block>
+                            </th:block>
+                        </div>
                     </div>
-                </div>
 
-                <div class="col-12 text-center py-5" th:if="${products.totalElements == 0}">
-                    <div class="mb-3"><i class="fas fa-search fa-3x text-muted opacity-50"></i></div>
-                    <h5 class="text-muted fw-bold">Không tìm thấy sản phẩm nào!</h5>
-                    <p class="text-muted small">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
-                    <a href="/home" class="btn btn-dark mt-2 rounded-pill px-4">Xóa bộ lọc</a>
-                </div>
+                    <div class="col-12 text-center py-5" th:if="${products.totalElements == 0}">
+                        <div class="mb-3"><i class="fas fa-search fa-3x text-muted opacity-50"></i></div>
+                        <h5 class="text-muted fw-bold">Không tìm thấy sản phẩm nào!</h5>
+                        <p class="text-muted small">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
+                        <a href="/home" class="btn btn-dark mt-2 rounded-pill px-4">Xóa bộ lọc</a>
+                    </div>
 
-                <nav class="mt-5 d-flex justify-content-center" th:if="${products.totalPages > 1}">
-                    <ul class="pagination">
-                        <li class="page-item" th:classappend="${products.first} ? 'disabled'"><a
-                                class="page-link text-dark border-0 rounded-circle mx-1 shadow-sm"
-                                th:href="@{/home(page=${products.number - 1}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}"><i
-                                    class="fas fa-chevron-left"></i></a></li>
-                        <li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
-                            th:classappend="${i == products.number} ? 'active'"><a
-                                class="page-link rounded-circle mx-1 border-0 shadow-sm fw-bold"
-                                th:href="@{/home(page=${i}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}"
-                                th:text="${i + 1}"
-                                th:classappend="${i == products.number} ? 'bg-dark text-white' : 'text-dark bg-white'"></a>
-                        </li>
-                        <li class="page-item" th:classappend="${products.last} ? 'disabled'"><a
-                                class="page-link text-dark border-0 rounded-circle mx-1 shadow-sm"
-                                th:href="@{/home(page=${products.number + 1}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}"><i
-                                    class="fas fa-chevron-right"></i></a></li>
-                    </ul>
-                </nav>
+                    <nav class="mt-5 d-flex justify-content-center" th:if="${products.totalPages > 1}">
+                        <ul class="pagination">
+                            <li class="page-item" th:classappend="${products.first} ? 'disabled'"><a
+                                    class="page-link text-dark border-0 rounded-circle mx-1 shadow-sm"
+                                    th:href="@{/home(page=${products.number - 1}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}"><i
+                                        class="fas fa-chevron-left"></i></a></li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
+                                th:classappend="${i == products.number} ? 'active'"><a
+                                    class="page-link rounded-circle mx-1 border-0 shadow-sm fw-bold"
+                                    th:href="@{/home(page=${i}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}"
+                                    th:text="${i + 1}"
+                                    th:classappend="${i == products.number} ? 'bg-dark text-white' : 'text-dark bg-white'"></a>
+                            </li>
+                            <li class="page-item" th:classappend="${products.last} ? 'disabled'"><a
+                                    class="page-link text-dark border-0 rounded-circle mx-1 shadow-sm"
+                                    th:href="@{/home(page=${products.number + 1}, keyword=${keyword}, gender=${selectedGender}, category=${selectedCategory}, color=${selectedColor}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, sale=${isSale})}"><i
+                                        class="fas fa-chevron-right"></i></a></li>
+                        </ul>
+                    </nav>
+                </div><!-- end #homeAjaxContent -->
             </main>
         </div>
 
@@ -1149,28 +1183,12 @@
                     bindPagination();
                     bindNavbarLinks();
 
-                    // Re-sync collapse layout state
-                    var filterContent = document.getElementById('filterContent');
+                    // Re-sync sidebar toggle state after AJAX
                     var sidebar = document.getElementById('sidebarFilter');
                     var mainProducts = document.getElementById('mainProducts');
-                    if (filterContent && sidebar && mainProducts) {
-                        var isExpanded = filterContent.classList.contains('show');
-                        if (isExpanded) {
-                            sidebar.classList.remove('filter-collapsed');
-                            mainProducts.classList.remove('products-expanded');
-                        } else {
-                            sidebar.classList.add('filter-collapsed');
-                            mainProducts.classList.add('products-expanded');
-                        }
-                        // Re-bind collapse events
-                        filterContent.addEventListener('shown.bs.collapse', function () {
-                            sidebar.classList.remove('filter-collapsed');
-                            mainProducts.classList.remove('products-expanded');
-                        });
-                        filterContent.addEventListener('hidden.bs.collapse', function () {
-                            sidebar.classList.add('filter-collapsed');
-                            mainProducts.classList.add('products-expanded');
-                        });
+                    if (sidebar && !sidebar.classList.contains('d-none')) {
+                        mainProducts.classList.remove('col-lg-12');
+                        mainProducts.classList.add('col-lg-9');
                     }
 
                     // Re-init quick view modals
@@ -1330,36 +1348,213 @@
                     bindPagination();
                     bindNavbarLinks();
 
-                    // --- Sidebar collapse/expand layout toggle ---
-                    var filterContent = document.getElementById('filterContent');
+                    // --- Sidebar toggle (new animation) ---
                     var sidebar = document.getElementById('sidebarFilter');
                     var mainProducts = document.getElementById('mainProducts');
+                    var toggleIcon = document.getElementById('filterToggleIcon');
 
-                    function setFilterLayout(isExpanded) {
-                        if (isExpanded) {
-                            sidebar.classList.remove('filter-collapsed');
-                            mainProducts.classList.remove('products-expanded');
+                    // Check if any filter is active by looking at active styles in the sidebar
+                    var hasActiveFilters = sidebar && (
+                        sidebar.querySelector('.list-group-item.fw-bold.text-dark') ||
+                        sidebar.querySelector('.btn-danger') ||
+                        sidebar.querySelector('.color-dot.border-primary')
+                    );
+
+                    // Auto-open if filters are active, otherwise start hidden
+                    if (hasActiveFilters && sidebar) {
+                        sidebar.classList.remove('d-none');
+                        sidebar.classList.add('d-lg-block');
+                        mainProducts.classList.remove('col-lg-12');
+                        mainProducts.classList.add('col-lg-9');
+                        if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
+                    }
+
+                    // Make toggle function globally available
+                    window.toggleFilterSidebar = function () {
+                        if (!sidebar) return;
+                        var isHidden = sidebar.classList.contains('d-none') || !sidebar.classList.contains('d-lg-block');
+                        if (isHidden) {
+                            // Show sidebar
+                            sidebar.classList.remove('d-none');
+                            sidebar.classList.add('d-lg-block');
+                            mainProducts.classList.remove('col-lg-12');
+                            mainProducts.classList.add('col-lg-9');
+                            if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
                         } else {
-                            sidebar.classList.add('filter-collapsed');
-                            mainProducts.classList.add('products-expanded');
+                            // Hide sidebar
+                            sidebar.classList.add('d-none');
+                            sidebar.classList.remove('d-lg-block');
+                            mainProducts.classList.remove('col-lg-9');
+                            mainProducts.classList.add('col-lg-12');
+                            if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
                         }
-                    }
-
-                    if (filterContent && sidebar && mainProducts) {
-                        // Set initial state
-                        var isInitExpanded = filterContent.classList.contains('show');
-                        setFilterLayout(isInitExpanded);
-
-                        // Listen for Bootstrap collapse events
-                        filterContent.addEventListener('shown.bs.collapse', function () {
-                            setFilterLayout(true);
-                        });
-                        filterContent.addEventListener('hidden.bs.collapse', function () {
-                            setFilterLayout(false);
-                        });
-                    }
+                    };
                 });
             })();
+        </script>
+
+        <!-- ===== HOME AJAX FILTER SYSTEM ===== -->
+        <script>
+            // ===== CLEAN URL ON PAGE LOAD (prevents flicker) =====
+            // Preserve hash fragment (e.g. #productRow) so browser can scroll to it
+            history.replaceState({}, '', '/home' + window.location.hash);
+
+            // Track current filter state
+            var homeFilterState = {
+                gender: '',
+                category: '',
+                color: '',
+                sale: '',
+                min: '',
+                max: '',
+                sort: 'newest',
+                keyword: '',
+                page: 0
+            };
+
+            // Initialize state from current page data
+            (function initFilterState() {
+                var sidebar = document.getElementById('sidebarFilter');
+                if (!sidebar) return;
+
+                // Extract current state from the links/inputs
+                var genderLinks = sidebar.querySelectorAll('.list-group-item.fw-bold.text-dark');
+                genderLinks.forEach(function (link) {
+                    var href = link.getAttribute('href') || '';
+                    if (href.includes("gender=Nam")) homeFilterState.gender = 'Nam';
+                    else if (href.includes("gender=N")) homeFilterState.gender = 'Nữ';
+                    else if (href.includes("gender=Unisex")) homeFilterState.gender = 'Unisex';
+                });
+
+                // Read from hidden inputs in price form
+                var priceForm = document.getElementById('homePriceForm');
+                if (priceForm) {
+                    var g = priceForm.querySelector('input[name="gender"]');
+                    if (g && g.value) homeFilterState.gender = g.value;
+                    var c = priceForm.querySelector('input[name="category"]');
+                    if (c && c.value) homeFilterState.category = c.value;
+                    var co = priceForm.querySelector('input[name="color"]');
+                    if (co && co.value) homeFilterState.color = co.value;
+                    var s = priceForm.querySelector('input[name="sort"]');
+                    if (s && s.value) homeFilterState.sort = s.value;
+                    var k = priceForm.querySelector('input[name="keyword"]');
+                    if (k && k.value) homeFilterState.keyword = k.value;
+                    var sa = priceForm.querySelector('input[name="sale"]');
+                    if (sa && sa.value && sa.value !== 'false') homeFilterState.sale = sa.value;
+                    var mi = priceForm.querySelector('input[name="min"]');
+                    if (mi && mi.value) homeFilterState.min = mi.value;
+                    var ma = priceForm.querySelector('input[name="max"]');
+                    if (ma && ma.value) homeFilterState.max = ma.value;
+                }
+
+                // Read sort
+                var sortSel = document.getElementById('homeSortSelect');
+                if (sortSel) homeFilterState.sort = sortSel.value;
+            })();
+
+            function homeAjaxFetch(url) {
+                var content = document.getElementById('homeAjaxContent');
+                if (!content) return;
+                content.style.opacity = '0.5';
+                content.style.pointerEvents = 'none';
+
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (r) { return r.text(); })
+                    .then(function (html) {
+                        var parser = new DOMParser();
+                        var doc = parser.parseFromString(html, 'text/html');
+                        var newContent = doc.getElementById('homeAjaxContent');
+                        if (newContent) {
+                            content.innerHTML = newContent.innerHTML;
+                        }
+                        // Also update sidebar filter state (active styles)
+                        var newSidebar = doc.getElementById('sidebarFilter');
+                        var curSidebar = document.getElementById('sidebarFilter');
+                        if (newSidebar && curSidebar) {
+                            curSidebar.innerHTML = newSidebar.innerHTML;
+                        }
+                        // Keep URL clean
+                        history.replaceState({}, '', '/home');
+                        // Re-bind pagination and sort
+                        homeBindPagination();
+                        homeBindSort();
+                    })
+                    .catch(function (err) { console.error('Home filter error:', err); })
+                    .finally(function () {
+                        content.style.opacity = '1';
+                        content.style.pointerEvents = 'auto';
+                    });
+            }
+
+            // Intercept sidebar filter link clicks
+            (function () {
+                var sidebar = document.getElementById('sidebarFilter');
+                if (!sidebar) return;
+
+                sidebar.addEventListener('click', function (e) {
+                    var link = e.target.closest('a[href*="/home"]');
+                    if (!link) return;
+                    var href = link.getAttribute('href');
+                    if (!href || !href.startsWith('/home')) return;
+
+                    e.preventDefault();
+                    homeAjaxFetch(href);
+                });
+            })();
+
+            // Sort handler
+            function homeAjaxSort(sortVal) {
+                homeFilterState.sort = sortVal;
+                var params = new URLSearchParams();
+                params.set('sort', sortVal);
+                if (homeFilterState.gender) params.set('gender', homeFilterState.gender);
+                if (homeFilterState.category) params.set('category', homeFilterState.category);
+                if (homeFilterState.color) params.set('color', homeFilterState.color);
+                if (homeFilterState.sale) params.set('sale', homeFilterState.sale);
+                if (homeFilterState.min) params.set('min', homeFilterState.min);
+                if (homeFilterState.max) params.set('max', homeFilterState.max);
+                if (homeFilterState.keyword) params.set('keyword', homeFilterState.keyword);
+                homeAjaxFetch('/home?' + params.toString());
+            }
+
+            // Price filter handler
+            function homeAjaxPriceFilter() {
+                var priceForm = document.getElementById('homePriceForm');
+                if (!priceForm) return;
+                var params = new URLSearchParams();
+                var inputs = priceForm.querySelectorAll('input[name]');
+                inputs.forEach(function (inp) {
+                    if (inp.value) params.set(inp.name, inp.value);
+                });
+                // Add sort from select
+                var sortSel = document.getElementById('homeSortSelect');
+                if (sortSel) params.set('sort', sortSel.value);
+                homeAjaxFetch('/home?' + params.toString());
+            }
+
+            // Pagination interception
+            function homeBindPagination() {
+                document.querySelectorAll('#homeAjaxContent .pagination a.page-link').forEach(function (link) {
+                    link.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        var href = this.getAttribute('href');
+                        if (href) homeAjaxFetch(href);
+                    });
+                });
+            }
+
+            // Sort re-binding after AJAX load
+            function homeBindSort() {
+                var sortSel = document.querySelector('#homeAjaxContent select');
+                if (sortSel) {
+                    sortSel.onchange = function () { homeAjaxSort(this.value); };
+                }
+            }
+
+            // Bind on initial load
+            document.addEventListener('DOMContentLoaded', function () {
+                homeBindPagination();
+            });
         </script>
     </article>
 </body>

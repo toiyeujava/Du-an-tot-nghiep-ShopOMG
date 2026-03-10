@@ -32,6 +32,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+        		.csrf(csrf -> csrf.disable())
                 .userDetailsService(userDetailsService)
                 // FORCE EAGER CSRF TOKEN LOADING TO FIX THYMELEAF SESSION COMMIT EXCEPTIONS
                 .addFilterAfter(new OncePerRequestFilter() {

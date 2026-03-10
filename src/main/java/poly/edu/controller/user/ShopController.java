@@ -94,26 +94,44 @@ public class ShopController {
     }
 
     /**
-     * Product detail page.
+     * Product detail page (by slug - SEO-friendly URL).
      *
      * Algorithm:
-     * 1. Load product by ID
+     * 1. Load product by slug
      * 2. Extract unique colors/sizes from variants for UI buttons
      * 3. Build JSON string of variants manually (no Jackson dependency)
-     *
-     * "Why build JSON manually instead of using Jackson?"
-     * - Avoids circular reference issues with JPA entities
-     * - Only 4 fields needed (id, color, size, quantity)
-     * - Simpler than configuring @JsonIgnore across all entities
      */
-    @GetMapping("/product/{id}")
-    public String productDetail(@PathVariable("id") Integer id, Model model) {
-        Optional<Product> productOpt = productRepository.findById(id);
+    @GetMapping("/product/{slug}")
+    public String productDetail(@PathVariable("slug") String slug, Model model) {
+        Optional<Product> productOpt;
 
-        if (productOpt.isPresent()) {
+        // Try slug lookup first; fallback to ID for backward compatibility
+        try {
+            Integer id = Integer.parseInt(slug);
+            // It's a numeric ID — redirect to slug URL for SEO
+            productOpt = productRepository.findById(id);
+            if (productOpt.isPresent()) {
+                Product product = productOpt.get();
+                if (product.getSlug() != null && !product.getSlug().isBlank()) {
+                    return "redirect:/product/" + product.getSlug();
+                }
+            }
+            // If product has no slug, continue to render normally
+        } catch (NumberFormatException e) {
+            // Not a number — treat as slug (normal flow)
+            productOpt = productRepository.findBySlug(slug);
+        }
+
+        if (productOpt != null && productOpt.isPresent()) {
             Product product = productOpt.get();
             model.addAttribute("product", product);
             model.addAttribute("pageTitle", product.getName());
+
+            // Breadcrumb: load category name
+            if (product.getCategoryId() != null) {
+                categoryRepository.findById(product.getCategoryId())
+                        .ifPresent(cat -> model.addAttribute("categoryName", cat.getName()));
+            }
 
             List<ProductVariant> variants = product.getVariants();
             if (variants == null)

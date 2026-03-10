@@ -32,23 +32,85 @@
         }
 
         @media all and (min-width: 992px) {
-            .navbar .nav-item.dropdown:hover .dropdown-menu {
-                display: block;
-                visibility: visible;
-                opacity: 1;
-                margin-top: 0;
-                transition: all 0.3s ease;
-            }
-        }
 
-        /* --- Đoạn cần thêm cho hover giỏ hàng --- */
-        @media all and (min-width: 992px) {
-            .nav-item.dropdown.cart-dropdown:hover .dropdown-menu {
-                display: block;
+            /* 1. Base style cho khối container dropdown */
+            .navbar .dropdown .dropdown-menu {
+                display: block !important;
+                visibility: hidden;
+                opacity: 0;
+                pointer-events: none;
+                margin-top: 0;
+                clip-path: inset(10% 50% 90% 50% round 10px);
+                transition: visibility 0.4s, opacity 0.4s, clip-path 0.4s;
+            }
+
+            /* 2. Hover lên nav-item để mở container dropdown */
+            .navbar .dropdown:hover .dropdown-menu {
                 visibility: visible;
                 opacity: 1;
-                margin-top: 0;
-                transition: all 0.3s ease;
+                pointer-events: auto;
+                clip-path: inset(0% 0% 0% 0% round 10px);
+            }
+
+            /* 3. Dropdown items khởi tạo (tương ứng .menu-list) ẩn và kéo xuống */
+            .navbar .dropdown ul.dropdown-menu>li {
+                --delay: 0.1s;
+                --trdelay: 0.08s;
+                transform: translateY(30px);
+                opacity: 0;
+                transition: transform 0.2s, opacity 0.2s;
+                /* khi hover out thì rút nhanh về */
+            }
+
+            /* Vừa hiển thị khi nav-item được hover, kéo lên vị trí 0,0 */
+            .navbar .dropdown:hover ul.dropdown-menu>li {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            /* 4. Animation Stagger (thứ tự rớt xuống) theo từng phần tử */
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(1) {
+                transition: transform 0.4s var(--delay), opacity 0.4s var(--delay);
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(2) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 1)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 1));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(3) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 2)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 2));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(4) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 3)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 3));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(5) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 4)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 4));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(6) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 5)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 5));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(7) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 6)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 6));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(8) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 7)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 7));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(9) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 8)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 8));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(10) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 9)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 9));
+            }
+
+            .navbar .dropdown:hover ul.dropdown-menu>li:nth-child(n+11) {
+                transition: transform 0.4s calc(var(--delay) + (var(--trdelay) * 10)), opacity 0.4s calc(var(--delay) + (var(--trdelay) * 10));
             }
         }
     </style>
@@ -71,67 +133,63 @@
                     <ul class="navbar-nav mx-auto">
                         <li class="nav-item"><a class="nav-link" href="/home">Trang chủ</a></li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link fw-bold dropdown-toggle" th:href="@{/home(gender='Nam')}"
+                            <a class="nav-link fw-bold dropdown-toggle" href="/home?gender=Nam"
                                 data-bs-toggle="dropdown">Nam</a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item fw-bold" th:href="@{/home(gender='Nam')}">Tất cả Nam</a>
+                                <li><a class="dropdown-item fw-bold" href="/home?gender=Nam">Tất cả Nam</a>
                                 </li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li th:each="cat : ${categories}">
-                                    <a class="dropdown-item"
-                                        th:href="@{/home(gender='Nam', category=${cat.id}, color='', sale='', min='', max='', sort='newest', keyword='')}"
+                                    <a class="dropdown-item" th:href="'/home?gender=Nam&category=' + ${cat.id}"
                                         th:text="${cat.name}">Tên danh mục</a>
                                 </li>
                             </ul>
                         </li>
 
                         <li class="nav-item dropdown">
-                            <a class="nav-link fw-bold dropdown-toggle" th:href="@{/home(gender='Nữ')}"
+                            <a class="nav-link fw-bold dropdown-toggle" href="/home?gender=Nữ"
                                 data-bs-toggle="dropdown">Nữ</a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item fw-bold" th:href="@{/home(gender='Nữ')}">Tất cả Nữ</a></li>
+                                <li><a class="dropdown-item fw-bold" href="/home?gender=Nữ">Tất cả Nữ</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li th:each="cat : ${categories}">
-                                    <a class="dropdown-item"
-                                        th:href="@{/home(gender='Nữ', category=${cat.id}, color='', sale='', min='', max='', sort='newest', keyword='')}"
+                                    <a class="dropdown-item" th:href="'/home?gender=Nữ&category=' + ${cat.id}"
                                         th:text="${cat.name}">Tên danh mục</a>
                                 </li>
                             </ul>
                         </li>
 
                         <li class="nav-item dropdown">
-                            <a class="nav-link fw-bold dropdown-toggle" th:href="@{/home(gender='Unisex')}"
+                            <a class="nav-link fw-bold dropdown-toggle" href="/home?gender=Unisex"
                                 data-bs-toggle="dropdown">Unisex</a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item fw-bold" th:href="@{/home(gender='Unisex')}">Tất cả
+                                <li><a class="dropdown-item fw-bold" href="/home?gender=Unisex">Tất cả
                                         Unisex</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li th:each="cat : ${categories}">
-                                    <a class="dropdown-item"
-                                        th:href="@{/home(gender='Unisex', category=${cat.id}, color='', sale='', min='', max='', sort='newest', keyword='')}"
+                                    <a class="dropdown-item" th:href="'/home?gender=Unisex&category=' + ${cat.id}"
                                         th:text="${cat.name}">Tên danh mục</a>
                                 </li>
                             </ul>
                         </li>
 
                         <li class="nav-item dropdown">
-                            <a class="nav-link fw-bold text-danger dropdown-toggle" th:href="@{/home(sale=true)}"
+                            <a class="nav-link fw-bold text-danger dropdown-toggle" href="/home?sale=true"
                                 data-bs-toggle="dropdown">Sale</a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item fw-bold text-danger" th:href="@{/home(sale=true)}">Tất cả
+                                <li><a class="dropdown-item fw-bold text-danger" href="/home?sale=true">Tất cả
                                         hàng Sale</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li th:each="cat : ${categories}">
-                                    <a class="dropdown-item"
-                                        th:href="@{/home(sale=true, category=${cat.id}, color='', gender='', min='', max='', sort='newest', keyword='')}"
+                                    <a class="dropdown-item" th:href="'/home?sale=true&category=' + ${cat.id}"
                                         th:text="${cat.name}">Tên danh mục</a>
                                 </li>
                             </ul>
@@ -143,14 +201,6 @@
                             <input type="text" name="keyword" th:value="${keyword}"
                                 class="form-control form-control-sm rounded-pill ps-3 pe-5 border-dark"
                                 placeholder="Tìm sản phẩm..." style="width: 200px;">
-
-                            <input type="hidden" name="gender" th:value="${selectedGender}">
-                            <input type="hidden" name="category" th:value="${selectedCategory}">
-                            <input type="hidden" name="color" th:value="${selectedColor}">
-                            <input type="hidden" name="sort" th:value="${selectedSort}">
-                            <input type="hidden" name="min" th:value="${minPrice}">
-                            <input type="hidden" name="max" th:value="${maxPrice}">
-                            <input type="hidden" name="sale" th:value="${isSale}">
 
                             <button type="submit"
                                 class="btn btn-sm position-absolute end-0 top-0 mt-1 me-2 border-0 bg-transparent">
@@ -180,7 +230,7 @@
                                                 class="shadow-sm border">
 
                                             <div class="ms-3 flex-grow-1">
-                                                <a th:href="@{/product/{id}(id=${item.productVariant.product.id})}"
+                                                <a th:href="@{/product/{slug}(slug=${item.productVariant.product.slug})}"
                                                     class="text-dark text-decoration-none">
                                                     <p class="mb-0 fw-bold small text-truncate"
                                                         style="max-width: 180px;"

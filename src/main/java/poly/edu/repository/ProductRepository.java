@@ -7,13 +7,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import poly.edu.entity.Product;
 
-import java.util.List; // Nhớ import List
+import java.util.List;
+import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Integer> {
 
-        // --- THÊM DÒNG NÀY ---
         List<Product> findByGender(String gender);
-        // ---------------------
+
+        Optional<Product> findBySlug(String slug);
+
+        boolean existsBySlug(String slug);
 
         @Query(value = "SELECT DISTINCT p FROM Product p " +
                         "LEFT JOIN p.variants pv " +

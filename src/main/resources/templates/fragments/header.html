@@ -328,6 +328,16 @@
                                     <li sec:authorize="hasRole('ADMIN')"><a class="dropdown-item text-primary fw-bold"
                                             href="/admin/dashboard"><i class="fas fa-chart-line me-2"></i>Quản lý</a>
                                     </li>
+                                    <li sec:authorize="hasRole('SALES')">
+                                        <a class="dropdown-item text-success fw-bold" href="/sales/dashboard">
+                                            <i class="fas fa-headset me-2"></i>Quản lý bán hàng
+                                        </a>
+                                    </li>
+                                    <li sec:authorize="hasRole('WAREHOUSE')">
+                                        <a class="dropdown-item text-warning fw-bold" href="/warehouse/dashboard">
+                                            <i class="fas fa-warehouse me-2"></i>Quản lý kho
+                                        </a>
+                                    </li>
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>

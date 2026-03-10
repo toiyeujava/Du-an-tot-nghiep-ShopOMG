@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sales-layout :: view(~{::title}, ~{::article})}">
+
+<head>
+    <title>Dashboard - Bán hàng</title>
+</head>
+
+<body>
+    <article>
+        <!-- ===== STATS CARDS ===== -->
+        <div class="row g-4 mb-4">
+
+            <!-- Đơn chờ xử lý -->
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div>
+                        <h6 class="text-muted small fw-bold text-uppercase mb-1">Đơn chờ xử lý</h6>
+                        <h3 class="fw-bold mb-0" th:text="${pendingCount}">0</h3>
+                        <small class="text-warning"><i class="fas fa-clock me-1"></i>Cần xử lý ngay</small>
+                    </div>
+                    <div class="icon-box bg-warning-soft"><i class="fas fa-hourglass-half"></i></div>
+                </div>
+            </div>
+
+            <!-- Đơn hôm nay -->
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div>
+                        <h6 class="text-muted small fw-bold text-uppercase mb-1">Đơn hôm nay</h6>
+                        <h3 class="fw-bold mb-0" th:text="${todayCount}">0</h3>
+                        <small class="text-muted"><i class="fas fa-calendar-day me-1"></i>Tổng đơn trong ngày</small>
+                    </div>
+                    <div class="icon-box bg-primary-soft"><i class="fas fa-shopping-cart"></i></div>
+                </div>
+            </div>
+
+            <!-- Đơn hoàn thành hôm nay -->
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div>
+                        <h6 class="text-muted small fw-bold text-uppercase mb-1">Hoàn thành hôm nay</h6>
+                        <h3 class="fw-bold mb-0" th:text="${completedTodayCount}">0</h3>
+                        <small class="text-success"><i class="fas fa-check-circle me-1"></i>Đơn đã giao thành công</small>
+                    </div>
+                    <div class="icon-box bg-danger-soft"><i class="fas fa-check-double"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TRẠNG THÁI ĐƠN HÀNG ===== -->
+        <div class="row mb-4">
+            <div class="col-lg-5 mb-4">
+                <div class="card-box h-100">
+                    <h5 class="fw-bold mb-4">
+                        <i class="fas fa-tasks me-2 text-secondary"></i>Trạng thái đơn hàng
+                    </h5>
+
+                    <div th:if="${orderStatsByStatus != null}">
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-warning-subtle">
+                            <span class="small"><i class="fas fa-clock me-1 text-warning"></i>Chờ xử lý</span>
+                            <span class="badge bg-warning text-dark" th:text="${orderStatsByStatus['PENDING']}">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-info-subtle">
+                            <span class="small"><i class="fas fa-check me-1 text-info"></i>Đã xác nhận</span>
+                            <span class="badge bg-info text-dark" th:text="${orderStatsByStatus['CONFIRMED']}">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-primary-subtle">
+                            <span class="small"><i class="fas fa-truck me-1 text-primary"></i>Đang giao</span>
+                            <span class="badge bg-primary" th:text="${orderStatsByStatus['SHIPPING']}">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-success-subtle">
+                            <span class="small"><i class="fas fa-check-circle me-1 text-success"></i>Hoàn thành</span>
+                            <span class="badge bg-success" th:text="${orderStatsByStatus['COMPLETED']}">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded bg-danger-subtle">
+                            <span class="small"><i class="fas fa-times-circle me-1 text-danger"></i>Đã huỷ</span>
+                            <span class="badge bg-danger" th:text="${orderStatsByStatus['CANCELLED']}">0</span>
+                        </div>
+                    </div>
+
+                    <a href="/sales/orders" class="btn btn-sm btn-outline-secondary w-100 mt-3">
+                        <i class="fas fa-list me-1"></i> Xem tất cả đơn hàng
+                    </a>
+                </div>
+            </div>
+
+            <!-- ===== ĐƠN HÀNG MỚI NHẤT ===== -->
+            <div class="col-lg-7 mb-4">
+                <div class="card-box h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold m-0">
+                            <i class="fas fa-bell me-2 text-warning"></i>Đơn hàng mới nhất
+                        </h5>
+                        <a href="/sales/orders" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Mã đơn</th>
+                                    <th>Khách hàng</th>
+                                    <th class="text-end">Tổng tiền</th>
+                                    <th class="text-center">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${recentOrders == null or recentOrders.isEmpty()}">
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>Chưa có đơn hàng nào
+                                    </td>
+                                </tr>
+                                <tr th:each="order : ${recentOrders}">
+                                    <td>
+                                        <a th:href="@{/sales/orders/{id}(id=${order.id})}"
+                                           class="fw-semibold text-primary text-decoration-none"
+                                           th:text="${'#' + order.id}">#0</a>
+                                    </td>
+                                    <td th:text="${order.account?.fullName ?: 'Khách vãng lai'}">-</td>
+                                    <td class="text-end fw-bold"
+                                        th:text="${#numbers.formatInteger(order.totalAmount, 3, 'POINT') + ' ₫'}">0 ₫</td>
+                                    <td class="text-center">
+                                        <span th:switch="${order.status}">
+                                            <span th:case="'PENDING'" class="badge bg-warning text-dark">Chờ xử lý</span>
+                                            <span th:case="'CONFIRMED'" class="badge bg-info text-dark">Đã xác nhận</span>
+                                            <span th:case="'SHIPPING'" class="badge bg-primary">Đang giao</span>
+                                            <span th:case="'COMPLETED'" class="badge bg-success">Hoàn thành</span>
+                                            <span th:case="'CANCELLED'" class="badge bg-danger">Đã huỷ</span>
+                                            <span th:case="*" class="badge bg-secondary" th:text="${order.status}">-</span>
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </article>
+</body>
+
+</html>

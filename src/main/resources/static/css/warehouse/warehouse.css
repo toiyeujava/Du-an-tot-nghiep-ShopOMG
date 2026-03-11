@@ -1,0 +1,183 @@
+/* =====================================================
+   WAREHOUSE MANAGEMENT — Custom CSS
+   ===================================================== */
+
+/* ---- KPI Stat Cards ---- */
+.wh-stat-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    border-left: 4px solid transparent;
+    transition: transform .15s, box-shadow .15s;
+}
+.wh-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,.10);
+}
+.wh-stat-card .icon-wrap {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; flex-shrink: 0;
+}
+.wh-stat-card .stat-label  { font-size: .72rem; text-transform: uppercase; letter-spacing: .8px; color: #888; font-weight: 700; }
+.wh-stat-card .stat-value  { font-size: 1.75rem; font-weight: 800; line-height: 1.1; color: #1a1a2e; }
+.wh-stat-card .stat-sub    { font-size: .75rem; color: #aaa; margin-top: .15rem; }
+
+.wh-stat-card.card-total   { border-left-color: #6366f1; }
+.wh-stat-card.card-warning { border-left-color: #f59e0b; }
+.wh-stat-card.card-danger  { border-left-color: #ef4444; }
+.wh-stat-card.card-ok      { border-left-color: #22c55e; }
+
+.bg-indigo-soft  { background: #eef2ff; color: #6366f1; }
+.bg-amber-soft   { background: #fef3c7; color: #d97706; }
+.bg-red-soft     { background: #fee2e2; color: #ef4444; }
+.bg-green-soft   { background: #dcfce7; color: #22c55e; }
+
+/* ---- Search / Filter Bar ---- */
+.wh-search-bar {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+    margin-bottom: 1.5rem;
+    display: flex; flex-wrap: wrap; gap: .75rem; align-items: center;
+}
+.wh-search-bar .search-input-wrap {
+    position: relative; flex: 1 1 260px;
+}
+.wh-search-bar .search-input-wrap .fa-search {
+    position: absolute; left: .85rem; top: 50%; transform: translateY(-50%); color: #b0b0b0;
+}
+.wh-search-bar input.form-control {
+    padding-left: 2.4rem;
+    border-radius: 10px;
+    border: 1.5px solid #e5e7eb;
+    font-size: .875rem;
+}
+.wh-search-bar input.form-control:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245,158,11,.12);
+}
+.wh-search-bar .form-select {
+    border-radius: 10px;
+    border: 1.5px solid #e5e7eb;
+    font-size: .875rem;
+    min-width: 160px;
+}
+
+/* ---- Main Data Table ---- */
+.wh-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    overflow: hidden;
+}
+.wh-card .wh-card-header {
+    padding: .9rem 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.wh-card .wh-card-header h6 { margin: 0; font-weight: 700; font-size: .9rem; }
+
+.wh-table thead th {
+    background: #f8fafc;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+    color: #64748b;
+    border-bottom: 2px solid #e2e8f0;
+    padding: .75rem 1rem;
+    white-space: nowrap;
+}
+.wh-table tbody td {
+    padding: .7rem 1rem;
+    vertical-align: middle;
+    font-size: .875rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+.wh-table tbody tr:last-child td { border-bottom: none; }
+.wh-table tbody tr:hover td { background: #fafbff; }
+
+/* SKU badge */
+.sku-badge {
+    font-family: 'Courier New', monospace;
+    background: #f1f5f9;
+    color: #475569;
+    padding: .2rem .55rem;
+    border-radius: 6px;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .5px;
+}
+
+/* Stock level indicators */
+.stock-level-bar {
+    height: 6px; border-radius: 99px;
+    background: #e5e7eb; overflow: hidden; min-width: 80px;
+}
+.stock-level-bar .fill { height: 100%; border-radius: 99px; }
+.stock-fill-ok      { background: #22c55e; }
+.stock-fill-low     { background: #f59e0b; }
+.stock-fill-danger  { background: #ef4444; }
+.stock-fill-none    { background: #cbd5e1; }
+
+.stock-badge-ok     { background: #dcfce7; color: #15803d; font-size: .72rem; }
+.stock-badge-low    { background: #fef3c7; color: #b45309; font-size: .72rem; }
+.stock-badge-danger { background: #fee2e2; color: #b91c1c; font-size: .72rem; }
+.stock-badge-none   { background: #f1f5f9; color: #94a3b8; font-size: .72rem; }
+
+/* ---- Log Table ---- */
+.log-type-in    { color: #22c55e; }
+.log-type-out   { color: #ef4444; }
+.log-type-adj   { color: #6366f1; }
+
+/* ---- Alerts / Warnings ---- */
+.wh-alert-row td:first-child { border-left: 3px solid #ef4444; }
+
+/* ---- Update Qty Form ---- */
+.qty-input-group .form-control {
+    text-align: center; font-weight: 700; font-size: 1rem; width: 80px;
+}
+.qty-btn { width: 32px; height: 32px; border-radius: 8px; padding: 0; display: flex; align-items: center; justify-content: center; }
+
+/* ---- Tabs ---- */
+.wh-tabs .nav-link {
+    border: none; border-radius: 10px 10px 0 0;
+    color: #64748b; font-weight: 600; font-size: .85rem;
+    padding: .6rem 1.2rem;
+}
+.wh-tabs .nav-link.active {
+    background: #fff; color: #f59e0b;
+    border-bottom: 2px solid #f59e0b;
+}
+.wh-tabs .nav-link:hover:not(.active) { background: #f8fafc; }
+
+/* ---- Modal Overrides ---- */
+.modal-content { border-radius: 18px; border: none; }
+.modal-header  { border-bottom: 1px solid #f1f5f9; padding: 1.25rem 1.5rem; }
+.modal-footer  { border-top: 1px solid #f1f5f9; }
+
+/* ---- Log Timeline ---- */
+.log-timeline { padding-left: 0; list-style: none; }
+.log-timeline li {
+    display: flex; gap: 1rem; padding: .6rem 0;
+    border-bottom: 1px dashed #f0f0f0;
+}
+.log-timeline li:last-child { border-bottom: none; }
+.log-dot {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; flex-shrink: 0; margin-top: .1rem;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+    .wh-stat-card { padding: 1rem; }
+    .wh-stat-card .stat-value { font-size: 1.3rem; }
+}

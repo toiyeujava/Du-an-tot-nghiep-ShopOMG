@@ -73,12 +73,17 @@
                                 <span th:unless="${acc.isActive}" class="badge-light-danger fw-bold">Đã khóa</span>
                             </td>
                             <td class="text-end pe-4">
-                                <!-- Actions based on role -->
-                                <div th:if="${acc.role?.name != 'ADMIN'}">
+                                <!-- Actions based on logged-in user -->
+                                <div th:if="${acc.username != #authentication.name}">
                                     <a th:href="@{/admin/accounts/{id}(id=${acc.id})}" class="btn-icon btn-icon-edit"
                                         title="Chi tiết">
                                         <i class="fas fa-eye"></i>
                                     </a>
+
+                                    <button type="button" class="btn-icon btn-icon-edit ms-2 text-warning" title="Đổi quyền"
+                                        th:onclick="openRoleModal([[${acc.id}]], [[${acc.role?.name}]], [[${acc.username}]])">
+                                        <i class="fas fa-user-shield"></i>
+                                    </button>
 
                                     <!-- Lock/Unlock button -->
                                     <form th:if="${acc.isActive}" th:action="@{/admin/accounts/{id}/lock(id=${acc.id})}"
@@ -97,8 +102,8 @@
                                         </button>
                                     </form>
                                 </div>
-                                <!-- Admin accounts have no actions -->
-                                <span th:if="${acc.role?.name == 'ADMIN'}" class="text-muted small">---</span>
+                                <!-- Logged in admin has no actions on self -->
+                                <span th:if="${acc.username == #authentication.name}" class="badge bg-success">Bạn</span>
                             </td>
                         </tr>
 
@@ -168,7 +173,123 @@
                     </div>
                 </div>
             </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- Change Role Modal -->
+        <div class="modal fade" id="changeRoleModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">Thay Đổi Phân Quyền</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="roleForm" method="post" action="">
+                        <div class="modal-body py-4">
+                            <p class="text-muted mb-4">Cập nhật vai trò cho người dùng <strong id="roleUsername" class="text-dark">User</strong>.</p>
+                            
+                            <div class="role-selector">
+                                <!-- Option 1: User -->
+                                <label class="role-card d-block position-relative border rounded-3 p-3 mb-3 cursor-pointer" for="roleUser">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 align-self-start">
+                                            <div class="form-check m-0">
+                                                <input class="form-check-input" type="radio" name="roleName" id="roleUser" value="USER" required>
+                                            </div>
+                                        </div>
+                                        <div class="ms-3 flex-grow-1">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <h6 class="mb-0 fw-bold text-dark">Khách hàng (USER)</h6>
+                                                <span class="badge bg-secondary ms-2 rounded-pill" style="font-size: 0.7em;">Mặc định</span>
+                                            </div>
+                                            <p class="text-muted small mb-0">Thực hiện đặt hàng, theo dõi đơn, đánh giá sản phẩm và quản lý thông tin cá nhân cơ bản.</p>
+                                        </div>
+                                    </div>
+                                    <div class="role-card-bg position-absolute top-0 start-0 w-100 h-100 rounded-3" style="background:#f8f9fa; z-index:-1; opacity:0; transition:0.2s;"></div>
+                                </label>
+                                
+                                <!-- Option 2: Admin -->
+                                <label class="role-card d-block position-relative border rounded-3 p-3 cursor-pointer" for="roleAdmin">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 align-self-start">
+                                            <div class="form-check m-0">
+                                                <input class="form-check-input" type="radio" name="roleName" id="roleAdmin" value="ADMIN" required>
+                                            </div>
+                                        </div>
+                                        <div class="ms-3 flex-grow-1">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <h6 class="mb-0 fw-bold text-primary">Quản trị viên (ADMIN)</h6>
+                                                <i class="fas fa-shield-alt text-primary ms-2 small"></i>
+                                            </div>
+                                            <p class="text-muted small mb-0">Toàn quyền kiểm soát hệ thống. Quản lý sản phẩm, đơn hàng, người dùng và thiết lập phân quyền.</p>
+                                        </div>
+                                    </div>
+                                    <div class="role-card-bg position-absolute top-0 start-0 w-100 h-100 rounded-3 bg-primary" style="opacity:0.03; z-index:-1; transition:0.2s"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="alert alert-warning mt-4 mb-0 d-flex align-items-center" role="alert" style="font-size: 0.85rem">
+                                <i class="fas fa-exclamation-triangle me-2 fa-lg"></i>
+                                <div>Trao quyền quản trị là một hành động nhạy cảm. Hãy đảm bảo bạn cấp quyền cho đúng người.</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <!-- CSRF token will be automatically added by Thymeleaf here due to standard form processing or manual placement if needed -->
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy bỏ</button>
+                            <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">Lưu Thay Đổi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <style>
+                .role-card { transition: all 0.2s ease; }
+                .role-card:hover { border-color: #adb5bd !important; transform: translateY(-1px); }
+                .form-check-input:checked ~ .role-card-bg { opacity: 0.05 !important; }
+                .role-card:has(.form-check-input:checked) { border-color: #0d6efd !important; box-shadow: 0 0 0 1px #0d6efd; }
+            </style>
+        </div>
+
+        <script>
+            function openRoleModal(id, currentRole, username) {
+                // Set form properties action
+                const form = document.getElementById('roleForm');
+                form.action = `/admin/accounts/${id}/role`;
+
+                // Set username display
+                document.getElementById('roleUsername').textContent = username;
+
+                // Select current role
+                if (currentRole === 'ADMIN') {
+                    document.getElementById('roleAdmin').checked = true;
+                } else {
+                    document.getElementById('roleUser').checked = true;
+                }
+
+                // Append CSRF explicitly if th:action wasn't used on form dynamically
+                const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+                const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+                
+                // Remove old CSRF
+                const oldInput = form.querySelector("input[name='_csrf']");
+                if(oldInput) oldInput.remove();
+                
+                if (csrfToken) {
+                    const input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = "_csrf";
+                    input.value = csrfToken;
+                    form.appendChild(input);
+                }
+
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('changeRoleModal'));
+                modal.show();
+            }
+        </script>
     </article>
 </body>
 

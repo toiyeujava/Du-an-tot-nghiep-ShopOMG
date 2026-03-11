@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -153,6 +154,21 @@ public class AdminAccountController {
         try {
             adminAccountService.lockAccount(id);
             redirectAttributes.addFlashAttribute("successMessage", "Khóa tài khoản thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/admin/accounts";
+    }
+
+    /**
+     * Change user role.
+     * Prevents admin from changing their own role.
+     */
+    @PostMapping("/{id}/role")
+    public String changeRole(@PathVariable Integer id, @RequestParam String roleName, Authentication authentication, RedirectAttributes redirectAttributes) {
+        try {
+            adminAccountService.updateRole(id, roleName, authentication.getName());
+            redirectAttributes.addFlashAttribute("successMessage", "Thay đổi quyền thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }

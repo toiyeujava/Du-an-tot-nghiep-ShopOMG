@@ -221,6 +221,7 @@
                                         style="transition: 0.3s;">
                                         <input type="hidden" name="productId" th:value="${product.id}">
                                         <input type="hidden" name="quantity" value="1">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                         <button type="submit"
                                             class="btn btn-link text-white text-decoration-none w-100 p-0">
                                             <i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
@@ -272,14 +273,21 @@
         // ===== CLEAN URL ON PAGE LOAD (prevents flicker) =====
         history.replaceState({}, '', '/products');
 
-        // ===== AJAX FETCH CORE =====
         function shopAjaxFetch(url) {
             var content = document.getElementById('ajaxContent');
             if (!content) return;
             content.style.opacity = '0.5';
             content.style.pointerEvents = 'none';
 
-            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+            const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+
+            fetch(url, { 
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+                } 
+            })
                 .then(function (r) { return r.text(); })
                 .then(function (html) {
                     var parser = new DOMParser();

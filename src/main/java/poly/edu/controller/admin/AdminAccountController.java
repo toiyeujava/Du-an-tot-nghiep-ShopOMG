@@ -6,18 +6,22 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import poly.edu.entity.Account;
 import poly.edu.entity.Order;
+import poly.edu.entity.Role;
+import poly.edu.repository.RoleRepository;
 import poly.edu.service.AdminAccountService;
 import poly.edu.service.ExcelExportService;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /**
  * AdminAccountController - Handles user account management.
@@ -65,6 +69,7 @@ public class AdminAccountController {
 
     private final AdminAccountService adminAccountService;
     private final ExcelExportService excelExportService;
+    private final RoleRepository roleRepository;
 
     /**
      * List all user accounts with pagination.
@@ -73,12 +78,21 @@ public class AdminAccountController {
     public String accounts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String role,
             Model model) {
 
         model.addAttribute("pageTitle", "Quản lý tài khoản");
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-        Page<Account> accountPage = adminAccountService.getAllUsers(pageable);
+        
+        Page<Account> accountPage;
+        if (role != null && !role.trim().isEmpty()) {
+            accountPage = adminAccountService.getUsersByRole(role, pageable);
+            model.addAttribute("selectedRole", role);
+        } else {
+            accountPage = adminAccountService.getAllUsers(pageable);
+            model.addAttribute("selectedRole", "");
+        }
 
         model.addAttribute("accounts", accountPage.getContent());
         model.addAttribute("currentPage", page);
@@ -88,6 +102,10 @@ public class AdminAccountController {
         // User statistics
         model.addAttribute("activeUsers", adminAccountService.getActiveUsersCount());
         model.addAttribute("lockedUsers", adminAccountService.getLockedUsersCount());
+
+        // Dynamic Roles for Role Change Modal
+        List<Role> roles = roleRepository.findAll();
+        model.addAttribute("roles", roles);
 
         return "admin/accounts";
     }
@@ -153,6 +171,21 @@ public class AdminAccountController {
         try {
             adminAccountService.lockAccount(id);
             redirectAttributes.addFlashAttribute("successMessage", "Khóa tài khoản thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/admin/accounts";
+    }
+
+    /**
+     * Change user role.
+     * Prevents admin from changing their own role.
+     */
+    @PostMapping("/{id}/role")
+    public String changeRole(@PathVariable Integer id, @RequestParam String roleName, Authentication authentication, RedirectAttributes redirectAttributes) {
+        try {
+            adminAccountService.updateRole(id, roleName, authentication.getName());
+            redirectAttributes.addFlashAttribute("successMessage", "Thay đổi quyền thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }

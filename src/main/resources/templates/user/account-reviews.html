@@ -484,13 +484,20 @@
                         return;
                     }
 
-                    const btn = this;
-                    btn.disabled = true;
-                    btn.textContent = 'Đang cập nhật...';
+                    // POST review to backend
+                    const submitBtn = document.getElementById('reviewSubmitBtn');
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Đang gửi...';
+
+                    const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+                    const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
 
                     fetch('/account/reviews/submit', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+                        },
                         body: JSON.stringify({
                             productId: parseInt(currentProductId),
                             rating: currentStarValue,

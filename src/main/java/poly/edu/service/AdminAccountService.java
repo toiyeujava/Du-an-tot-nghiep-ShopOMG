@@ -10,6 +10,8 @@ import poly.edu.entity.Account;
 import poly.edu.entity.Order;
 import poly.edu.repository.AccountRepository;
 import poly.edu.repository.OrderRepository;
+import poly.edu.repository.RoleRepository;
+import poly.edu.entity.Role;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +24,7 @@ public class AdminAccountService {
 
     private final AccountRepository accountRepository;
     private final OrderRepository orderRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -31,6 +34,13 @@ public class AdminAccountService {
      */
     public Page<Account> getAllUsers(Pageable pageable) {
         return accountRepository.findAll(pageable);
+    }
+
+    /**
+     * Get all users by a specific role with pagination
+     */
+    public Page<Account> getUsersByRole(String roleName, Pageable pageable) {
+        return accountRepository.findByRoleName(roleName, pageable);
     }
 
     /**
@@ -222,6 +232,26 @@ public class AdminAccountService {
             account.setGender(updatedInfo.getGender());
         }
 
+        return accountRepository.save(account);
+    }
+
+    /**
+     * Update user role.
+     * Prevents admin from changing their own role.
+     */
+    @Transactional
+    public Account updateRole(Integer userId, String baseRoleName, String currentUsername) {
+        Account account = accountRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Account not found with id: " + userId));
+
+        if (account.getUsername().equals(currentUsername)) {
+            throw new IllegalStateException("Không thể tự thay đổi quyền của chính mình!");
+        }
+
+        Role newRole = roleRepository.findByName(baseRoleName)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + baseRoleName));
+
+        account.setRole(newRole);
         return accountRepository.save(account);
     }
 }

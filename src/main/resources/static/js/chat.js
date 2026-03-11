@@ -14,7 +14,15 @@ function connect() {
 	var socket = new SockJS('/ws-chat');
 	stompClient = Stomp.over(socket);
 
-	stompClient.connect({}, function(frame) {
+	const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+	const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+	
+	const headers = {};
+	if (csrfHeader && csrfToken) {
+		headers[csrfHeader] = csrfToken;
+	}
+
+	stompClient.connect(headers, function(frame) {
 		console.log('Đã kết nối: ' + username);
 
 		stompClient.subscribe('/user/queue/messages', function(message) {
@@ -86,7 +94,14 @@ function loadHistory() {
     if (!username) return;
     
     // Gọi API lấy tin nhắn cũ
-    fetch('/api/chat/history?user=' + username)
+    const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+    const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+
+    fetch('/api/chat/history?user=' + username, {
+        headers: {
+            ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+        }
+    })
         .then(response => response.json())
         .then(messages => {
             messages.forEach(msg => {

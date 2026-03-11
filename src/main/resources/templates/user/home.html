@@ -1023,7 +1023,16 @@
                     url = '/cart/add-ajax';
                 }
 
-                fetch(url, { method: 'POST', body: formData })
+                const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+                const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+
+                fetch(url, { 
+                    method: 'POST', 
+                    body: formData,
+                    headers: {
+                        ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+                    }
+                })
                     .then(async res => {
                         if (res.redirected && res.url.includes('/login')) {
                             window.location.href = res.url;
@@ -1124,7 +1133,15 @@
                     var mainEl = document.querySelector(MAIN_SELECTOR);
                     if (mainEl) createLoadingOverlay(mainEl);
 
-                    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+                    const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+
+                    fetch(url, { 
+                        headers: { 
+                            'X-Requested-With': 'XMLHttpRequest',
+                            ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+                        } 
+                    })
                         .then(function (res) { return res.text(); })
                         .then(function (html) {
                             var parser = new DOMParser();
@@ -1458,7 +1475,15 @@
                 content.style.opacity = '0.5';
                 content.style.pointerEvents = 'none';
 
-                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+                const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+                
+                fetch(url, { 
+                    headers: { 
+                        'X-Requested-With': 'XMLHttpRequest',
+                        ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+                    } 
+                })
                     .then(function (r) { return r.text(); })
                     .then(function (html) {
                         var parser = new DOMParser();

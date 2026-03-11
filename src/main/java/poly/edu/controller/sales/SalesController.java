@@ -11,10 +11,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import poly.edu.entity.Account;
 import poly.edu.repository.AccountRepository;
 import poly.edu.repository.OrderRepository;
+import poly.edu.service.EmailService; // 4.9
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,6 +35,7 @@ public class SalesController {
 
     private final OrderRepository orderRepository;
     private final AccountRepository accountRepository;
+    private final EmailService emailService; // 4.9
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, @AuthenticationPrincipal UserDetails userDetails) {
@@ -94,5 +101,65 @@ public class SalesController {
         model.addAttribute("currentPage",    page);
 
         return "sales/orders";
+    }
+    
+    // Chi tiết đơn hàng
+    @GetMapping("/orders/{id}")
+    public String orderDetail(@PathVariable Integer id, Model model,
+                              @AuthenticationPrincipal UserDetails userDetails) {
+
+        poly.edu.entity.Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng #" + id));
+
+        model.addAttribute("pageTitle", "Chi tiết đơn #" + id);
+        model.addAttribute("order", order);
+        model.addAttribute("pendingCount", orderRepository.countByStatus("PENDING"));
+
+        if (userDetails != null) {
+            accountRepository.findByEmail(userDetails.getUsername())
+                .ifPresent(acc -> model.addAttribute("currentAccount", acc));
+        }
+
+        return "sales/order-detail";
+    }
+    
+ // 4.7: Cập nhật trạng thái đơn hàng
+    @PutMapping("/orders/{id}/status")
+    @ResponseBody
+    public ResponseEntity<?> updateStatus(@PathVariable Integer id,
+                                          @RequestBody Map<String, String> body) {
+        try {
+            poly.edu.entity.Order order = orderRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn #" + id));
+            order.setStatus(body.get("status"));
+            orderRepository.save(order);
+            emailService.sendOrderStatusEmail(order); // 4.9: gửi email thông báo trạng thái
+            return ResponseEntity.ok(Map.of("success", true, "message", "Cập nhật thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    // 4.8: Hủy đơn hàng
+    @PutMapping("/orders/{id}/cancel")
+    @ResponseBody
+    public ResponseEntity<?> cancelOrder(@PathVariable Integer id,
+                                         @RequestBody Map<String, String> body) {
+        try {
+            poly.edu.entity.Order order = orderRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn #" + id));
+            if ("COMPLETED".equals(order.getStatus()) || "CANCELLED".equals(order.getStatus())) {
+                return ResponseEntity.badRequest().body(Map.of("success", false,
+                        "message", "Không thể hủy đơn ở trạng thái này!"));
+            }
+            String reason = body.get("reason");
+            order.setStatus("CANCELLED");
+            order.setNote(reason != null ? "[Hủy bởi NV] " + reason : "[Hủy bởi nhân viên]");
+            orderRepository.save(order);
+            emailService.sendOrderCancelledEmail(order, reason); // 4.9: gửi email hủy đơn kèm lý do
+            return ResponseEntity.ok(Map.of("success", true, "message", "Đã hủy đơn hàng!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 }

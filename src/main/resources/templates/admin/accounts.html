@@ -146,7 +146,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="/admin/accounts/create" method="post">
+                        <form th:action="@{/admin/accounts/create}" method="post">
                             <div class="mb-3">
                                 <label class="form-label">Tên đăng nhập</label>
                                 <input type="text" name="username" class="form-control" required>

@@ -1003,16 +1003,21 @@
                     document.getElementById('modalCharCount').textContent = this.value.length + '/1000';
                 });
 
-                // Submit
                 document.getElementById('modalSubmitBtn').addEventListener('click', function () {
                     if (modalRating === 0) { showToast('Vui lòng chọn số sao!', false); return; }
                     const btn = this;
                     btn.disabled = true;
                     btn.textContent = 'Đang gửi...';
 
+                    const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+                    const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+
                     fetch('/account/reviews/submit', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+                        },
                         body: JSON.stringify({
                             productId: PRODUCT_ID,
                             rating: modalRating,

@@ -264,8 +264,14 @@
                 var formData = new FormData();
                 formData.append('quantity', newQty);
 
+                const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+                const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+
                 fetch('/cart/update/' + itemId, {
                     method: 'POST',
+                    headers: {
+                        ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+                    },
                     body: formData
                 })
                     .then(response => response.json())

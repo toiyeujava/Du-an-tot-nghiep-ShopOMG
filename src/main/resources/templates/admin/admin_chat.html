@@ -203,8 +203,15 @@
         var row = document.getElementById("user-row-" + username);
         if(row) row.classList.add('active');
 
+        const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+        const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+
         // 4. Load lịch sử chat
-        fetch('/api/chat/history?user=' + username)
+        fetch('/api/chat/history?user=' + username, {
+            headers: {
+                ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+            }
+        })
             .then(res => res.json())
             .then(messages => {
                 messages.forEach(msg => {
@@ -282,7 +289,14 @@
     }
     
     function loadActiveUsers() {
-        fetch('/api/chat/users').then(res => res.json()).then(users => {
+        const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+        const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+
+        fetch('/api/chat/users', {
+            headers: {
+                ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
+            }
+        }).then(res => res.json()).then(users => {
             users.forEach(user => renderUserInList(user));
         });
     }

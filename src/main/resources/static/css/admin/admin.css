@@ -42,18 +42,32 @@
     color: #7e8299;
     font-weight: 500;
     margin-bottom: 5px;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
 }
 
 .admin-menu a:hover {
     background-color: #f3f6f9;
     color: #3699ff;
+    transform: translateX(5px);
 }
 
 .admin-menu a.active {
     background-color: #e8f0fe;
     color: #3699ff;
     font-weight: 600;
+    box-shadow: 0 4px 10px rgba(54, 153, 255, 0.15);
+}
+
+.admin-menu a i {
+    width: 25px;
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.admin-menu a:hover i {
+    transform: scale(1.15);
 }
 
 .admin-menu a i {
@@ -64,28 +78,54 @@
 /* ===== STAT CARDS ===== */
 .stat-card {
     background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.03);
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: transform 0.3s;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    border: 1px solid rgba(0,0,0,0.02);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    z-index: -1;
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-5px) scale(1.01);
+}
+
+.stat-card:hover::after {
+    opacity: 1;
 }
 
 /* ===== ICON BOX ===== */
 .icon-box {
     width: 50px;
     height: 50px;
-    border-radius: 10px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover .icon-box {
+    transform: rotate(10deg) scale(1.1);
 }
 
 /* Icon Colors - Pastel */
@@ -112,9 +152,22 @@
 /* ===== CARD BOX ===== */
 .card-box {
     background: #fff;
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 25px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0,0,0,0.02);
+    animation: slideUpFade 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+@keyframes slideUpFade {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ===== TABLE STYLES ===== */
@@ -142,6 +195,18 @@
 .table-custom thead th:last-child {
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
+}
+
+.table-custom tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table-custom tbody tr:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transform: scale(1.002);
+    z-index: 10;
+    position: relative;
 }
 
 .table-custom tbody td {
@@ -194,15 +259,45 @@
 
 /* ===== ACTION BUTTONS ===== */
 .btn-icon {
-    width: 35px;
-    height: 35px;
-    border-radius: 8px;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
     border: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-icon::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+}
+
+.btn-icon:hover::before {
+    width: 120%;
+    height: 120%;
+}
+
+.btn-icon:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.btn-icon:active {
+    transform: translateY(1px);
+    box-shadow: none;
 }
 
 .btn-icon-edit {
@@ -213,6 +308,7 @@
 .btn-icon-edit:hover {
     background-color: #3699ff;
     color: white;
+    box-shadow: 0 4px 10px rgba(54, 153, 255, 0.3);
 }
 
 .btn-icon-delete {
@@ -223,6 +319,7 @@
 .btn-icon-delete:hover {
     background-color: #f64e60;
     color: white;
+    box-shadow: 0 4px 10px rgba(246, 78, 96, 0.3);
 }
 
 .btn-icon-view {
@@ -233,6 +330,7 @@
 .btn-icon-view:hover {
     background-color: #1bc5bd;
     color: white;
+    box-shadow: 0 4px 10px rgba(27, 197, 189, 0.3);
 }
 
 /* ===== PRODUCT IMAGE ===== */
@@ -245,20 +343,71 @@
 
 /* ===== FILTER BUTTONS ===== */
 .filter-btn {
-    padding: 8px 16px;
+    padding: 8px 18px;
     border: 1px solid #e4e6ef;
     background: #fff;
-    border-radius: 6px;
+    border-radius: 8px;
     font-weight: 500;
     color: #7e8299;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
 }
 
-.filter-btn:hover,
+.filter-btn:hover {
+    color: #000;
+    border-color: #b5b5c3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.filter-btn:active {
+    transform: translateY(0);
+}
+
 .filter-btn.active {
     background-color: #000;
     color: #fff;
     border-color: #000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Primary Button Animation Setup */
+.btn-primary {
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(13, 110, 253, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+}
+
+/* Modal Animations */
+.modal.fade .modal-dialog {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+    transform: scale(0.95) translateY(-20px);
+    opacity: 0;
+}
+
+.modal.show .modal-dialog {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+/* Inputs and Selects Focus Animation */
+.form-control, .form-select {
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    border-color: #86b7fe;
+    transform: translateY(-1px);
 }
 
 /* ===== ORDER STATUS ===== */

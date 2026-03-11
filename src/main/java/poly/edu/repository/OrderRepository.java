@@ -60,6 +60,17 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
         // Get recent orders
         List<Order> findTop10ByOrderByOrderDateDesc();
+        
+        // Search + filter for Sales
+        @Query("SELECT o FROM Order o WHERE " +
+                "(:status IS NULL OR o.status = :status) AND " +
+                "(:keyword IS NULL OR CAST(o.id AS string) LIKE %:keyword% OR " +
+                " LOWER(o.receiverName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                " LOWER(o.receiverPhone) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+                "ORDER BY o.orderDate DESC")
+        Page<Order> searchOrders(@Param("status") String status,
+                                 @Param("keyword") String keyword,
+                                 Pageable pageable);
 
         // Check if product variant has orders
         @Query("SELECT COUNT(od) > 0 FROM OrderDetail od " +

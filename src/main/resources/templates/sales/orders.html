@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sales-layout :: view(~{::title}, ~{::article})}">
+
+<head>
+    <title>Quản lý đơn hàng</title>
+</head>
+
+<body>
+<article>
+
+    <!-- ===== FILTER + SEARCH BAR ===== -->
+    <div class="card-box mb-4">
+        <div class="row g-3 align-items-end">
+
+            <!-- Tìm kiếm (4.5) -->
+            <div class="col-md-5">
+                <label class="form-label small fw-bold text-muted">Tìm kiếm đơn hàng</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
+                           placeholder="Mã đơn, tên khách, số điện thoại..."
+                           th:value="${keyword}">
+                </div>
+            </div>
+
+            <!-- Lọc trạng thái (4.4) -->
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">Trạng thái</label>
+                <select id="statusFilter" class="form-select">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="PENDING"   th:selected="${currentStatus == 'PENDING'}">⏳ Chờ xử lý</option>
+                    <option value="CONFIRMED" th:selected="${currentStatus == 'CONFIRMED'}">✅ Đã xác nhận</option>
+                    <option value="SHIPPING"  th:selected="${currentStatus == 'SHIPPING'}">🚚 Đang giao</option>
+                    <option value="COMPLETED" th:selected="${currentStatus == 'COMPLETED'}">🎉 Hoàn thành</option>
+                    <option value="CANCELLED" th:selected="${currentStatus == 'CANCELLED'}">❌ Đã huỷ</option>
+                </select>
+            </div>
+
+            <!-- Nút tìm + reset -->
+            <div class="col-md-3 d-flex gap-2">
+                <button class="btn btn-dark flex-fill" onclick="applyFilter()">
+                    <i class="fas fa-filter me-1"></i> Lọc
+                </button>
+                <a href="/sales/orders" class="btn btn-outline-secondary">
+                    <i class="fas fa-redo"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BẢNG ĐƠN HÀNG (4.3) ===== -->
+    <div class="card-box">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0">
+                <i class="fas fa-shopping-cart me-2 text-primary"></i>Danh sách đơn hàng
+                <span class="badge bg-primary-subtle text-primary ms-2"
+                      th:text="${orders.totalElements + ' đơn'}">0 đơn</span>
+            </h5>
+        </div>
+
+        <!-- Bảng -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:80px">Mã đơn</th>
+                        <th>Khách hàng</th>
+                        <th>SĐT</th>
+                        <th class="text-end">Tổng tiền</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th>Ngày đặt</th>
+                        <th class="text-center" style="width:100px">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Không có đơn nào -->
+                    <tr th:if="${orders.isEmpty()}">
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i>
+                            Không tìm thấy đơn hàng nào
+                        </td>
+                    </tr>
+
+                    <!-- Danh sách đơn -->
+                    <tr th:each="order : ${orders}">
+                        <td>
+                            <span class="fw-bold text-primary"
+                                  th:text="${'#' + order.id}">#0</span>
+                        </td>
+                        <td>
+                            <div class="fw-semibold"
+                                 th:text="${order.receiverName ?: order.account?.fullName ?: 'Khách vãng lai'}">-</div>
+                            <small class="text-muted"
+                                   th:text="${order.account?.email ?: ''}"></small>
+                        </td>
+                        <td th:text="${order.receiverPhone ?: '-'}">-</td>
+                        <td class="text-end fw-bold"
+                            th:text="${#numbers.formatInteger(order.finalAmount, 3, 'POINT') + ' ₫'}">0 ₫</td>
+                        <td class="text-center">
+                            <span th:switch="${order.status}">
+                                <span th:case="'PENDING'"   class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Chờ xử lý</span>
+                                <span th:case="'CONFIRMED'" class="badge bg-info text-dark"><i class="fas fa-check me-1"></i>Đã xác nhận</span>
+                                <span th:case="'SHIPPING'"  class="badge bg-primary"><i class="fas fa-truck me-1"></i>Đang giao</span>
+                                <span th:case="'COMPLETED'" class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Hoàn thành</span>
+                                <span th:case="'CANCELLED'" class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Đã huỷ</span>
+                                <span th:case="*"           class="badge bg-secondary" th:text="${order.status}">-</span>
+                            </span>
+                        </td>
+                        <td>
+                            <span th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy HH:mm')}">-</span>
+                        </td>
+                        <td class="text-center">
+                            <a th:href="@{/sales/orders/{id}(id=${order.id})}"
+                               class="btn-icon btn-icon-view" title="Xem chi tiết">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ===== PAGINATION ===== -->
+        <div th:if="${orders.totalPages > 1}"
+             class="d-flex justify-content-between align-items-center mt-4">
+            <small class="text-muted"
+                   th:text="'Trang ' + (${currentPage} + 1) + ' / ' + ${orders.totalPages}">Trang 1</small>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/sales/orders(page=${currentPage - 1}, status=${currentStatus}, keyword=${keyword})}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, orders.totalPages - 1)}"
+                        th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/sales/orders(page=${i}, status=${currentStatus}, keyword=${keyword})}"
+                           th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == orders.totalPages - 1} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/sales/orders(page=${currentPage + 1}, status=${currentStatus}, keyword=${keyword})}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <script>
+        function applyFilter() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            const status  = document.getElementById('statusFilter').value;
+            const params  = new URLSearchParams();
+            if (keyword) params.set('keyword', keyword);
+            if (status)  params.set('status', status);
+            params.set('page', '0');
+            window.location.href = '/sales/orders?' + params.toString();
+        }
+
+        // Nhấn Enter trong ô search cũng tìm kiếm
+        document.getElementById('searchInput').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') applyFilter();
+        });
+    </script>
+
+</article>
+</body>
+</html>

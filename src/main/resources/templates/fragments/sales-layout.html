@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:fragment="view(title, content)">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}" />
+    <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title th:replace="${title}">Sales Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/admin/admin.css}">
+</head>
+
+<body>
+
+    <div class="admin-sidebar">
+        <a href="/" class="sidebar-brand text-decoration-none">
+            <i class="fas fa-shopping-bag text-primary me-2"></i> SHOP OMG!
+        </a>
+
+        <div class="admin-menu">
+            <small class="text-uppercase text-muted fw-bold ms-3 mb-2 d-block"
+                style="font-size: 0.7rem; letter-spacing: 1px;">Tổng quan</small>
+            <a href="/sales/dashboard" th:classappend="${pageTitle == 'Dashboard - Bán hàng'} ? 'active'">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+
+            <small class="text-uppercase text-muted fw-bold ms-3 mb-2 mt-4 d-block"
+                style="font-size: 0.7rem; letter-spacing: 1px;">Quản lý đơn hàng</small>
+            <a href="/sales/orders" th:classappend="${pageTitle?.contains('đơn hàng')} ? 'active'">
+                <i class="fas fa-shopping-cart"></i> Đơn hàng
+                <span th:if="${pendingCount != null and pendingCount > 0}" class="badge bg-danger ms-auto"
+                    th:text="${pendingCount}">0</span>
+            </a>
+
+            <small class="text-uppercase text-muted fw-bold ms-3 mb-2 mt-4 d-block"
+                style="font-size: 0.7rem; letter-spacing: 1px;">Khách hàng</small>
+            <a href="/sales/customers" th:classappend="${pageTitle?.contains('khách hàng')} ? 'active'">
+                <i class="fas fa-users"></i> Tra cứu khách hàng
+            </a>
+
+            <form th:action="@{/logout}" method="post" class="mt-4 ms-3 mb-2 d-block">
+                <button type="submit"
+                    class="btn btn-link text-danger text-decoration-none p-0 d-flex align-items-center">
+                    <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="admin-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-0 text-dark" th:text="${pageTitle}">Dashboard</h4>
+                <small class="text-muted">
+                    Xin chào, <strong th:text="${currentAccount?.fullName ?: #authentication.name}">Nhân viên</strong>!
+                </small>
+            </div>
+            <div class="d-flex align-items-center bg-white p-2 rounded-pill shadow-sm">
+                <img th:src="${currentAccount?.avatar != null ? currentAccount.avatar : 'https://ui-avatars.com/api/?background=4CAF50&color=fff&name=Sales'}"
+                     class="rounded-circle" width="35" height="35"
+                     style="object-fit: cover;"
+                     th:alt="${currentAccount?.fullName ?: 'Sales Staff'}">
+                <span class="fw-bold ms-2 me-3 small"
+                    th:text="${currentAccount?.fullName ?: #authentication.name}">Sales Staff</span>
+                <span class="badge bg-success-subtle text-success small">
+                    <i class="fas fa-headset me-1"></i>Bán hàng
+                </span>
+            </div>
+        </div>
+
+        <div th:replace="${content}"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/admin/admin.js}"></script>
+    <script th:src="@{/js/sales/sales.js}"></script>
+</body>
+
+</html>

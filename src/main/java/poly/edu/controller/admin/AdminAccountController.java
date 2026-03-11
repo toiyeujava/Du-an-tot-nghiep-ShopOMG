@@ -78,12 +78,21 @@ public class AdminAccountController {
     public String accounts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String role,
             Model model) {
 
         model.addAttribute("pageTitle", "Quản lý tài khoản");
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-        Page<Account> accountPage = adminAccountService.getAllUsers(pageable);
+        
+        Page<Account> accountPage;
+        if (role != null && !role.trim().isEmpty()) {
+            accountPage = adminAccountService.getUsersByRole(role, pageable);
+            model.addAttribute("selectedRole", role);
+        } else {
+            accountPage = adminAccountService.getAllUsers(pageable);
+            model.addAttribute("selectedRole", "");
+        }
 
         model.addAttribute("accounts", accountPage.getContent());
         model.addAttribute("currentPage", page);

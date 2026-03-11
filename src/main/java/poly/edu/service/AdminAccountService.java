@@ -37,6 +37,13 @@ public class AdminAccountService {
     }
 
     /**
+     * Get all users by a specific role with pagination
+     */
+    public Page<Account> getUsersByRole(String roleName, Pageable pageable) {
+        return accountRepository.findByRoleName(roleName, pageable);
+    }
+
+    /**
      * Get user by ID
      * Algorithm: Direct lookup by primary key
      * Time Complexity: O(1)

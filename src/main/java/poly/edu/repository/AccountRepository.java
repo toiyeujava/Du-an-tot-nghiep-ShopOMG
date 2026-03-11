@@ -2,6 +2,8 @@ package poly.edu.repository;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -12,6 +14,9 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
     boolean existsByEmail(String email);
     boolean existsByUsername(String username);
     Optional<Account> findByUsername(String username);
+    
+    Page<Account> findByRoleName(String roleName, Pageable pageable);
+
     @Query("SELECT a.email FROM Account a WHERE a.role.id = 2")
     List<String> findAllUsernames();
 }

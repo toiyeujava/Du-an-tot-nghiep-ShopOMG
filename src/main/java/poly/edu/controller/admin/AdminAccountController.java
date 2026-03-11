@@ -13,12 +13,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import poly.edu.entity.Account;
 import poly.edu.entity.Order;
+import poly.edu.entity.Role;
+import poly.edu.repository.RoleRepository;
 import poly.edu.service.AdminAccountService;
 import poly.edu.service.ExcelExportService;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /**
  * AdminAccountController - Handles user account management.
@@ -66,6 +69,7 @@ public class AdminAccountController {
 
     private final AdminAccountService adminAccountService;
     private final ExcelExportService excelExportService;
+    private final RoleRepository roleRepository;
 
     /**
      * List all user accounts with pagination.
@@ -89,6 +93,10 @@ public class AdminAccountController {
         // User statistics
         model.addAttribute("activeUsers", adminAccountService.getActiveUsersCount());
         model.addAttribute("lockedUsers", adminAccountService.getLockedUsersCount());
+
+        // Dynamic Roles for Role Change Modal
+        List<Role> roles = roleRepository.findAll();
+        model.addAttribute("roles", roles);
 
         return "admin/accounts";
     }

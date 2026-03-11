@@ -65,8 +65,12 @@
                                 <div class="small text-muted" th:text="${acc.phone ?: '---'}">phone</div>
                             </td>
                             <td>
-                                <span th:if="${acc.role?.name == 'ADMIN'}" class="badge bg-dark">ADMIN</span>
-                                <span th:unless="${acc.role?.name == 'ADMIN'}" class="badge bg-secondary">USER</span>
+                                <span th:if="${acc.role?.name == 'ADMIN'}" class="badge bg-primary">ADMIN</span>
+                                <span th:if="${acc.role?.name == 'USER'}" class="badge bg-secondary">USER</span>
+                                <span th:if="${acc.role?.name == 'SALES'}" class="badge bg-info">SALES</span>
+                                <span th:if="${acc.role?.name == 'WAREHOUSE'}" class="badge bg-warning text-dark">WAREHOUSE</span>
+                                <span th:if="${acc.role?.name != 'ADMIN' and acc.role?.name != 'USER' and acc.role?.name != 'SALES' and acc.role?.name != 'WAREHOUSE'}" 
+                                      class="badge bg-dark" th:text="${acc.role?.name != null ? acc.role.name : 'NONE'}">ROLE</span>
                             </td>
                             <td>
                                 <span th:if="${acc.isActive}" class="badge-light-success fw-bold">Hoạt động</span>
@@ -192,42 +196,39 @@
                             <p class="text-muted mb-4">Cập nhật vai trò cho người dùng <strong id="roleUsername" class="text-dark">User</strong>.</p>
                             
                             <div class="role-selector">
-                                <!-- Option 1: User -->
-                                <label class="role-card d-block position-relative border rounded-3 p-3 mb-3 cursor-pointer" for="roleUser">
+                                <!-- Dynamic Options from Database -->
+                                <label th:each="r : ${roles}" class="role-card d-block position-relative border rounded-3 p-3 mb-3 cursor-pointer" th:for="'role' + ${r.name}">
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0 align-self-start">
                                             <div class="form-check m-0">
-                                                <input class="form-check-input" type="radio" name="roleName" id="roleUser" value="USER" required>
+                                                <input class="form-check-input" type="radio" name="roleName" th:id="'role' + ${r.name}" th:value="${r.name}" required>
                                             </div>
                                         </div>
                                         <div class="ms-3 flex-grow-1">
                                             <div class="d-flex align-items-center mb-1">
-                                                <h6 class="mb-0 fw-bold text-dark">Khách hàng (USER)</h6>
-                                                <span class="badge bg-secondary ms-2 rounded-pill" style="font-size: 0.7em;">Mặc định</span>
+                                                <h6 class="mb-0 fw-bold" 
+                                                    th:text="${r.name == 'ADMIN' ? 'Quản trị viên (ADMIN)' : (r.name == 'USER' ? 'Khách hàng (USER)' : r.name + ' ROLE')}"
+                                                    th:classappend="${r.name == 'ADMIN' ? 'text-primary' : (r.name == 'USER' ? 'text-dark' : 'text-success')}">
+                                                    Role Name
+                                                </h6>
+                                                <i th:if="${r.name == 'ADMIN'}" class="fas fa-shield-alt text-primary ms-2 small"></i>
+                                                <span th:if="${r.name == 'USER'}" class="badge bg-secondary ms-2 rounded-pill" style="font-size: 0.7em;">Mặc định</span>
+                                                <i th:if="${r.name == 'SALES'}" class="fas fa-chart-line text-success ms-2 small"></i>
+                                                <i th:if="${r.name == 'WAREHOUSE'}" class="fas fa-boxes text-success ms-2 small"></i>
                                             </div>
-                                            <p class="text-muted small mb-0">Thực hiện đặt hàng, theo dõi đơn, đánh giá sản phẩm và quản lý thông tin cá nhân cơ bản.</p>
+                                            <p class="text-muted small mb-0" 
+                                               th:text="${r.name == 'ADMIN' ? 'Toàn quyền kiểm soát hệ thống. Quản lý sản phẩm, đơn hàng, người dùng và thiết lập phân quyền.' : 
+                                                        (r.name == 'USER' ? 'Thực hiện đặt hàng, theo dõi đơn, đánh giá sản phẩm và quản lý thông tin cá nhân cơ bản.' : 
+                                                        (r.name == 'SALES' ? 'Quản lý đơn hàng, khuyến mãi, báo cáo doanh thu bán hàng.' : 
+                                                        (r.name == 'WAREHOUSE' ? 'Quản lý kho, nhập xuất tồn sản phẩm và xử lý nhãn giao hàng.' : 'Vai trò tùy chỉnh hệ thống.')))}">
+                                               Mô tả
+                                            </p>
                                         </div>
                                     </div>
-                                    <div class="role-card-bg position-absolute top-0 start-0 w-100 h-100 rounded-3" style="background:#f8f9fa; z-index:-1; opacity:0; transition:0.2s;"></div>
-                                </label>
-                                
-                                <!-- Option 2: Admin -->
-                                <label class="role-card d-block position-relative border rounded-3 p-3 cursor-pointer" for="roleAdmin">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 align-self-start">
-                                            <div class="form-check m-0">
-                                                <input class="form-check-input" type="radio" name="roleName" id="roleAdmin" value="ADMIN" required>
-                                            </div>
-                                        </div>
-                                        <div class="ms-3 flex-grow-1">
-                                            <div class="d-flex align-items-center mb-1">
-                                                <h6 class="mb-0 fw-bold text-primary">Quản trị viên (ADMIN)</h6>
-                                                <i class="fas fa-shield-alt text-primary ms-2 small"></i>
-                                            </div>
-                                            <p class="text-muted small mb-0">Toàn quyền kiểm soát hệ thống. Quản lý sản phẩm, đơn hàng, người dùng và thiết lập phân quyền.</p>
-                                        </div>
-                                    </div>
-                                    <div class="role-card-bg position-absolute top-0 start-0 w-100 h-100 rounded-3 bg-primary" style="opacity:0.03; z-index:-1; transition:0.2s"></div>
+                                    <!-- Dynamic Background -->
+                                    <div class="role-card-bg position-absolute top-0 start-0 w-100 h-100 rounded-3" 
+                                         th:classappend="${r.name == 'ADMIN' ? 'bg-primary' : (r.name == 'USER' ? '' : 'bg-success')}"
+                                         th:style="${r.name == 'ADMIN' ? 'opacity:0.03; z-index:-1; transition:0.2s;' : (r.name == 'USER' ? 'background:#f8f9fa; z-index:-1; opacity:0; transition:0.2s;' : 'opacity:0.03; z-index:-1; transition:0.2s;')}"></div>
                                 </label>
                             </div>
                             
@@ -263,10 +264,13 @@
                 document.getElementById('roleUsername').textContent = username;
 
                 // Select current role
-                if (currentRole === 'ADMIN') {
-                    document.getElementById('roleAdmin').checked = true;
+                const roleRadio = document.getElementById('role' + currentRole);
+                if (roleRadio) {
+                    roleRadio.checked = true;
                 } else {
-                    document.getElementById('roleUser').checked = true;
+                    // Fallback if current role not in list
+                    const fallbackUser = document.getElementById('roleUSER');
+                    if (fallbackUser) fallbackUser.checked = true;
                 }
 
                 // Append CSRF explicitly if th:action wasn't used on form dynamically

@@ -9,7 +9,12 @@ const Csrf = {
     getToken: () => document.querySelector("meta[name='_csrf']")?.getAttribute("content") || '',
     getHeader: () => document.querySelector("meta[name='_csrf_header']")?.getAttribute("content") || 'X-CSRF-TOKEN',
     headers: function () {
-        return { [this.getHeader()]: this.getToken(), 'Content-Type': 'application/json' };
+        const token = this.getToken();
+        const header = this.getHeader();
+        const headers = { 'Content-Type': 'application/json' };
+        // Tự động thêm CSRF nếu có (hoạt động cả khi bật lẫn tắt CSRF)
+        if (token && header) headers[header] = token;
+        return headers;
     }
 };
 

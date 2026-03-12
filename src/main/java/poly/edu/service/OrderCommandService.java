@@ -202,6 +202,76 @@ public class OrderCommandService {
         return finalizeOrder(savedOrder, detail.getTotal());
     }
 
+    /**
+     * Confirm QR payment: QR_PENDING → QR_CONFIRMED.
+     *
+     * Rubber Duck Explanation:
+     * -------------------------
+     * "Why not auto-confirm via bank webhook?"
+     * - VietQR is a static QR code with no callback mechanism
+     * - Admin must manually verify the bank transfer was received
+     * - This is the standard flow for small/medium e-commerce in Vietnam
+     *
+     * "Why record confirmedBy and confirmedAt?"
+     * - Audit trail: know WHO confirmed WHEN for dispute resolution
+     * - Required for financial compliance and accountability
+     *
+     * Time Complexity: O(1) single update.
+     */
+    @Transactional
+    public Order confirmQrPayment(Integer orderId, String confirmedByUsername) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        if (!"QR_PENDING".equals(order.getPaymentStatus())) {
+            throw new IllegalStateException(
+                    "Can only confirm orders with QR_PENDING payment status. Current: " + order.getPaymentStatus());
+        }
+
+        order.setPaymentStatus("QR_CONFIRMED");
+        order.setPaymentConfirmedAt(LocalDateTime.now());
+        order.setPaymentConfirmedBy(confirmedByUsername);
+        return orderRepository.save(order);
+    }
+
+    /**
+     * Reject QR payment: QR_PENDING → QR_REJECTED + cancel order.
+     *
+     * Rubber Duck Explanation:
+     * -------------------------
+     * "Why cancel the order when rejecting payment?"
+     * - If payment wasn't received, the order cannot proceed
+     * - Inventory must be restored so other customers can purchase
+     * - Reuses cancelOrder() logic to avoid duplicating inventory restoration code
+     *
+     * Algorithm:
+     * 1. Validate payment status is QR_PENDING
+     * 2. Set payment_status = QR_REJECTED with audit info
+     * 3. Cancel the order (restores inventory via cancelOrder logic)
+     *
+     * Time Complexity: O(n) where n = number of order items (inventory
+     * restoration).
+     * Transaction: ACID ensures either everything rolls back or commits.
+     */
+    @Transactional
+    public Order rejectQrPayment(Integer orderId, String rejectedByUsername) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        if (!"QR_PENDING".equals(order.getPaymentStatus())) {
+            throw new IllegalStateException(
+                    "Can only reject orders with QR_PENDING payment status. Current: " + order.getPaymentStatus());
+        }
+
+        order.setPaymentStatus("QR_REJECTED");
+        order.setPaymentConfirmedAt(LocalDateTime.now());
+        order.setPaymentConfirmedBy(rejectedByUsername);
+        orderRepository.save(order);
+
+        // Cancel the order and restore inventory
+        return cancelOrder(orderId);
+    }
+
     // ===== PRIVATE HELPER METHODS =====
 
     private Order buildOrder(Account account, String receiverName, String receiverPhone, String shippingAddress) {

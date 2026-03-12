@@ -132,12 +132,91 @@ class OrderCommandServiceTest {
         assertEquals("COMPLETED", result.getStatus());
     }
 
+    // ===== CONFIRM QR PAYMENT =====
+
+    @Test
+    void confirmQrPayment_qrPending_setsConfirmed() {
+        Order order = createTestOrderWithPayment(1, "PENDING", "QR_PENDING");
+        when(orderRepository.findById(1)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+
+        Order result = orderCommandService.confirmQrPayment(1, "admin@shop.com");
+
+        assertEquals("QR_CONFIRMED", result.getPaymentStatus());
+        assertNotNull(result.getPaymentConfirmedAt());
+        assertEquals("admin@shop.com", result.getPaymentConfirmedBy());
+        verify(orderRepository).save(order);
+    }
+
+    @Test
+    void confirmQrPayment_notQrPending_throwsException() {
+        Order order = createTestOrderWithPayment(1, "PENDING", "NOT_REQUIRED");
+        when(orderRepository.findById(1)).thenReturn(Optional.of(order));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> orderCommandService.confirmQrPayment(1, "admin"));
+        assertTrue(ex.getMessage().contains("QR_PENDING"));
+    }
+
+    @Test
+    void confirmQrPayment_alreadyConfirmed_throwsException() {
+        Order order = createTestOrderWithPayment(1, "PENDING", "QR_CONFIRMED");
+        when(orderRepository.findById(1)).thenReturn(Optional.of(order));
+
+        assertThrows(IllegalStateException.class,
+                () -> orderCommandService.confirmQrPayment(1, "admin"));
+    }
+
+    @Test
+    void confirmQrPayment_notFound_throwsException() {
+        when(orderRepository.findById(999)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class,
+                () -> orderCommandService.confirmQrPayment(999, "admin"));
+    }
+
+    // ===== REJECT QR PAYMENT =====
+
+    @Test
+    void rejectQrPayment_qrPending_setsRejectedAndCancels() {
+        Order order = createTestOrderWithPayment(1, "PENDING", "QR_PENDING");
+        ProductVariant variant = createTestVariant(10);
+        OrderDetail detail = createTestDetail(variant, 3);
+
+        when(orderRepository.findById(1)).thenReturn(Optional.of(order));
+        when(orderDetailRepository.findByOrderId(1)).thenReturn(List.of(detail));
+        when(productVariantRepository.save(any())).thenReturn(variant);
+        when(orderRepository.save(any())).thenReturn(order);
+
+        Order result = orderCommandService.rejectQrPayment(1, "admin@shop.com");
+
+        assertEquals("CANCELLED", result.getStatus());
+        assertEquals("QR_REJECTED", result.getPaymentStatus());
+        assertEquals("admin@shop.com", result.getPaymentConfirmedBy());
+        assertEquals(13, variant.getQuantity()); // 10 + 3 restored
+    }
+
+    @Test
+    void rejectQrPayment_notQrPending_throwsException() {
+        Order order = createTestOrderWithPayment(1, "PENDING", "QR_CONFIRMED");
+        when(orderRepository.findById(1)).thenReturn(Optional.of(order));
+
+        assertThrows(IllegalStateException.class,
+                () -> orderCommandService.rejectQrPayment(1, "admin"));
+    }
+
     // ===== HELPER METHODS =====
 
     private Order createTestOrder(int id, String status) {
         Order order = new Order();
         order.setId(id);
         order.setStatus(status);
+        return order;
+    }
+
+    private Order createTestOrderWithPayment(int id, String status, String paymentStatus) {
+        Order order = createTestOrder(id, status);
+        order.setPaymentStatus(paymentStatus);
         return order;
     }
 

@@ -67,6 +67,18 @@
                             <td>
                                 <span class="badge bg-light text-dark border"
                                     th:text="${order.paymentMethod ?: 'COD'}">COD</span>
+                                <span th:if="${order.paymentStatus == 'QR_PENDING'}"
+                                    class="badge bg-warning text-dark ms-1" title="Chờ xác nhận QR">
+                                    <i class="fas fa-clock"></i>
+                                </span>
+                                <span th:if="${order.paymentStatus == 'QR_CONFIRMED'}" class="badge bg-success ms-1"
+                                    title="Đã xác nhận QR">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                <span th:if="${order.paymentStatus == 'QR_REJECTED'}" class="badge bg-danger ms-1"
+                                    title="Từ chối QR">
+                                    <i class="fas fa-times"></i>
+                                </span>
                             </td>
                             <td>
                                 <!-- Status badge with dynamic class -->

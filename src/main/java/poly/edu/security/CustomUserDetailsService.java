@@ -44,14 +44,14 @@ public class CustomUserDetailsService implements UserDetailsService {
         String roleName = acc.getRole() != null ? acc.getRole().getName() : "USER";
         List<GrantedAuthority> auths = List.of(new SimpleGrantedAuthority("ROLE_" + roleName));
 
-        // ADMIN bỏ qua kiểm tra email verification
+        // ADMIN, SALES, WAREHOUSE (staff roles) chỉ cần isActive = true
         // USER phải verify email mới được đăng nhập
         boolean enabled;
-        if ("ADMIN".equals(roleName)) {
-            // Admin chỉ cần isActive = true
+        if ("ADMIN".equals(roleName) || "SALES".equals(roleName) || "WAREHOUSE".equals(roleName)) {
+            // Staff accounts chỉ cần isActive = true
             enabled = acc.getIsActive() != null && acc.getIsActive();
         } else {
-            // User cần cả isActive = true VÀ emailVerified = true
+            // User thường cần cả isActive = true VÀ emailVerified = true
             enabled = acc.getIsActive() != null && acc.getIsActive()
                     && acc.getEmailVerified() != null && acc.getEmailVerified();
         }

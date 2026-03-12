@@ -23,6 +23,13 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
         Page<Order> findByAccountIdOrderByOrderDateDesc(Integer accountId, Pageable pageable);
 
+        // Revenue aggregation for Dashboard Chart
+        @Query("SELECT YEAR(o.orderDate) as yy, MONTH(o.orderDate) as mm, SUM(o.totalAmount) as total " +
+               "FROM Order o WHERE o.status = 'COMPLETED' " +
+               "GROUP BY YEAR(o.orderDate), MONTH(o.orderDate) " +
+               "ORDER BY yy ASC, mm ASC")
+        List<Object[]> getMonthlyRevenue();
+
         List<Order> findByAccountIdAndStatusOrderByOrderDateDesc(Integer accountId, String status);
 
         // Find orders by date range

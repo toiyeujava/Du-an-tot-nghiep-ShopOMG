@@ -103,4 +103,19 @@ public class OrderQueryService {
     public List<Order> getOrdersByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         return orderRepository.findByDateRange(startDate, endDate);
     }
+
+    /**
+     * Count orders with QR_PENDING payment status (for admin dashboard).
+     * Time Complexity: O(n) - DB count query with index.
+     */
+    public long countQrPendingOrders() {
+        return orderRepository.countByPaymentStatus("QR_PENDING");
+    }
+
+    /**
+     * Get orders with QR_PENDING payment status (for admin filter).
+     */
+    public Page<Order> getQrPendingOrders(Pageable pageable) {
+        return orderRepository.findByPaymentStatus("QR_PENDING", pageable);
+    }
 }

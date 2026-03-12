@@ -25,9 +25,9 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
         // Revenue aggregation for Dashboard Chart
         @Query("SELECT YEAR(o.orderDate) as yy, MONTH(o.orderDate) as mm, SUM(o.totalAmount) as total " +
-               "FROM Order o WHERE o.status = 'COMPLETED' " +
-               "GROUP BY YEAR(o.orderDate), MONTH(o.orderDate) " +
-               "ORDER BY yy ASC, mm ASC")
+                        "FROM Order o WHERE o.status = 'COMPLETED' " +
+                        "GROUP BY YEAR(o.orderDate), MONTH(o.orderDate) " +
+                        "ORDER BY yy ASC, mm ASC")
         List<Object[]> getMonthlyRevenue();
 
         List<Order> findByAccountIdAndStatusOrderByOrderDateDesc(Integer accountId, String status);
@@ -67,21 +67,28 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
         // Get recent orders
         List<Order> findTop10ByOrderByOrderDateDesc();
-        
+
         // Search + filter for Sales
         @Query("SELECT o FROM Order o WHERE " +
-                "(:status IS NULL OR o.status = :status) AND " +
-                "(:keyword IS NULL OR CAST(o.id AS string) LIKE %:keyword% OR " +
-                " LOWER(o.receiverName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                " LOWER(o.receiverPhone) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-                "ORDER BY o.orderDate DESC")
+                        "(:status IS NULL OR o.status = :status) AND " +
+                        "(:keyword IS NULL OR CAST(o.id AS string) LIKE %:keyword% OR " +
+                        " LOWER(o.receiverName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        " LOWER(o.receiverPhone) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+                        "ORDER BY o.orderDate DESC")
         Page<Order> searchOrders(@Param("status") String status,
-                                 @Param("keyword") String keyword,
-                                 Pageable pageable);
+                        @Param("keyword") String keyword,
+                        Pageable pageable);
 
         // Check if product variant has orders
         @Query("SELECT COUNT(od) > 0 FROM OrderDetail od " +
                         "WHERE od.productVariant.product.id = :productId " +
                         "AND od.order.status IN ('PENDING', 'CONFIRMED', 'SHIPPING')")
         boolean hasActiveOrdersForProduct(@Param("productId") Integer productId);
+
+        // QR Payment queries
+        Page<Order> findByPaymentStatus(String paymentStatus, Pageable pageable);
+
+        Long countByPaymentStatus(String paymentStatus);
+
+        List<Order> findByPaymentStatusAndStatus(String paymentStatus, String status);
 }

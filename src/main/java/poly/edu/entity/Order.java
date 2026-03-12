@@ -55,6 +55,16 @@ public class Order {
     @Column(length = 500)
     private String note;
 
+    // QR Payment tracking fields
+    @Column(name = "payment_status", length = 30)
+    private String paymentStatus = "NOT_REQUIRED";
+
+    @Column(name = "payment_confirmed_at")
+    private LocalDateTime paymentConfirmedAt;
+
+    @Column(name = "payment_confirmed_by", length = 100)
+    private String paymentConfirmedBy;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<OrderDetail> orderDetails;
@@ -72,6 +82,9 @@ public class Order {
         }
         if (discountAmount == null) {
             discountAmount = BigDecimal.ZERO;
+        }
+        if (paymentStatus == null) {
+            paymentStatus = "NOT_REQUIRED";
         }
     }
 }

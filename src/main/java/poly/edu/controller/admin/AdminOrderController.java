@@ -13,6 +13,8 @@ import poly.edu.entity.Order;
 import poly.edu.service.DashboardService;
 import poly.edu.service.OrderService;
 
+import java.security.Principal;
+
 /**
  * AdminOrderController - Handles order management with State Machine pattern.
  * 
@@ -187,6 +189,59 @@ public class AdminOrderController {
             orderService.cancelOrder(id);
             redirectAttributes.addFlashAttribute("successMessage",
                     "Hủy đơn hàng thành công! Kho hàng đã được hoàn.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/admin/orders/" + id;
+    }
+
+    // ===== QR PAYMENT CONFIRMATION =====
+
+    /**
+     * Confirm QR payment (QR_PENDING → QR_CONFIRMED).
+     *
+     * Rubber Duck Explanation:
+     * -------------------------
+     * "Why is this in the order controller and not a separate PaymentController?"
+     * - QR confirmation is tightly coupled with order processing
+     * - Admin views it in the order detail page, not a separate payment page
+     * - Keeping it here follows the existing pattern (approve, ship, complete are
+     * all here)
+     *
+     * Business Rule:
+     * - Only QR_PENDING orders can be confirmed
+     * - Records admin username and timestamp for audit trail
+     */
+    @PostMapping("/{id}/confirm-payment")
+    public String confirmQrPayment(@PathVariable Integer id, Principal principal,
+            RedirectAttributes redirectAttributes) {
+        try {
+            String adminUsername = principal != null ? principal.getName() : "system";
+            orderService.confirmQrPayment(id, adminUsername);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Xác nhận thanh toán QR thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/admin/orders/" + id;
+    }
+
+    /**
+     * Reject QR payment (QR_PENDING → QR_REJECTED + cancel order).
+     *
+     * Business Rule:
+     * - Only QR_PENDING orders can be rejected
+     * - Rejecting payment also cancels the order and restores inventory
+     * - This is a destructive action, requires confirmation on the frontend
+     */
+    @PostMapping("/{id}/reject-payment")
+    public String rejectQrPayment(@PathVariable Integer id, Principal principal,
+            RedirectAttributes redirectAttributes) {
+        try {
+            String adminUsername = principal != null ? principal.getName() : "system";
+            orderService.rejectQrPayment(id, adminUsername);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Đã từ chối thanh toán QR. Đơn hàng đã bị hủy và kho hàng đã được hoàn.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }

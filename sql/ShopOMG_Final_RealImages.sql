@@ -1,4 +1,4 @@
-﻿/*
+/*
 ===========================================================================
    PROJECT: SHOP OMG - GRADUATION VERSION (REAL IMAGES EDITION)
    AUTHOR: Gemini & User
@@ -1333,3 +1333,7 @@ GO
 PRINT '✅ All ADMIN accounts updated successfully!';
 PRINT '🔓 Admin accounts can now login without email verification.';
 GO
+
+-- 12/3 --
+-- Thêm cột media_url vào bảng ProductReviews (chạy 1 lần duy nhất)
+ALTER TABLE ProductReviews ADD media_url NVARCHAR(2000) NULL;

@@ -103,6 +103,20 @@
                                 <p class="comment-display mb-0 fst-italic text-muted"
                                     th:if="${review.comment == null or review.comment.isEmpty()}"
                                     style="font-size:.88rem;">Không có nhận xét</p>
+
+                                <!-- Media Display -->
+                                <div class="media-display mt-2" th:if="${review.mediaUrl != null and !review.mediaUrl.isEmpty()}">
+                                    <th:block th:if="${review.mediaUrl.toLowerCase().endsWith('.mp4')}">
+                                        <video th:src="${review.mediaUrl}" controls
+                                            style="max-width:200px; max-height:200px; border-radius:8px; border:1px solid #eee;"></video>
+                                    </th:block>
+                                    <th:block th:unless="${review.mediaUrl.toLowerCase().endsWith('.mp4')}">
+                                        <img th:src="${review.mediaUrl}" alt="Review media"
+                                            style="max-width:150px; max-height:150px; object-fit:cover; border-radius:8px; border:1px solid #eee; cursor:pointer;"
+                                            onclick="window.open(this.src, '_blank')">
+                                    </th:block>
+                                </div>
+                                <div class="media-display mt-2" th:if="${review.mediaUrl == null or review.mediaUrl.isEmpty()}"></div>
                             </div>
                             <!-- Edit button -->
                             <button type="button" class="btn btn-sm edit-review-btn flex-shrink-0"
@@ -201,6 +215,33 @@
                                 <span id="reviewCharCount"
                                     style="position:absolute;bottom:8px;right:12px;font-size:.78rem;color:#aaa;">0/300</span>
                             </div>
+                        </div>
+
+                        <!-- Media Add Button -->
+                        <div class="mb-4">
+                            <label class="fw-semibold mb-2 d-block" style="font-size:.9rem;">Thêm ảnh/video (không bắt buộc)</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <!-- Upload Button Box -->
+                                <div id="mediaUploadBox"
+                                    style="width: 70px; height: 70px; border: 1.5px dashed #ccc; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: #ff3366; transition: all 0.2s; background: #fafafa;">
+                                    <i class="fas fa-camera" style="font-size: 1.2rem; margin-bottom: 4px;"></i>
+                                    <span style="font-size: 0.65rem; font-weight: 600;">Thêm ảnh</span>
+                                </div>
+                                <input type="file" id="mediaInput" accept="image/jpeg,image/png,image/gif,video/mp4" style="display: none;">
+
+                                <!-- Preview Box (Hidden by default) -->
+                                <div id="mediaPreviewContainer" style="display: none; position: relative;">
+                                    <div id="mediaPreviewBox"
+                                        style="width: 70px; height: 70px; border-radius: 8px; overflow: hidden; border: 1px solid #eee; background: #000; display: flex; align-items: center; justify-content: center;">
+                                        <!-- Content injected by JS -->
+                                    </div>
+                                    <button type="button" id="removeMediaBtn" class="btn btn-sm"
+                                        style="position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; padding: 0; border-radius: 50%; background: #fff; border: 1px solid #ddd; color: #555; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 0.7rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="text-muted mt-2 d-block" style="font-size: 0.75rem;">Định dạng hỗ trợ: JPG, PNG, MP4 (tối đa 10MB)</small>
                         </div>
 
                         <!-- Submit -->
@@ -406,6 +447,79 @@
                 let currentReviewId = null;
                 let currentCardEl = null;
                 let abandonModal = null;
+                let currentFile = null;
+
+                // ===== MEDIA UPLOAD LOGIC =====
+                const uploadBox = document.getElementById('mediaUploadBox');
+                const mediaInput = document.getElementById('mediaInput');
+                const previewContainer = document.getElementById('mediaPreviewContainer');
+                const previewBox = document.getElementById('mediaPreviewBox');
+                const removeBtn = document.getElementById('removeMediaBtn');
+
+                // Trigger file input
+                uploadBox.addEventListener('click', () => mediaInput.click());
+
+                // Handle file selection
+                mediaInput.addEventListener('change', function (e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    // Validate file type
+                    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4'];
+                    if (!validTypes.includes(file.type)) {
+                        showToast('Định dạng file không hỗ trợ. Vui lòng chọn JPG/PNG/MP4.', false);
+                        mediaInput.value = '';
+                        return;
+                    }
+
+                    // Validate file size (10MB)
+                    if (file.size > 10 * 1024 * 1024) {
+                        showToast('File quá lớn. Vui lòng chọn file dưới 10MB.', false);
+                        mediaInput.value = '';
+                        return;
+                    }
+
+                    currentFile = file;
+                    previewBox.innerHTML = ''; // Clear preview
+
+                    if (file.type.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(file);
+                        img.onload = () => URL.revokeObjectURL(img.src);
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'cover';
+                        previewBox.appendChild(img);
+                    } else if (file.type.startsWith('video/')) {
+                        const video = document.createElement('video');
+                        video.src = URL.createObjectURL(file);
+                        video.muted = true;
+                        video.style.width = '100%';
+                        video.style.height = '100%';
+                        video.style.objectFit = 'cover';
+                        previewBox.appendChild(video);
+                    }
+
+                    uploadBox.style.display = 'none';
+                    previewContainer.style.display = 'block';
+                });
+
+                // Handle remove media
+                removeBtn.addEventListener('click', function () {
+                    currentFile = null;
+                    mediaInput.value = '';
+                    previewBox.innerHTML = '';
+                    previewContainer.style.display = 'none';
+                    uploadBox.style.display = 'flex';
+                });
+
+                function resetMediaUpload() {
+                    currentFile = null;
+                    mediaInput.value = '';
+                    previewBox.innerHTML = '';
+                    previewContainer.style.display = 'none';
+                    uploadBox.style.display = 'flex';
+                }
 
                 // ===== OPEN EDIT MODAL =====
                 document.addEventListener('click', function (e) {
@@ -441,6 +555,7 @@
                     const textarea = document.getElementById('reviewText');
                     textarea.value = savedComment;
                     document.getElementById('reviewCharCount').textContent = savedComment.length + '/300';
+                    resetMediaUpload();
 
                     // Populate product info
                     document.getElementById('reviewProductList').innerHTML = `
@@ -492,17 +607,19 @@
                     const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
                     const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
 
+                    const formData = new FormData();
+                    formData.append('productId', currentProductId);
+                    formData.append('rating', currentStarValue);
+                    formData.append('comment', document.getElementById('reviewText').value.trim());
+                    if (currentReviewId) formData.append('reviewId', currentReviewId);
+                    if (currentFile) formData.append('media', currentFile);
+
                     fetch('/account/reviews/submit', {
                         method: 'POST',
                         headers: { 
-                            'Content-Type': 'application/json',
                             ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
                         },
-                        body: JSON.stringify({
-                            productId: parseInt(currentProductId),
-                            rating: currentStarValue,
-                            comment: document.getElementById('reviewText').value.trim()
-                        })
+                        body: formData
                     })
                         .then(res => res.json())
                         .then(data => {
@@ -544,19 +661,39 @@
                                     commentEl.textContent = newComment || 'Không có nhận xét';
                                 }
 
+                                // Update media display
+                                let mediaDisplay = card.querySelector('.media-display');
+                                if(!mediaDisplay) {
+                                    mediaDisplay = document.createElement('div');
+                                    mediaDisplay.className = 'media-display mt-2';
+                                    if(card.querySelector('.comment-display').nextElementSibling) {
+                                        card.querySelector('.comment-display').parentNode.insertBefore(mediaDisplay, card.querySelector('.comment-display').nextElementSibling);
+                                    } else {
+                                        card.querySelector('.comment-display').parentNode.appendChild(mediaDisplay);
+                                    }
+                                }
+                                mediaDisplay.innerHTML = '';
+                                if(data.review && data.review.mediaUrl) {
+                                    if (data.review.mediaUrl.toLowerCase().endsWith('.mp4')){
+                                        mediaDisplay.innerHTML = `<video src="${data.review.mediaUrl}" controls style="max-width:200px; max-height:200px; border-radius:8px; border:1px solid #eee;"></video>`;
+                                    } else {
+                                        mediaDisplay.innerHTML = `<img src="${data.review.mediaUrl}" alt="Review media" style="max-width:150px; max-height:150px; object-fit:cover; border-radius:8px; border:1px solid #eee; cursor:pointer;" onclick="window.open(this.src, '_blank')">`;
+                                    }
+                                }
+
                                 // Update star-badge color on star-badge element (for hover/card look)
                                 badge.style.background = '';  // class handles it
 
                                 showToast('✓ Cập nhật đánh giá thành công!', 'success');
                             } else {
-                                btn.disabled = false;
-                                btn.textContent = 'Cập nhật đánh giá';
+                                submitBtn.disabled = false;
+                                submitBtn.textContent = 'Cập nhật đánh giá';
                                 showToast(data.error || 'Đã xảy ra lỗi, vui lòng thử lại.', 'error');
                             }
                         })
                         .catch(() => {
-                            btn.disabled = false;
-                            btn.textContent = 'Cập nhật đánh giá';
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Cập nhật đánh giá';
                             showToast('Lỗi kết nối, vui lòng thử lại.', 'error');
                         });
                 });
@@ -564,7 +701,8 @@
                 // ===== BACK BUTTON =====
                 document.getElementById('reviewBackBtn').addEventListener('click', function () {
                     const hasChanges = currentStarValue !== parseInt(currentCardEl?.getAttribute('data-rating') || '0')
-                        || document.getElementById('reviewText').value.trim() !== (currentCardEl?.getAttribute('data-comment') || '');
+                        || document.getElementById('reviewText').value.trim() !== (currentCardEl?.getAttribute('data-comment') || '')
+                        || currentFile !== null;
 
                     if (!hasChanges) {
                         bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();

@@ -11,7 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import poly.edu.security.CustomOAuth2UserService; // Đảm bảo bạn đã tạo class này
+import poly.edu.security.CustomOAuth2UserService;
 
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -32,7 +32,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-        		//.csrf(csrf -> csrf.disable())
+        		// Exclude SePay webhook from CSRF — it is called by SePay servers (not the browser)
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/webhook/**"))
                 .userDetailsService(userDetailsService)
                 // FORCE EAGER CSRF TOKEN LOADING TO FIX THYMELEAF SESSION COMMIT EXCEPTIONS
                 .addFilterAfter(new OncePerRequestFilter() {
@@ -50,10 +52,13 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/sales/**").hasAnyRole("SALES", "ADMIN")
                         .requestMatchers("/warehouse/**").hasAnyRole("WAREHOUSE", "ADMIN")
-                        .requestMatchers("/account/sign-up", "/register", "/login",
+                         .requestMatchers("/account/sign-up", "/register", "/login",
                                 "/forgot-password", "/reset-password",
                                 "/verify-email", "/verify-email-sent", "/resend-verification",
-                                "/css/**", "/js/**", "/images/**", "/uploads/**", "/webjars/**")
+                                "/css/**", "/js/**", "/images/**", "/uploads/**", "/webjars/**",
+                                "/api/webhook/**",   // SePay calls this — no auth needed
+                                "/api/payment-events/**" // SSE — browser connects before auth check
+                         )
                         .permitAll()
                         .requestMatchers("/account/**", "/checkout/**").authenticated()
                         .anyRequest().permitAll())
@@ -93,7 +98,9 @@ public class SecurityConfig {
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/home")
                         .permitAll())
-                .exceptionHandling(ex -> ex.accessDeniedPage("/403"));
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(new org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint("/login"))
+                        .accessDeniedPage("/403"));
 
         return http.build();
     }

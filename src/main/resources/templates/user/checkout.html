@@ -937,28 +937,23 @@
                 });
             }
 
-            // Global addresses array - Load from localStorage or use default
-            let addressesData = JSON.parse(localStorage.getItem('checkoutAddresses')) || [
-                {
-                    id: 1,
-                    recipientName: 'Nguyễn Văn A',
-                    phone: '0909123456',
-                    city: 'TP. Hồ Chí Minh',
-                    district: 'Quận 1',
-                    detailAddress: '123 Đường Nguyễn Huệ, P. Bến Nghé',
-                    isDefault: true
-                }
-            ];
+            // ─── Address storage: keyed per logged-in account ────────────────
+            // We use the account email (injected by Thymeleaf) so one user's
+            // saved addresses cannot leak to a different account on the same
+            // browser.
+            const _accountKey = 'checkoutAddresses_' + (/*[[${#authentication != null ? #authentication.name : 'guest'}]]*/ 'guest');
 
-            // Save addresses to localStorage
+            // Global addresses array — start EMPTY; never pre-fill fake data
+            let addressesData = JSON.parse(localStorage.getItem(_accountKey)) || [];
+
+            // Save addresses to localStorage (keyed per account)
             function saveAddressesToStorage() {
-                localStorage.setItem('checkoutAddresses', JSON.stringify(addressesData));
+                localStorage.setItem(_accountKey, JSON.stringify(addressesData));
             }
 
             // Load addresses from storage
             function loadAddresses() {
-                // Load from localStorage
-                const stored = localStorage.getItem('checkoutAddresses');
+                const stored = localStorage.getItem(_accountKey);
                 if (stored) {
                     addressesData = JSON.parse(stored);
                 }
@@ -1566,6 +1561,38 @@
 
             // Load product when page loads
             loadBuyNowProduct();
+
+            // ─── Form submit guard: require a selected address ────────────────
+            document.getElementById('checkoutForm').addEventListener('submit', function (e) {
+                const recipientName = (document.getElementById('selectedRecipientName').value || '').trim();
+                const phone = (document.getElementById('selectedPhone').value || '').trim();
+                const address = (document.getElementById('selectedAddress').value || '').trim();
+
+                if (!recipientName || !phone || !address) {
+                    e.preventDefault(); // block submission
+
+                    // Show a friendly error banner above the address list
+                    let alertEl = document.getElementById('noAddressAlert');
+                    if (!alertEl) {
+                        alertEl = document.createElement('div');
+                        alertEl.id = 'noAddressAlert';
+                        alertEl.className = 'alert alert-danger d-flex align-items-center gap-2 mt-2';
+                        alertEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> <span>Vui lòng <strong>thêm và chọn địa chỉ giao hàng</strong> trước khi đặt hàng.</span>';
+                        const addressSection = document.getElementById('addressList');
+                        if (addressSection && addressSection.parentNode) {
+                            addressSection.parentNode.insertBefore(alertEl, addressSection.nextSibling);
+                        }
+                    }
+                    alertEl.style.display = 'flex';
+
+                    // Scroll to the error so the user sees it
+                    alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    // Hide any previous error
+                    const alertEl = document.getElementById('noAddressAlert');
+                    if (alertEl) alertEl.style.display = 'none';
+                }
+            });
         </script>
     </article>
 </body>

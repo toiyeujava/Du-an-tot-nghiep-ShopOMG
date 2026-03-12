@@ -45,7 +45,7 @@
                     <div th:each="order : ${orders}" class="card-box p-0 overflow-hidden mb-4 order-card"
                         th:attr="data-status=${order.status},
                                  data-order-id=${order.id},
-                                 data-has-unreviewed=${order.status == 'COMPLETED' and !reviewedProductIds.contains(order.orderDetails[0].productVariant.product.id)}">
+                                 data-has-unreviewed=${order.status == 'COMPLETED' and !reviewedOrderProductKeys.contains(order.id + '_' + order.orderDetails[0].productVariant.product.id)}">
 
                         <!-- Order Status Header -->
                         <div class="bg-light px-4 py-2 border-bottom d-flex justify-content-between align-items-center">
@@ -105,15 +105,15 @@
                                             th:onclick="'confirmCancel(' + ${order.id} + ')'">Hủy đơn</button>
                                     </span>
                                     <span th:if="${order.status == 'COMPLETED'}">
-                                        <!-- Chưa đánh giá → Viết đánh giá -->
+                                        <!-- Chưa đánh giá (theo đơn này) → Viết đánh giá -->
                                         <button
-                                            th:if="${!reviewedProductIds.contains(order.orderDetails[0].productVariant.product.id)}"
+                                            th:if="${!reviewedOrderProductKeys.contains(order.id + '_' + order.orderDetails[0].productVariant.product.id)}"
                                             type="button" class="btn btn-warning btn-sm px-4 fw-bold review-btn"
                                             th:attr="data-order-id=${order.id}">
                                             <i class="fas fa-star me-1"></i>Viết đánh giá
                                         </button>
-                                        <!-- Đã đánh giá → Xem đánh giá -->
-                                        <a th:if="${reviewedProductIds.contains(order.orderDetails[0].productVariant.product.id)}"
+                                        <!-- Đã đánh giá đơn này → Xem đánh giá -->
+                                        <a th:if="${reviewedOrderProductKeys.contains(order.id + '_' + order.orderDetails[0].productVariant.product.id)}"
                                             href="/account/reviews" class="btn btn-outline-success btn-sm px-4 fw-bold">
                                             <i class="fas fa-check-circle me-1"></i>Xem đánh giá
                                         </a>
@@ -748,6 +748,7 @@
             const STAR_LABELS = ['Rất tệ', 'Tệ', 'Ổn', 'Tốt', 'Xuất sắc'];
             let currentStarValue = 0;
             let currentProductId = null;  // product ID sent to backend
+            let currentOrderId   = null;  // order ID sent to backend (for per-order review key)
 
             // Open review modal when "Đánh giá" button is clicked
             document.addEventListener('click', function (e) {
@@ -770,6 +771,9 @@
                 const productList = document.getElementById('reviewProductList');
                 productList.innerHTML = '';
                 currentProductId = null;
+                // Capture the order ID from the card so we can submit it with the review
+                currentOrderId = card.getAttribute('data-order-id')
+                                   ? parseInt(card.getAttribute('data-order-id')) : null;
                 card.querySelectorAll('.order-detail-item').forEach((item, idx) => {
                     const productId = item.getAttribute('data-product-id') || '';
                     const name = item.getAttribute('data-product-name') || '';
@@ -883,17 +887,25 @@
                 const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
                 const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
 
+                const formData = new FormData();
+                formData.append('productId', currentProductId);
+                if (currentOrderId) {
+                    formData.append('orderId', currentOrderId);
+                }
+                formData.append('rating', currentStarValue);
+                formData.append('comment', document.getElementById('reviewText').value.trim());
+
+                const mediaInput = document.getElementById('reviewMediaInput');
+                if (mediaInput && mediaInput.files.length > 0) {
+                    formData.append('media', mediaInput.files[0]);
+                }
+
                 fetch('/account/reviews/submit', {
                     method: 'POST',
                     headers: { 
-                        'Content-Type': 'application/json',
                         ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
                     },
-                    body: JSON.stringify({
-                        productId: currentProductId,
-                        rating: currentStarValue,
-                        comment: document.getElementById('reviewText').value.trim()
-                    })
+                    body: formData
                 })
                     .then(res => res.json())
                     .then(data => {
@@ -942,6 +954,79 @@
                 const reviewModal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
                 if (reviewModal) reviewModal.hide();
             });
+
+            // ===== REAL-TIME ORDER STATUS POLLING =====
+            // Maps status to badge HTML
+            const STATUS_BADGES = {
+                PENDING:   '<span class="badge bg-warning text-dark">CHỜ XÁC NHẬN</span>',
+                CONFIRMED: '<span class="badge bg-info">ĐÃ XÁC NHẬN</span>',
+                SHIPPING:  '<span class="badge bg-primary">ĐANG GIAO</span>',
+                COMPLETED: '<span class="badge bg-success">HOÀN THÀNH</span>',
+                CANCELLED: '<span class="badge bg-danger">ĐÃ HỦY</span>',
+            };
+
+            function getReviewButtonHtml(orderId) {
+                return `<button type="button" class="btn btn-warning btn-sm px-4 fw-bold review-btn"
+                            data-order-id="${orderId}">
+                            <i class="fas fa-star me-1"></i>Viết đánh giá
+                        </button>`;
+            }
+
+            // Find the last badge container inside an order card
+            function updateOrderCard(card, newStatus) {
+                const oldStatus = card.getAttribute('data-status');
+                if (oldStatus === newStatus) return; // No change — skip
+
+                card.setAttribute('data-status', newStatus);
+
+                // Update the badge
+                const badgeContainer = card.querySelector('.bg-light.border-bottom div');
+                if (badgeContainer && STATUS_BADGES[newStatus]) {
+                    badgeContainer.innerHTML = STATUS_BADGES[newStatus];
+                }
+
+                // If newly COMPLETED → inject "Viết đánh giá" button (replacing cancel/nothing)
+                const footerBtnArea = card.querySelector('.mt-2.d-flex.justify-content-end.gap-2');
+                if (!footerBtnArea) return;
+
+                if (newStatus === 'COMPLETED') {
+                    const orderId = card.getAttribute('data-order-id');
+                    // Only inject if there's no review button already
+                    if (!footerBtnArea.querySelector('.review-btn')) {
+                        // Remove cancel button if present
+                        const cancelSpan = footerBtnArea.querySelector('span');
+                        if (cancelSpan) cancelSpan.remove();
+
+                        const reviewSpan = document.createElement('span');
+                        reviewSpan.innerHTML = getReviewButtonHtml(orderId);
+                        footerBtnArea.insertBefore(reviewSpan, footerBtnArea.querySelector('a'));
+                    }
+                } else if (newStatus === 'CANCELLED') {
+                    // Remove cancel + review buttons
+                    const cancelSpan = footerBtnArea.querySelector('span');
+                    if (cancelSpan) cancelSpan.remove();
+                }
+
+                // Flash animation to draw attention
+                card.style.transition = 'box-shadow 0.3s ease';
+                card.style.boxShadow = '0 0 0 3px rgba(40, 167, 69, 0.4)';
+                setTimeout(() => card.style.boxShadow = '', 1500);
+            }
+
+            function pollOrderStatuses() {
+                fetch('/account/orders/statuses')
+                    .then(res => { if (!res.ok) throw new Error(); return res.json(); })
+                    .then(statuses => {
+                        statuses.forEach(({ orderId, status }) => {
+                            const card = document.querySelector(`.order-card[data-order-id="${orderId}"]`);
+                            if (card) updateOrderCard(card, status);
+                        });
+                    })
+                    .catch(() => {}); // Silent fail — network blip is not fatal
+            }
+
+            // Start polling every 10 seconds
+            setInterval(pollOrderStatuses, 10000);
 
         </script>
     </article>

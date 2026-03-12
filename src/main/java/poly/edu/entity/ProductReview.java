@@ -24,6 +24,11 @@ public class ProductReview {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
+    /** Which order triggered this review (nullable for backwards compat with old reviews) */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = true)
+    private Order order;
+
     @Column(nullable = false)
     private Integer rating; // 1-5
 
@@ -32,6 +37,9 @@ public class ProductReview {
 
     @Column(name = "review_date")
     private LocalDateTime reviewDate;
+
+    @Column(name = "media_url", length = 2000)
+    private String mediaUrl;
 
     @PrePersist
     public void onCreate() {

@@ -5,6 +5,7 @@
 <head>
     <title>Quản lý Tồn kho - Kho hàng</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -33,7 +34,7 @@
                 <button class="nav-link" id="alert-tab" data-bs-toggle="tab" data-bs-target="#tab-alerts" type="button"
                     role="tab">
                     <i class="fas fa-bell me-1"></i> Cảnh báo hết hàng
-                    <span class="badge bg-danger ms-1" th:text="${lowStockCount ?: 22}">22</span>
+                    <span class="badge bg-danger ms-1" th:text="${(lowStockCount ?: 0) + (outOfStockCount ?: 0)}">0</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -232,9 +233,7 @@
                     <select class="form-select" id="categoryFilter" onchange="filterInventory()"
                         style="max-width: 180px;">
                         <option value="">Tất cả danh mục</option>
-                        <option value="giay">Giày thể thao</option>
-                        <option value="dep">Dép / Sandal</option>
-                        <option value="boot">Boot</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
                     </select>
                     <select class="form-select" id="stockFilter" onchange="filterInventory()" style="max-width: 170px;">
                         <option value="">Tất cả trạng thái</option>
@@ -243,18 +242,14 @@
                         <option value="danger">Hết hàng / Gần hết</option>
                         <option value="none">Hết hàng hoàn toàn</option>
                     </select>
-                    <button class="btn btn-warning fw-semibold" data-bs-toggle="modal"
-                        data-bs-target="#updateStockModal">
-                        <i class="fas fa-edit me-1"></i> Cập nhật số lượng
-                    </button>
-                </div>
+                    <!-- Nút Cập nhật số lượng đã chuyển xuống từng dòng thao tác riêng lẻ -->                </div>
 
                 <!-- Inventory Table -->
                 <div class="wh-card">
                     <div class="wh-card-header">
                         <h6><i class="fas fa-table me-2 text-indigo-500"></i>Bảng tồn kho chi tiết</h6>
                         <div class="d-flex gap-2">
-                            <span class="text-muted small" id="rowCount">Đang hiển thị <strong>15</strong> SKU</span>
+                            <span class="text-muted small" id="rowCount" th:text="'Đang hiển thị ' + ${totalSku} + ' SKU'">Đang hiển thị <strong>15</strong> SKU</span>
                             <button class="btn btn-sm btn-outline-secondary" onclick="exportCSV()">
                                 <i class="fas fa-download me-1"></i>Xuất CSV
                             </button>
@@ -277,273 +272,70 @@
                                 </tr>
                             </thead>
                             <tbody id="inventoryBody">
-
-                                <!-- Row 1 -->
-                                <tr data-sku="SKU-001" data-category="giay" data-stock-level="ok">
-                                    <td class="text-muted">1</td>
-                                    <td><span class="sku-badge">SKU-001</span></td>
+                                <!-- Dynamic Rows -->
+                                <tr th:each="v, iterStat : ${variants}"
+                                    th:data-sku="${v.sku}"
+                                    th:data-category="${v.product.categoryId}"
+                                    th:data-stock-level="${(v.quantity == null or v.quantity == 0) ? 'none' : (v.quantity <= 10 ? 'danger' : (v.quantity <= 20 ? 'low' : 'ok'))}">
+                                    <td class="text-muted" th:text="${iterStat.count}">1</td>
+                                    <td><span class="sku-badge" th:text="${v.sku}"></span></td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <img src="https://picsum.photos/seed/wh1/36/36" class="rounded-2" alt=""
-                                                style="object-fit:cover;">
-                                            <span class="fw-semibold small">Nike Air Max 270</span>
+                                            <img th:src="${v.product.image != null and !v.product.image.isEmpty() ? v.product.image : 'https://picsum.photos/seed/wh1/36/36'}" class="rounded-2" alt=""
+                                                style="object-fit:cover; width: 36px; height: 36px;">
+                                            <span class="fw-semibold small" th:text="${v.product.name}"></span>
                                         </div>
                                     </td>
-                                    <td><span class="badge bg-primary-subtle text-primary small">Giày thể thao</span>
-                                    </td>
-                                    <td><span class="d-inline-block rounded-circle border me-1"
-                                            style="width:14px;height:14px;background:#222;"></span><small>Đen</small>
-                                    </td>
-                                    <td><span class="fw-semibold">42</span></td>
-                                    <td class="text-center fw-bold text-success">124</td>
                                     <td>
-                                        <div class="stock-level-bar">
-                                            <div class="fill stock-fill-ok" style="width:85%"></div>
-                                        </div>
+                                        <span class="badge bg-primary-subtle text-primary small" th:text="${categoryMap[v.product.categoryId] != null ? categoryMap[v.product.categoryId] : 'Khác'}"></span>
                                     </td>
-                                    <td><span class="badge stock-badge-ok">Còn hàng tốt</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-warning me-1" title="Cập nhật"
-                                            onclick="openUpdateModal('SKU-001','Nike Air Max 270',124)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-info" title="Xem log"
-                                            onclick="openLogModal('SKU-001')">
-                                            <i class="fas fa-history"></i>
-                                        </button>
+                                    <td>
+                                        <!-- Circular color placeholder -->
+                                        <span class="d-inline-block rounded-circle border me-1" style="width:14px;height:14px;background:#ccc;"></span>
+                                        <small th:text="${v.color}"></small>
                                     </td>
+                                    <td><span class="fw-semibold" th:text="${v.size}"></span></td>
+                                    
+                                    <th:block th:with="qty=${v.quantity != null ? v.quantity : 0}">
+                                        <td th:class="'text-center fw-bold ' + (${qty == 0 ? 'text-secondary' : (qty <= 10 ? 'text-danger' : (qty <= 20 ? 'text-warning' : 'text-success'))})" th:text="${qty}"></td>
+                                        <td>
+                                            <div class="stock-level-bar">
+                                                <div th:class="'fill ' + (${qty == 0 ? 'stock-fill-none' : (qty <= 10 ? 'stock-fill-danger' : (qty <= 20 ? 'stock-fill-low' : 'stock-fill-ok'))})" 
+                                                     th:style="'width:' + (${qty > 100 ? 100 : qty}) + '%'"></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span th:class="'badge ' + (${qty == 0 ? 'stock-badge-none' : (qty <= 10 ? 'stock-badge-danger' : (qty <= 20 ? 'stock-badge-low' : 'stock-badge-ok'))})"
+                                                  th:text="${qty == 0 ? 'Hết hàng' : (qty <= 10 ? 'Gần hết hàng' : (qty <= 20 ? 'Sắp hết hàng' : 'Còn hàng tốt'))}">
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <button th:if="${qty > 0}" class="btn btn-sm btn-outline-warning me-1" title="Cập nhật"
+                                                th:data-sku="${v.sku}" th:data-name="${v.product.name}" th:data-qty="${qty}" th:data-id="${v.id}"
+                                                onclick="openUpdateModal(this.getAttribute('data-sku'), this.getAttribute('data-name'), this.getAttribute('data-qty'), this.getAttribute('data-id'))">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button th:if="${qty == 0}" class="btn btn-sm btn-warning me-1 fw-semibold" title="Nhập hàng"
+                                                th:data-sku="${v.sku}" th:data-name="${v.product.name}" th:data-qty="${qty}" th:data-id="${v.id}"
+                                                onclick="openUpdateModal(this.getAttribute('data-sku'), this.getAttribute('data-name'), this.getAttribute('data-qty'), this.getAttribute('data-id'))">
+                                                <i class="fas fa-plus me-1"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-info" title="Xem log"
+                                                th:data-sku="${v.sku}" th:data-id="${v.id}"
+                                                onclick="openLogModal(this.getAttribute('data-id'), this.getAttribute('data-sku'))">
+                                                <i class="fas fa-history"></i>
+                                            </button>
+                                        </td>
+                                    </th:block>
                                 </tr>
-
-                                <!-- Row 2 - LOW -->
-                                <tr data-sku="SKU-002" data-category="giay" data-stock-level="low">
-                                    <td class="text-muted">2</td>
-                                    <td><span class="sku-badge">SKU-002</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <img src="https://picsum.photos/seed/wh2/36/36" class="rounded-2" alt=""
-                                                style="object-fit:cover;">
-                                            <span class="fw-semibold small">Adidas Ultraboost 22</span>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge bg-primary-subtle text-primary small">Giày thể thao</span>
-                                    </td>
-                                    <td><span class="d-inline-block rounded-circle border me-1"
-                                            style="width:14px;height:14px;background:#fff;"></span><small>Trắng</small>
-                                    </td>
-                                    <td><span class="fw-semibold">40</span></td>
-                                    <td class="text-center fw-bold text-warning">8</td>
-                                    <td>
-                                        <div class="stock-level-bar">
-                                            <div class="fill stock-fill-low" style="width:20%"></div>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge stock-badge-low">Sắp hết hàng</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-warning me-1" title="Cập nhật"
-                                            onclick="openUpdateModal('SKU-002','Adidas Ultraboost 22',8)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-info" title="Xem log"
-                                            onclick="openLogModal('SKU-002')">
-                                            <i class="fas fa-history"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-
-                                <!-- Row 3 - DANGER -->
-                                <tr data-sku="SKU-003" data-category="dep" data-stock-level="danger">
-                                    <td class="text-muted">3</td>
-                                    <td><span class="sku-badge">SKU-003</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <img src="https://picsum.photos/seed/wh3/36/36" class="rounded-2" alt=""
-                                                style="object-fit:cover;">
-                                            <span class="fw-semibold small">Bitis Hunter Street</span>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge bg-success-subtle text-success small">Dép / Sandal</span>
-                                    </td>
-                                    <td><span class="d-inline-block rounded-circle border me-1"
-                                            style="width:14px;height:14px;background:#e74c3c;"></span><small>Đỏ</small>
-                                    </td>
-                                    <td><span class="fw-semibold">38</span></td>
-                                    <td class="text-center fw-bold text-danger">3</td>
-                                    <td>
-                                        <div class="stock-level-bar">
-                                            <div class="fill stock-fill-danger" style="width:8%"></div>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge stock-badge-danger">Gần hết hàng</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-warning me-1" title="Cập nhật"
-                                            onclick="openUpdateModal('SKU-003','Bitis Hunter Street',3)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-info" title="Xem log"
-                                            onclick="openLogModal('SKU-003')">
-                                            <i class="fas fa-history"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-
-                                <!-- Row 4 - NONE -->
-                                <tr data-sku="SKU-004" data-category="boot" data-stock-level="none">
-                                    <td class="text-muted">4</td>
-                                    <td><span class="sku-badge">SKU-004</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <img src="https://picsum.photos/seed/wh4/36/36" class="rounded-2" alt=""
-                                                style="object-fit:cover;">
-                                            <span class="fw-semibold small">Dr. Martens 1460</span>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge bg-secondary-subtle text-secondary small">Boot</span></td>
-                                    <td><span class="d-inline-block rounded-circle border me-1"
-                                            style="width:14px;height:14px;background:#8B4513;"></span><small>Nâu</small>
-                                    </td>
-                                    <td><span class="fw-semibold">39</span></td>
-                                    <td class="text-center fw-bold text-secondary">0</td>
-                                    <td>
-                                        <div class="stock-level-bar">
-                                            <div class="fill stock-fill-none" style="width:2%"></div>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge stock-badge-none">Hết hàng</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-warning me-1 fw-semibold" title="Nhập hàng"
-                                            onclick="openUpdateModal('SKU-004','Dr. Martens 1460',0)">
-                                            <i class="fas fa-plus me-1"></i>Nhập hàng
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-info" title="Xem log"
-                                            onclick="openLogModal('SKU-004')">
-                                            <i class="fas fa-history"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-
-                                <!-- Row 5 -->
-                                <tr data-sku="SKU-005" data-category="giay" data-stock-level="ok">
-                                    <td class="text-muted">5</td>
-                                    <td><span class="sku-badge">SKU-005</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <img src="https://picsum.photos/seed/wh5/36/36" class="rounded-2" alt=""
-                                                style="object-fit:cover;">
-                                            <span class="fw-semibold small">Converse Chuck Taylor</span>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge bg-primary-subtle text-primary small">Giày thể thao</span>
-                                    </td>
-                                    <td><span class="d-inline-block rounded-circle border me-1"
-                                            style="width:14px;height:14px;background:#3498db;"></span><small>Xanh</small>
-                                    </td>
-                                    <td><span class="fw-semibold">41</span></td>
-                                    <td class="text-center fw-bold text-success">67</td>
-                                    <td>
-                                        <div class="stock-level-bar">
-                                            <div class="fill stock-fill-ok" style="width:52%"></div>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge stock-badge-ok">Còn hàng tốt</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-warning me-1"
-                                            onclick="openUpdateModal('SKU-005','Converse Chuck Taylor',67)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-info" onclick="openLogModal('SKU-005')">
-                                            <i class="fas fa-history"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-
-                                <!-- Row 6 - LOW -->
-                                <tr data-sku="SKU-006" data-category="dep" data-stock-level="low">
-                                    <td class="text-muted">6</td>
-                                    <td><span class="sku-badge">SKU-006</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <img src="https://picsum.photos/seed/wh6/36/36" class="rounded-2" alt=""
-                                                style="object-fit:cover;">
-                                            <span class="fw-semibold small">Vans Old Skool</span>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge bg-success-subtle text-success small">Dép / Sandal</span>
-                                    </td>
-                                    <td><span class="d-inline-block rounded-circle border me-1"
-                                            style="width:14px;height:14px;background:#2ecc71;"></span><small>Xanh
-                                            lá</small></td>
-                                    <td><span class="fw-semibold">37</span></td>
-                                    <td class="text-center fw-bold text-warning">6</td>
-                                    <td>
-                                        <div class="stock-level-bar">
-                                            <div class="fill stock-fill-low" style="width:15%"></div>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge stock-badge-low">Sắp hết hàng</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-warning me-1"
-                                            onclick="openUpdateModal('SKU-006','Vans Old Skool',6)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-info" onclick="openLogModal('SKU-006')">
-                                            <i class="fas fa-history"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-
-                                <!-- Row 7 -->
-                                <tr data-sku="SKU-007" data-category="boot" data-stock-level="ok">
-                                    <td class="text-muted">7</td>
-                                    <td><span class="sku-badge">SKU-007</span></td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <img src="https://picsum.photos/seed/wh7/36/36" class="rounded-2" alt=""
-                                                style="object-fit:cover;">
-                                            <span class="fw-semibold small">Timberland 6-Inch Boot</span>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge bg-secondary-subtle text-secondary small">Boot</span></td>
-                                    <td><span class="d-inline-block rounded-circle border me-1"
-                                            style="width:14px;height:14px;background:#f39c12;"></span><small>Vàng
-                                            lúa</small></td>
-                                    <td><span class="fw-semibold">43</span></td>
-                                    <td class="text-center fw-bold text-success">45</td>
-                                    <td>
-                                        <div class="stock-level-bar">
-                                            <div class="fill stock-fill-ok" style="width:40%"></div>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge stock-badge-ok">Còn hàng tốt</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-warning me-1"
-                                            onclick="openUpdateModal('SKU-007','Timberland 6-Inch Boot',45)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-info" onclick="openLogModal('SKU-007')">
-                                            <i class="fas fa-history"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-
                             </tbody>
                         </table>
                     </div>
 
                     <!-- Pagination -->
-                    <div class="d-flex justify-content-between align-items-center p-3 border-top">
-                        <small class="text-muted">Hiển thị 1–7 / 248 SKU</small>
-                        <nav>
-                            <ul class="pagination pagination-sm mb-0">
-                                <li class="page-item disabled"><a class="page-link" href="#">«</a></li>
-                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                <li class="page-item"><span class="page-link">…</span></li>
-                                <li class="page-item"><a class="page-link" href="#">35</a></li>
-                                <li class="page-item"><a class="page-link" href="#">»</a></li>
-                            </ul>
-                        </nav>
-                    </div>
+                    <!-- <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                        <small class="text-muted" th:text="'Tổng số ' + ${totalSku} + ' SKU'"></small>
+                    </div> -->
                 </div>
             </div>
 
@@ -554,15 +346,15 @@
                 <div class="wh-card mt-0" style="border-radius: 0 16px 16px 16px;">
                     <div class="wh-card-header bg-danger-subtle">
                         <h6 class="text-danger"><i class="fas fa-bell me-2"></i>Danh sách cảnh báo tồn kho thấp</h6>
-                        <span class="badge bg-danger">22 SKU cần xử lý</span>
+                        <span class="badge bg-danger" th:text="${(lowStockCount ?: 0) + (outOfStockCount ?: 0)} + ' SKU cần xử lý'">0 SKU cần xử lý</span>
                     </div>
 
                     <!-- Alert summary banner -->
                     <div class="alert alert-warning m-3 mb-0 d-flex align-items-center gap-2 rounded-3" role="alert">
                         <i class="fas fa-triangle-exclamation fa-lg"></i>
                         <div>
-                            <strong>Lưu ý:</strong> Có <strong>5 SKU hết hàng hoàn toàn</strong> và
-                            <strong>17 SKU sắp hết</strong>. Vui lòng xử lý sớm để tránh ảnh hưởng đơn hàng.
+                            <strong>Lưu ý:</strong> Có <strong th:text="${outOfStockCount ?: 0} + ' SKU hết hàng hoàn toàn'">0 SKU hết hàng hoàn toàn</strong> và
+                            <strong th:text="${lowStockCount ?: 0} + ' SKU sắp hết'">0 SKU sắp hết</strong>. Vui lòng xử lý sớm để tránh ảnh hưởng đơn hàng.
                         </div>
                     </div>
 
@@ -581,101 +373,42 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="wh-alert-row">
-                                    <td><span class="sku-badge">SKU-004</span></td>
-                                    <td class="fw-semibold">Dr. Martens 1460</td>
-                                    <td>39</td>
-                                    <td>Nâu</td>
-                                    <td class="text-center"><span class="badge bg-danger px-3">0</span></td>
-                                    <td>
-                                        <div class="progress" style="height:6px;border-radius:9px;">
-                                            <div class="progress-bar bg-danger" style="width:100%"></div>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge stock-badge-none fw-semibold">Hết hàng</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-danger fw-semibold"
-                                            onclick="openUpdateModal('SKU-004','Dr. Martens 1460',0)">
-                                            <i class="fas fa-plus me-1"></i>Nhập hàng ngay
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr class="wh-alert-row" style="--bs-table-bg: transparent;">
-                                    <td><span class="sku-badge">SKU-002</span></td>
-                                    <td class="fw-semibold">Adidas Ultraboost 22</td>
-                                    <td>40</td>
-                                    <td>Trắng</td>
-                                    <td class="text-center"><span class="badge bg-warning text-dark px-3">8</span></td>
-                                    <td>
-                                        <div class="progress" style="height:6px;border-radius:9px;">
-                                            <div class="progress-bar bg-warning" style="width:30%"></div>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge stock-badge-low fw-semibold">Sắp hết</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-warning fw-semibold"
-                                            onclick="openUpdateModal('SKU-002','Adidas Ultraboost 22',8)">
-                                            <i class="fas fa-edit me-1"></i>Cập nhật
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr class="wh-alert-row">
-                                    <td><span class="sku-badge">SKU-003</span></td>
-                                    <td class="fw-semibold">Bitis Hunter Street</td>
-                                    <td>38</td>
-                                    <td>Đỏ</td>
-                                    <td class="text-center"><span class="badge bg-danger px-3">3</span></td>
-                                    <td>
-                                        <div class="progress" style="height:6px;border-radius:9px;">
-                                            <div class="progress-bar bg-danger" style="width:10%"></div>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge stock-badge-danger fw-semibold">Gần hết</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-danger fw-semibold"
-                                            onclick="openUpdateModal('SKU-003','Bitis Hunter Street',3)">
-                                            <i class="fas fa-plus me-1"></i>Nhập hàng ngay
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><span class="sku-badge">SKU-006</span></td>
-                                    <td class="fw-semibold">Vans Old Skool</td>
-                                    <td>37</td>
-                                    <td>Xanh lá</td>
-                                    <td class="text-center"><span class="badge bg-warning text-dark px-3">6</span></td>
-                                    <td>
-                                        <div class="progress" style="height:6px;border-radius:9px;">
-                                            <div class="progress-bar bg-warning" style="width:20%"></div>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge stock-badge-low fw-semibold">Sắp hết</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-warning fw-semibold"
-                                            onclick="openUpdateModal('SKU-006','Vans Old Skool',6)">
-                                            <i class="fas fa-edit me-1"></i>Cập nhật
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><span class="sku-badge">SKU-011</span></td>
-                                    <td class="fw-semibold">Puma RS-X Toys</td>
-                                    <td>43</td>
-                                    <td>Đa màu</td>
-                                    <td class="text-center"><span class="badge bg-warning text-dark px-3">4</span></td>
-                                    <td>
-                                        <div class="progress" style="height:6px;border-radius:9px;">
-                                            <div class="progress-bar bg-danger" style="width:12%"></div>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge stock-badge-danger fw-semibold">Gần hết</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-danger fw-semibold"
-                                            onclick="openUpdateModal('SKU-011','Puma RS-X Toys',4)">
-                                            <i class="fas fa-plus me-1"></i>Nhập hàng ngay
-                                        </button>
-                                    </td>
-                                </tr>
+                                <th:block th:each="v : ${variants}">
+                                    <tr class="wh-alert-row" th:if="${v.quantity == null or v.quantity <= 10}">
+                                        <td><span class="sku-badge" th:text="${v.sku}"></span></td>
+                                        <td class="fw-semibold" th:text="${v.product.name}"></td>
+                                        <td th:text="${v.size}"></td>
+                                        <td th:text="${v.color}"></td>
+                                        
+                                        <th:block th:with="qty=${v.quantity != null ? v.quantity : 0}">
+                                            <td class="text-center">
+                                                <span th:class="'badge px-3 ' + (${qty == 0 ? 'bg-danger' : 'bg-warning text-dark'})" th:text="${qty}"></span>
+                                            </td>
+                                            <td>
+                                                <div class="progress" style="height:6px;border-radius:9px;">
+                                                    <div th:class="'progress-bar ' + (${qty == 0 ? 'bg-danger' : 'bg-warning'})" 
+                                                         th:style="'width:' + (${qty == 0 ? 100 : qty * 10}) + '%'"></div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span th:class="'badge fw-semibold ' + (${qty == 0 ? 'stock-badge-none' : 'stock-badge-low'})"
+                                                      th:text="${qty == 0 ? 'Hết hàng' : 'Sắp hết'}"></span>
+                                            </td>
+                                            <td class="text-center">
+                                                <button th:if="${qty > 0}" class="btn btn-sm btn-warning fw-semibold"
+                                                    th:data-sku="${v.sku}" th:data-name="${v.product.name}" th:data-qty="${qty}" th:data-id="${v.id}"
+                                                    onclick="openUpdateModal(this.getAttribute('data-sku'), this.getAttribute('data-name'), this.getAttribute('data-qty'), this.getAttribute('data-id'))">
+                                                    <i class="fas fa-edit me-1"></i>Cập nhật
+                                                </button>
+                                                <button th:if="${qty == 0}" class="btn btn-sm btn-danger fw-semibold"
+                                                    th:data-sku="${v.sku}" th:data-name="${v.product.name}" th:data-qty="${qty}" th:data-id="${v.id}"
+                                                    onclick="openUpdateModal(this.getAttribute('data-sku'), this.getAttribute('data-name'), this.getAttribute('data-qty'), this.getAttribute('data-id'))">
+                                                    <i class="fas fa-plus me-1"></i>Nhập hàng ngay
+                                                </button>
+                                            </td>
+                                        </th:block>
+                                    </tr>
+                                </th:block>
                             </tbody>
                         </table>
                     </div>
@@ -691,25 +424,22 @@
                 <div class="wh-search-bar" style="border-radius: 0 14px 14px 14px;">
                     <div class="search-input-wrap">
                         <i class="fas fa-search"></i>
-                        <input type="text" class="form-control" placeholder="Tìm theo SKU, ghi chú…">
+                        <input type="text" id="logSearch" class="form-control" placeholder="Tìm theo SKU, ghi chú…" onkeyup="filterLogs()">
                     </div>
-                    <select class="form-select" style="max-width: 150px;">
+                    <select id="logTypeFilter" class="form-select" style="max-width: 150px;" onchange="filterLogs()">
                         <option value="">Tất cả loại</option>
                         <option value="in">Nhập kho</option>
                         <option value="out">Xuất kho</option>
                         <option value="adj">Điều chỉnh</option>
                     </select>
-                    <input type="date" class="form-control" style="max-width: 170px;">
-                    <input type="date" class="form-control" style="max-width: 170px;">
-                    <button class="btn btn-warning fw-semibold" data-bs-toggle="modal" data-bs-target="#addLogModal">
-                        <i class="fas fa-plus me-1"></i>Ghi log mới
-                    </button>
+                    <input type="date" id="logDateFrom" class="form-control" style="max-width: 170px;" onchange="filterLogs()">
+                    <input type="date" id="logDateTo" class="form-control" style="max-width: 170px;" onchange="filterLogs()">
                 </div>
 
                 <div class="wh-card" style="border-radius: 0 16px 16px 16px;">
                     <div class="wh-card-header">
                         <h6><i class="fas fa-clipboard-list me-2 text-info"></i>Lịch sử nhập / xuất kho</h6>
-                        <span class="text-muted small">32 giao dịch hôm nay</span>
+                        <span class="text-muted small" th:text="${todayLogsCount} + ' giao dịch hôm nay'">0 giao dịch hôm nay</span>
                     </div>
                     <div class="table-responsive">
                         <table class="table wh-table mb-0">
@@ -727,139 +457,46 @@
                                     <th>Người thực hiện</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="text-muted small">#LOG-0032</td>
-                                    <td class="small text-muted">11/03 15:42</td>
-                                    <td><span class="sku-badge">SKU-001</span></td>
-                                    <td class="small fw-semibold">Nike Air Max 270 / Đen / 42</td>
-                                    <td class="text-center">
-                                        <span class="badge bg-success-subtle text-success"><i
-                                                class="fas fa-arrow-down me-1"></i>Nhập kho</span>
-                                    </td>
-                                    <td class="text-center text-muted">114</td>
-                                    <td class="text-center text-success fw-bold">+10</td>
-                                    <td class="text-center fw-bold">124</td>
-                                    <td class="small text-muted">Hàng mới từ NCC Việt Nam</td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <img src="https://ui-avatars.com/api/?name=Ngoc+Linh&size=24&background=f59e0b&color=fff"
-                                                class="rounded-circle">
-                                            <small>Ngọc Linh</small>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted small">#LOG-0031</td>
-                                    <td class="small text-muted">11/03 14:18</td>
-                                    <td><span class="sku-badge">SKU-005</span></td>
-                                    <td class="small fw-semibold">Converse Chuck Taylor / Xanh / 41</td>
-                                    <td class="text-center">
-                                        <span class="badge bg-danger-subtle text-danger"><i
-                                                class="fas fa-arrow-up me-1"></i>Xuất kho</span>
-                                    </td>
-                                    <td class="text-center text-muted">72</td>
-                                    <td class="text-center text-danger fw-bold">-5</td>
-                                    <td class="text-center fw-bold">67</td>
-                                    <td class="small text-muted">Xử lý đơn #ORD-2198</td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <img src="https://ui-avatars.com/api/?name=Tuan+Anh&size=24&background=6366f1&color=fff"
-                                                class="rounded-circle">
-                                            <small>Tuấn Anh</small>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted small">#LOG-0030</td>
-                                    <td class="small text-muted">11/03 13:55</td>
-                                    <td><span class="sku-badge">SKU-007</span></td>
-                                    <td class="small fw-semibold">Timberland 6-Inch / Vàng / 43</td>
-                                    <td class="text-center">
-                                        <span class="badge bg-success-subtle text-success"><i
-                                                class="fas fa-arrow-down me-1"></i>Nhập kho</span>
-                                    </td>
-                                    <td class="text-center text-muted">25</td>
-                                    <td class="text-center text-success fw-bold">+20</td>
-                                    <td class="text-center fw-bold">45</td>
-                                    <td class="small text-muted">Nhập lô Q1/2026</td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <img src="https://ui-avatars.com/api/?name=Ngoc+Linh&size=24&background=f59e0b&color=fff"
-                                                class="rounded-circle">
-                                            <small>Ngọc Linh</small>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted small">#LOG-0029</td>
-                                    <td class="small text-muted">11/03 11:30</td>
-                                    <td><span class="sku-badge">SKU-003</span></td>
-                                    <td class="small fw-semibold">Bitis Hunter Street / Đỏ / 38</td>
-                                    <td class="text-center">
-                                        <span class="badge bg-indigo-soft" style="background:#eef2ff;color:#6366f1;"><i
-                                                class="fas fa-sliders me-1"></i>Điều chỉnh</span>
-                                    </td>
-                                    <td class="text-center text-muted">5</td>
-                                    <td class="text-center text-danger fw-bold">-2</td>
-                                    <td class="text-center fw-bold">3</td>
-                                    <td class="small text-muted">Hàng lỗi kiểm kê</td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <img src="https://ui-avatars.com/api/?name=Minh+Khoa&size=24&background=22c55e&color=fff"
-                                                class="rounded-circle">
-                                            <small>Minh Khoa</small>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted small">#LOG-0028</td>
-                                    <td class="small text-muted">11/03 10:07</td>
-                                    <td><span class="sku-badge">SKU-002</span></td>
-                                    <td class="small fw-semibold">Adidas Ultraboost 22 / Trắng / 40</td>
-                                    <td class="text-center">
-                                        <span class="badge bg-danger-subtle text-danger"><i
-                                                class="fas fa-arrow-up me-1"></i>Xuất kho</span>
-                                    </td>
-                                    <td class="text-center text-muted">12</td>
-                                    <td class="text-center text-danger fw-bold">-4</td>
-                                    <td class="text-center fw-bold">8</td>
-                                    <td class="small text-muted">Xử lý đơn #ORD-2195</td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <img src="https://ui-avatars.com/api/?name=Tuan+Anh&size=24&background=6366f1&color=fff"
-                                                class="rounded-circle">
-                                            <small>Tuấn Anh</small>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted small">#LOG-0027</td>
-                                    <td class="small text-muted">10/03 17:40</td>
-                                    <td><span class="sku-badge">SKU-006</span></td>
-                                    <td class="small fw-semibold">Vans Old Skool / Xanh lá / 37</td>
-                                    <td class="text-center">
-                                        <span class="badge bg-danger-subtle text-danger"><i
-                                                class="fas fa-arrow-up me-1"></i>Xuất kho</span>
-                                    </td>
-                                    <td class="text-center text-muted">10</td>
-                                    <td class="text-center text-danger fw-bold">-4</td>
-                                    <td class="text-center fw-bold">6</td>
-                                    <td class="small text-muted">Xử lý đơn #ORD-2190</td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <img src="https://ui-avatars.com/api/?name=Ngoc+Linh&size=24&background=f59e0b&color=fff"
-                                                class="rounded-circle">
-                                            <small>Ngọc Linh</small>
-                                        </div>
-                                    </td>
-                                </tr>
+                            <tbody id="logBody">
+                                <th:block th:if="${recentLogs != null and !recentLogs.isEmpty()}">
+                                    <tr th:each="log : ${recentLogs}" 
+                                        th:data-sku="${log.variant.sku}" 
+                                        th:data-type="${log.type}" 
+                                        th:data-timestamp="${#temporals.format(log.timestamp, 'yyyy-MM-dd')}">
+                                        <td class="text-muted small" th:text="'#LOG-' + ${#numbers.formatInteger(log.id, 4)}">#LOG-0032</td>
+                                        <td class="small text-muted" th:text="${#temporals.format(log.timestamp, 'dd/MM HH:mm')}">11/03 15:42</td>
+                                        <td><span class="sku-badge" th:text="${log.variant.sku}">SKU-001</span></td>
+                                        <td class="small fw-semibold" th:text="${log.variant.product.name} + ' / ' + ${log.variant.color} + ' / ' + ${log.variant.size}">Nike Air Max 270 / Đen / 42</td>
+                                        <td class="text-center">
+                                            <span th:if="${log.type == 'in'}" class="badge bg-success-subtle text-success"><i class="fas fa-arrow-down me-1"></i>Nhập kho</span>
+                                            <span th:if="${log.type == 'out'}" class="badge bg-danger-subtle text-danger"><i class="fas fa-arrow-up me-1"></i>Xuất kho</span>
+                                            <span th:if="${log.type == 'adj'}" class="badge bg-indigo-soft" style="background:#eef2ff;color:#6366f1;"><i class="fas fa-sliders me-1"></i>Điều chỉnh</span>
+                                        </td>
+                                        <td class="text-center text-muted" th:text="${log.oldQuantity}">114</td>
+                                        <td th:class="'text-center fw-bold ' + (${log.changeAmount > 0 ? 'text-success' : (log.changeAmount < 0 ? 'text-danger' : 'text-secondary')})" 
+                                            th:text="${log.changeAmount > 0 ? '+' : ''} + ${log.changeAmount}">+10</td>
+                                        <td class="text-center fw-bold" th:text="${log.newQuantity}">124</td>
+                                        <td class="small text-muted" th:text="${log.note}">Hàng mới từ NCC Việt Nam</td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <img th:src="'https://ui-avatars.com/api/?name=' + ${log.account.fullName} + '&size=24&background=random&color=fff'"
+                                                    class="rounded-circle">
+                                                <small th:text="${log.account.fullName}">Ngọc Linh</small>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </th:block>
+                                <th:block th:if="${recentLogs == null or recentLogs.isEmpty()}">
+                                    <tr>
+                                        <td colspan="10" class="text-center py-4 text-muted">Không có dữ liệu log gần đây.</td>
+                                    </tr>
+                                </th:block>
                             </tbody>
                         </table>
                     </div>
 
                     <!-- Pagination -->
-                    <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                    <!-- <div class="d-flex justify-content-between align-items-center p-3 border-top">
                         <small class="text-muted">Hiển thị 1–6 / 128 giao dịch</small>
                         <nav>
                             <ul class="pagination pagination-sm mb-0">
@@ -870,7 +507,7 @@
                                 <li class="page-item"><a class="page-link" href="#">»</a></li>
                             </ul>
                         </nav>
-                    </div>
+                    </div> -->
                 </div>
             </div>
 
@@ -936,8 +573,7 @@
                                         <input class="form-check-input d-none" type="radio" name="txType" id="typeAdj"
                                             value="adj">
                                         <label class="form-check-label w-100" for="typeAdj" style="cursor:pointer;">
-                                            <i class="fas fa-sliders text-indigo d-block mb-1"
-                                                style="color:#6366f1;"></i>
+                                            <i class="fas fa-sliders text-primary d-block mb-1"></i>
                                             <span class="small fw-semibold">Điều chỉnh</span>
                                         </label>
                                     </div>
@@ -987,129 +623,66 @@
             </div>
         </div>
 
-        <!-- =================================================
-         MODAL: GHI LOG MỚI
-    ================================================= -->
-        <div class="modal fade" id="addLogModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title fw-bold">
-                            <i class="fas fa-plus-circle text-success me-2"></i>
-                            Ghi log nhập / xuất kho
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form>
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold small">SKU sản phẩm <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control" placeholder="VD: SKU-001" id="logSkuInput">
-                                <div class="form-text">Nhập SKU để tự động điền thông tin sản phẩm</div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold small">Loại giao dịch <span
-                                        class="text-danger">*</span></label>
-                                <select class="form-select">
-                                    <option value="in">Nhập kho 📥</option>
-                                    <option value="out">Xuất kho 📤</option>
-                                    <option value="adj">Điều chỉnh ⚙️</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold small">Số lượng <span
-                                        class="text-danger">*</span></label>
-                                <input type="number" class="form-control" placeholder="0" min="1">
-                            </div>
-                            <div class="mb-0">
-                                <label class="form-label fw-semibold small">Ghi chú</label>
-                                <textarea class="form-control" rows="2"
-                                    placeholder="Mô tả lý do / nguồn hàng…"></textarea>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Huỷ</button>
-                        <button type="button" class="btn btn-success fw-semibold">
-                            <i class="fas fa-save me-1"></i>Lưu log
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- =================================================
-         MODAL: XEM LOG THEO SKU
-    ================================================= -->
-        <div class="modal fade" id="skuLogModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title fw-bold">
-                            <i class="fas fa-history text-info me-2"></i>
-                            Lịch sử giao dịch: <span id="log-sku-title" class="sku-badge ms-1">—</span>
+
+
+
+        <!-- ═══════════ SKU LOG MODAL ═══════════════════════════════ -->
+        <div class="modal fade" id="skuLogModal" tabindex="-1" aria-labelledby="skuLogModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-info bg-gradient text-white">
+                        <h5 class="modal-title" id="skuLogModalLabel">
+                            <i class="fas fa-history me-2"></i>
+                            Lịch sử nhập/xuất — <span id="log-sku-title">SKU</span>
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body">
-                        <ul class="log-timeline" id="logTimeline">
-                            <li>
-                                <div class="log-dot bg-success-subtle text-success"><i
-                                        class="fas fa-arrow-down fa-xs"></i></div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <span class="fw-semibold small text-success">Nhập kho +10</span>
-                                        <span class="text-muted small">11/03/2026 15:42</span>
-                                    </div>
-                                    <div class="text-muted small">Hàng mới từ NCC Việt Nam | Người thực hiện: Ngọc Linh
-                                    </div>
-                                    <div class="small mt-1">Tồn kho: <strong>114</strong> → <strong
-                                            class="text-success">124</strong></div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="log-dot bg-danger-subtle text-danger"><i class="fas fa-arrow-up fa-xs"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <span class="fw-semibold small text-danger">Xuất kho -3</span>
-                                        <span class="text-muted small">08/03/2026 09:15</span>
-                                    </div>
-                                    <div class="text-muted small">Xử lý đơn #ORD-2155 | Người thực hiện: Tuấn Anh</div>
-                                    <div class="small mt-1">Tồn kho: <strong>117</strong> → <strong
-                                            class="text-danger">114</strong></div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="log-dot bg-success-subtle text-success"><i
-                                        class="fas fa-arrow-down fa-xs"></i></div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <span class="fw-semibold small text-success">Nhập kho +30</span>
-                                        <span class="text-muted small">01/03/2026 10:00</span>
-                                    </div>
-                                    <div class="text-muted small">Nhập lô tháng 3 | Người thực hiện: Ngọc Linh</div>
-                                    <div class="small mt-1">Tồn kho: <strong>87</strong> → <strong
-                                            class="text-success">117</strong></div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="log-dot" style="background:#eef2ff;color:#6366f1;"><i
-                                        class="fas fa-sliders fa-xs"></i></div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <span class="fw-semibold small" style="color:#6366f1;">Điều chỉnh -2</span>
-                                        <span class="text-muted small">20/02/2026 14:30</span>
-                                    </div>
-                                    <div class="text-muted small">Hàng lỗi kiểm kê | Người thực hiện: Minh Khoa</div>
-                                    <div class="small mt-1">Tồn kho: <strong>89</strong> → <strong>87</strong></div>
-                                </div>
-                            </li>
-                        </ul>
+                    <div class="modal-body p-0">
+                        <!-- Variant info bar -->
+                        <div id="logVariantInfo" class="p-3 bg-light border-bottom d-flex flex-wrap gap-3 align-items-center">
+                            <span class="badge bg-secondary" id="logVariantProduct">–</span>
+                            <span class="small text-muted" id="logVariantDetail">–</span>
+                            <span class="ms-auto fw-bold" id="logVariantQty">–</span>
+                        </div>
+
+                        <!-- Loading spinner -->
+                        <div id="logLoading" class="text-center py-5">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Loading…</span>
+                            </div>
+                            <p class="text-muted mt-2 small">Đang tải lịch sử…</p>
+                        </div>
+
+                        <!-- Log table (hidden until data loads) -->
+                        <div id="logTableWrapper" class="d-none">
+                            <table class="table table-hover mb-0 small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-center" style="width:40px">#</th>
+                                        <th>Thời gian</th>
+                                        <th class="text-center">Loại</th>
+                                        <th class="text-end">Cũ</th>
+                                        <th class="text-center">Thay đổi</th>
+                                        <th class="text-end">Mới</th>
+                                        <th>Ghi chú</th>
+                                        <th>Người thực hiện</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logModalBody">
+                                    <!-- JS rendered -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Empty state -->
+                        <div id="logEmpty" class="d-none text-center py-5">
+                            <i class="fas fa-inbox text-muted fs-1 mb-2"></i>
+                            <p class="text-muted">Chưa có lịch sử nhập/xuất cho sản phẩm này.</p>
+                        </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                     </div>
                 </div>
             </div>

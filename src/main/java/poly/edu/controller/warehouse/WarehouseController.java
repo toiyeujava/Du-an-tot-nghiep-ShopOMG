@@ -12,6 +12,11 @@ import poly.edu.entity.ProductVariant;
 import poly.edu.repository.AccountRepository;
 import poly.edu.repository.OrderDetailRepository;
 import poly.edu.repository.ProductVariantRepository;
+import poly.edu.repository.CategoryRepository;
+import poly.edu.repository.InventoryLogRepository;
+import poly.edu.entity.Category;
+import poly.edu.entity.InventoryLog;
+import java.util.stream.Collectors;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,6 +39,8 @@ public class WarehouseController {
     private final AccountRepository accountRepository;
     private final OrderDetailRepository orderDetailRepository;
     private final poly.edu.repository.OrderRepository orderRepository;
+    private final CategoryRepository categoryRepository;
+    private final InventoryLogRepository inventoryLogRepository;
 
     // ─── Low-stock threshold (configurable) ──────────────────────
     private static final int LOW_STOCK_THRESHOLD = 10;
@@ -65,6 +72,9 @@ public class WarehouseController {
         injectCurrentAccount(userDetails, model);
 
         List<ProductVariant> allVariants = productVariantRepository.findAll();
+        List<Category> categories = categoryRepository.findAll();
+        Map<Integer, String> categoryMap = categories.stream()
+                .collect(Collectors.toMap(Category::getId, Category::getName));
 
         long totalSku        = allVariants.size();
         long lowStockCount   = allVariants.stream()
@@ -118,11 +128,15 @@ public class WarehouseController {
         List<Object[]> completedProductsToday = orderDetailRepository.getCompletedProductsSoldToday(startOfDay, endOfDay);
         model.addAttribute("completedProductsToday", completedProductsToday);
 
+        List<InventoryLog> recentLogs = inventoryLogRepository.findAllByOrderByTimestampDesc();
+        long todayLogsCount = inventoryLogRepository.countByTimestampBetween(startOfDay, endOfDay);
+
         model.addAttribute("pageTitle",       "Quản lý Tồn kho - Kho hàng");
         model.addAttribute("totalSku",        totalSku);
         model.addAttribute("lowStockCount",   lowStockCount);
         model.addAttribute("outOfStockCount",  outOfStockCount);
-        model.addAttribute("todayLogs",       0);
+        model.addAttribute("todayLogsCount",  todayLogsCount);
+        model.addAttribute("recentLogs",      recentLogs);
         model.addAttribute("unitsSoldToday",  unitsSoldToday != null ? unitsSoldToday : 0L);
         model.addAttribute("chartLabels",     chartLabels);
         model.addAttribute("chartValues",     chartValues);
@@ -132,6 +146,8 @@ public class WarehouseController {
         model.addAttribute("dailySoldValues", dailySoldValues);
         
         model.addAttribute("variants",        allVariants);
+        model.addAttribute("categories",      categories);
+        model.addAttribute("categoryMap",     categoryMap);
 
         return "warehouse/inventory";
     }
@@ -204,7 +220,8 @@ public class WarehouseController {
     @ResponseBody
     public ResponseEntity<?> updateQuantity(
             @PathVariable Integer id,
-            @RequestBody Map<String, Object> body) {
+            @RequestBody Map<String, Object> body,
+            @AuthenticationPrincipal UserDetails userDetails) {
         try {
             ProductVariant variant = productVariantRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy biến thể #" + id));
@@ -212,6 +229,7 @@ public class WarehouseController {
             String type = String.valueOf(body.getOrDefault("type", "adj"));
             int    qty  = Integer.parseInt(String.valueOf(body.getOrDefault("quantity", 0)));
             int    current = variant.getQuantity() != null ? variant.getQuantity() : 0;
+            String note = (String) body.getOrDefault("note", "");
 
             int newQty;
             switch (type) {
@@ -220,8 +238,24 @@ public class WarehouseController {
                 default    -> newQty = qty; // "adj" = set trực tiếp
             }
 
+            int effectiveChange = newQty - current;
+
             variant.setQuantity(newQty);
             productVariantRepository.save(variant);
+
+            poly.edu.entity.Account currentUser = accountRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("Lỗi xác thực người dùng"));
+
+            InventoryLog log = InventoryLog.builder()
+                .variant(variant)
+                .type(type)
+                .oldQuantity(current)
+                .changeAmount(effectiveChange)
+                .newQuantity(newQty)
+                .note(note)
+                .account(currentUser)
+                .build();
+            inventoryLogRepository.save(log);
 
             return ResponseEntity.ok(Map.of(
                 "success",    true,
@@ -255,6 +289,46 @@ public class WarehouseController {
             return ResponseEntity.ok(products);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * GET /warehouse/api/variants/{id}/logs
+     * Returns inventory log history for a specific variant as JSON.
+     */
+    @GetMapping("/api/variants/{id}/logs")
+    @ResponseBody
+    public ResponseEntity<?> getVariantLogs(@PathVariable Integer id) {
+        try {
+            ProductVariant variant = productVariantRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy biến thể #" + id));
+
+            List<InventoryLog> logs = inventoryLogRepository.findByVariantIdOrderByTimestampDesc(id);
+
+            List<Map<String, Object>> result = logs.stream().map(log -> {
+                Map<String, Object> m = new java.util.LinkedHashMap<>();
+                m.put("id", log.getId());
+                m.put("timestamp", log.getTimestamp().toString());
+                m.put("type", log.getType());
+                m.put("oldQuantity", log.getOldQuantity());
+                m.put("changeAmount", log.getChangeAmount());
+                m.put("newQuantity", log.getNewQuantity());
+                m.put("note", log.getNote());
+                m.put("accountName", log.getAccount() != null ? log.getAccount().getFullName() : "N/A");
+                return m;
+            }).toList();
+
+            return ResponseEntity.ok(Map.of(
+                "sku", variant.getSku(),
+                "productName", variant.getProduct() != null ? variant.getProduct().getName() : "N/A",
+                "color", variant.getColor() != null ? variant.getColor() : "",
+                "size", variant.getSize() != null ? variant.getSize() : "",
+                "currentQty", variant.getQuantity() != null ? variant.getQuantity() : 0,
+                "logs", result
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 }

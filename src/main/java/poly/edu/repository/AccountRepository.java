@@ -19,4 +19,15 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
 
     @Query("SELECT a.email FROM Account a WHERE a.role.id = 2")
     List<String> findAllUsernames();
+    
+    // Tìm kiếm khách hàng theo tên, email, SĐT
+    @Query("SELECT a FROM Account a WHERE a.role.name = 'USER' AND " +
+           "(:keyword IS NULL OR " +
+           " LOWER(a.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           " LOWER(a.email)    LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           " a.phone           LIKE CONCAT('%', :keyword, '%')) " +
+           "ORDER BY a.createdAt DESC")
+    Page<Account> searchCustomers(
+            @org.springframework.data.repository.query.Param("keyword") String keyword,
+            Pageable pageable);
 }

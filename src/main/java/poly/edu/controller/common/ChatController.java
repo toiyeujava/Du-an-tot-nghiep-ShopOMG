@@ -29,6 +29,11 @@ public class ChatController {
     
     @Autowired
     private AccountRepository accountRepository;
+    
+    private static final List<String> STAFF_ACCOUNTS = List.of(
+            "admin@shopomg.com",
+            "sales@shopomg.com"
+        );
 
     // --- PHẦN WEBSOCKET (REAL-TIME) ---
 
@@ -47,9 +52,15 @@ public class ChatController {
                 chatService.saveMessage(senderName, chatMessage);
             }
 
-            // --- QUAN TRỌNG: Gửi về đúng email Admin đang đăng nhập ---
-            // Sửa "admin" thành "admin@shopomg.com" (hoặc email bạn dùng đăng nhập)
-            messagingTemplate.convertAndSendToUser("admin@shopomg.com", "/queue/messages", chatMessage);
+//            // --- QUAN TRỌNG: Gửi về đúng email Admin đang đăng nhập ---
+//            // Sửa "admin" thành "admin@shopomg.com" (hoặc email bạn dùng đăng nhập)
+//            messagingTemplate.convertAndSendToUser("admin@shopomg.com", "/queue/messages", chatMessage);
+            
+         // Gửi riêng cho từng staff — convertAndSendToUser chỉ nhận 1 user mỗi lần
+            for (String staff : STAFF_ACCOUNTS) {
+                messagingTemplate.convertAndSendToUser(staff, "/queue/messages", (Object) chatMessage);
+            }
+            
             
         } catch (Exception e) {
             System.err.println("Lỗi gửi tin cho Admin: " + e.getMessage());

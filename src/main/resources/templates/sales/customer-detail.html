@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sales-layout :: view(~{::title}, ~{::article})}">
+<head><title th:text="'Khách hàng - ' + ${customer.fullName}">Chi tiết khách hàng</title></head>
+<body>
+<article>
+
+    <!-- BREADCRUMB -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="/sales/customers" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Danh sách
+        </a>
+        <h5 class="fw-bold mb-0" th:text="${customer.fullName}">Khách hàng</h5>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- ===== CỘT TRÁI: Profile (4.11) ===== -->
+        <div class="col-lg-4">
+            <div class="card-box text-center mb-4">
+                <img th:src="${customer.avatar != null ? customer.avatar :
+                              'https://ui-avatars.com/api/?background=4CAF50&color=fff&size=128&name=' + customer.fullName}"
+                     class="rounded-circle mb-3"
+                     width="90" height="90" style="object-fit:cover;">
+                <h5 class="fw-bold mb-1" th:text="${customer.fullName}">-</h5>
+                <span class="badge bg-success-subtle text-success mb-3">Khách hàng</span>
+
+                <div class="text-start d-flex flex-column gap-2 mt-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-envelope text-muted" style="width:18px"></i>
+                        <span class="small" th:text="${customer.email}">-</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-phone text-muted" style="width:18px"></i>
+                        <span class="small" th:text="${customer.phone ?: 'Chưa cập nhật'}">-</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-birthday-cake text-muted" style="width:18px"></i>
+                        <span class="small"
+                              th:text="${customer.birthDate != null ?
+                                        #temporals.format(customer.birthDate, 'dd/MM/yyyy') :
+                                        'Chưa cập nhật'}">-</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-venus-mars text-muted" style="width:18px"></i>
+                        <span class="small" th:text="${customer.gender != null ?
+                            (customer.gender == 'MALE' ? 'Nam' :
+                             customer.gender == 'FEMALE' ? 'Nữ' : 'Khác') :
+                            'Chưa cập nhật'}">-</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-calendar-alt text-muted" style="width:18px"></i>
+                        <span class="small"
+                              th:text="${customer.createdAt != null ?
+                                        'Tham gia: ' + #temporals.format(customer.createdAt, 'dd/MM/yyyy') :
+                                        'Chưa rõ'}">-</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-circle text-muted" style="width:18px"></i>
+                        <span class="small">
+                            <span th:if="${customer.isActive}"
+                                  class="badge bg-success-subtle text-success">Đang hoạt động</span>
+                            <span th:unless="${customer.isActive}"
+                                  class="badge bg-danger-subtle text-danger">Đã khóa</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thống kê nhanh -->
+            <div class="card-box">
+                <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2 text-primary"></i>Thống kê</h6>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small text-muted">Tổng đơn hàng</span>
+                    <span class="fw-bold" th:text="${orderHistory.totalElements}">0</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small text-muted">Đơn hoàn thành</span>
+                    <span class="fw-bold text-success" th:text="${completedCount}">0</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="small text-muted">Đơn đã hủy</span>
+                    <span class="fw-bold text-danger" th:text="${cancelledCount}">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== CỘT PHẢI: Lịch sử mua hàng (4.12) ===== -->
+        <div class="col-lg-8">
+            <div class="card-box">
+                <h5 class="fw-bold mb-4">
+                    <i class="fas fa-history me-2 text-primary"></i>Lịch sử mua hàng
+                    <small class="text-muted fw-normal" style="font-size:0.75rem;">
+                        (20 đơn gần nhất)
+                    </small>
+                </h5>
+
+                <div th:if="${orderHistory.isEmpty()}" class="text-center text-muted py-5">
+                    <i class="fas fa-shopping-bag fa-3x mb-3 d-block opacity-25"></i>
+                    Khách hàng chưa có đơn hàng nào
+                </div>
+
+                <div class="table-responsive" th:unless="${orderHistory.isEmpty()}">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Ngày đặt</th>
+                                <th class="text-end">Tổng tiền</th>
+                                <th class="text-center">Trạng thái</th>
+                                <th class="text-center">Chi tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="order : ${orderHistory}">
+                                <td class="fw-bold text-primary"
+                                    th:text="${'#' + order.id}">-</td>
+                                <td th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy HH:mm')}">-</td>
+                                <td class="text-end fw-bold"
+                                    th:text="${#numbers.formatInteger(order.finalAmount, 3, 'POINT') + ' ₫'}">0 ₫</td>
+                                <td class="text-center">
+                                    <span th:switch="${order.status}">
+                                        <span th:case="'PENDING'"   class="badge bg-warning text-dark">Chờ xử lý</span>
+                                        <span th:case="'CONFIRMED'" class="badge bg-info text-dark">Đã xác nhận</span>
+                                        <span th:case="'SHIPPING'"  class="badge bg-primary">Đang giao</span>
+                                        <span th:case="'COMPLETED'" class="badge bg-success">Hoàn thành</span>
+                                        <span th:case="'CANCELLED'" class="badge bg-danger">Đã huỷ</span>
+                                        <span th:case="*"           class="badge bg-secondary" th:text="${order.status}">-</span>
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <a th:href="@{/sales/orders/{id}(id=${order.id})}"
+                                       class="btn-icon btn-icon-view" title="Xem đơn hàng">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</article>
+</body>
+</html>

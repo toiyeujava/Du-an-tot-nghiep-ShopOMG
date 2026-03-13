@@ -17,6 +17,7 @@ import poly.edu.repository.OrderRepository;
 import poly.edu.service.AccountService;
 import poly.edu.service.CartService;
 import poly.edu.service.OrderCommandService;
+import poly.edu.service.NotificationService;
 
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -53,6 +54,7 @@ public class CheckoutController {
     private final AccountRepository accountRepository;
     private final AccountService accountService;
     private final OrderRepository orderRepository;
+    private final NotificationService notificationService;
 
     /**
      * Display checkout page with cart summary.
@@ -229,6 +231,7 @@ public class CheckoutController {
             order.setFinalAmount(BigDecimal.valueOf(finalAmt));
             
             orderRepository.save(order);
+            notificationService.notifyNewOrder(order);
 
             if ("QR".equalsIgnoreCase(paymentMethod)) {
                 return "redirect:/checkout/qr/" + order.getId();

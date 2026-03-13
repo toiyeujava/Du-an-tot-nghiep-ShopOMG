@@ -143,6 +143,9 @@ CREATE TABLE Orders (
     receiver_name NVARCHAR(100),
     receiver_phone VARCHAR(20),
     note NVARCHAR(500),
+    payment_status NVARCHAR(30) DEFAULT 'NOT_REQUIRED',
+    payment_confirmed_at DATETIME2 NULL,
+    payment_confirmed_by NVARCHAR(100) NULL,
     CONSTRAINT FK_Orders_Accounts FOREIGN KEY (account_id) REFERENCES Accounts(id)
 );
 
@@ -178,8 +181,11 @@ CREATE TABLE ProductReviews (
     rating INT CHECK (rating BETWEEN 1 AND 5),
     comment NVARCHAR(1000),
     review_date DATETIME DEFAULT GETDATE(),
+    order_id INT NULL,
+    media_url NVARCHAR(2000) NULL,
     CONSTRAINT FK_Reviews_Products FOREIGN KEY (product_id) REFERENCES Products(id),
-    CONSTRAINT FK_Reviews_Accounts FOREIGN KEY (account_id) REFERENCES Accounts(id)
+    CONSTRAINT FK_Reviews_Accounts FOREIGN KEY (account_id) REFERENCES Accounts(id),
+    CONSTRAINT FK_ProductReviews_Orders FOREIGN KEY (order_id) REFERENCES Orders(id)
 );
 GO
 

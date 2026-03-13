@@ -931,6 +931,16 @@
                             ? `<p class="text-muted" style="margin:0 0 12px;font-size:14px;line-height:1.65;">${r.comment}</p>`
                             : `<p class="text-muted" style="margin:0 0 12px;font-size:13px;font-style:italic;">Không có nhận xét</p>`;
 
+                        let mediaHtml = '';
+                        if (r.mediaUrl) {
+                            const isVideo = r.mediaUrl.match(/\.(mp4|webm|ogg)$/i);
+                            if (isVideo) {
+                                mediaHtml = `<video src="${r.mediaUrl}" controls style="max-height: 120px; max-width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid #eee;"></video>`;
+                            } else {
+                                mediaHtml = `<img src="${r.mediaUrl}" style="max-height: 120px; max-width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid #eee; cursor: pointer;" onclick="window.open(this.src, '_blank')">`;
+                            }
+                        }
+
                         return `
               <div class="rv-card" style="animation-delay:${idx * 0.04}s">
                 <div style="display:flex;gap:14px;align-items:flex-start;">
@@ -944,6 +954,7 @@
                     </div>
                     <div style="margin-bottom:8px;">${stars(r.rating, 14)}</div>
                     ${commentHtml}
+                    ${mediaHtml}
                   </div>
                 </div>
               </div>`;
@@ -1012,17 +1023,22 @@
                     const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
                     const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
 
+                    const formData = new FormData();
+                    formData.append('productId', PRODUCT_ID);
+                    formData.append('rating', modalRating);
+                    formData.append('comment', document.getElementById('modalComment').value.trim());
+
+                    const mediaInput = document.getElementById('reviewMediaInput');
+                    if (mediaInput && mediaInput.files.length > 0) {
+                        formData.append('media', mediaInput.files[0]);
+                    }
+
                     fetch('/account/reviews/submit', {
                         method: 'POST',
                         headers: { 
-                            'Content-Type': 'application/json',
                             ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
                         },
-                        body: JSON.stringify({
-                            productId: PRODUCT_ID,
-                            rating: modalRating,
-                            comment: document.getElementById('modalComment').value.trim()
-                        })
+                        body: formData
                     })
                         .then(r => r.json())
                         .then(data => {

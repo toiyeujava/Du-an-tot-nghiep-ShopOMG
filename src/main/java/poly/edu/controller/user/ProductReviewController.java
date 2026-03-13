@@ -55,6 +55,7 @@ public class ProductReviewController {
                     "avatar",     avatar,
                     "rating",     r.getRating(),
                     "comment",    r.getComment() != null ? r.getComment() : "",
+                    "mediaUrl",   r.getMediaUrl() != null ? r.getMediaUrl() : "",
                     "reviewDate", r.getReviewDate() != null
                                     ? r.getReviewDate().toLocalDate().toString() : ""
             );

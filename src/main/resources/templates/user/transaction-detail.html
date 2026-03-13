@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+
+<head>
+    <title>Chi tiết giao dịch - ShopOMG</title>
+</head>
+
+<body>
+<article class="container-fluid px-0">
+
+    <!-- ── TOP BAR ── -->
+    <div class="txd-topbar">
+        <div class="container d-flex align-items-center gap-3" style="max-width: 800px;">
+            <a href="/account/orders" class="txd-back-btn d-flex align-items-center">
+                <i class="fas fa-list me-2"></i> Giao dịch
+            </a>
+            <span class="txd-breadcrumb-sep">/</span>
+            <span class="txd-breadcrumb-cur" th:text="'Giao dịch #' + ${orderCode}">Giao dịch #OMG-0</span>
+        </div>
+    </div>
+
+    <!-- ── MAIN ── -->
+    <div class="txd-main">
+        <div class="container" style="max-width: 800px;">
+            <div class="txd-card">
+                
+                <!-- Amount Header -->
+                <div class="txd-amount-header">
+                    <div class="txd-in-badge">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="me-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Tiền vào
+                    </div>
+                    <div class="txd-amount" th:text="${'+ ' + #numbers.formatInteger(amount, 0, 'COMMA') + ' đ'}">+ 10,000 đ</div>
+                    <div class="txd-amount-words text-muted" style="font-size: 0.9rem; font-style: italic;">Thanh toán thành công</div>
+                </div>
+
+                <div class="txd-separator"></div>
+
+                <!-- Info Rows -->
+                <div class="txd-info-container">
+                    
+                    <div class="txd-row">
+                        <div class="txd-lbl">
+                            <i class="fas fa-university fa-fw me-2"></i> Tài khoản
+                        </div>
+                        <div class="txd-val d-flex align-items-center">
+                            <!-- MB Logo placeholder or custom image -->
+                            <div class="txd-bank-logo bg-light text-danger fw-bold me-3">MB</div>
+                            <div>
+                                <div class="fw-bold text-uppercase" style="font-size: 0.95rem;">Shop OMG - MB BANK</div>
+                                <div class="text-muted" style="font-size: 0.9rem;">0961342609</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="txd-row">
+                        <div class="txd-lbl">
+                            <i class="far fa-comment-dots fa-fw me-2"></i> Nội dung
+                        </div>
+                        <div class="txd-val" th:text="${transferContent}">Nguyen Dang Hoang Lam chuyen tien QR Ma giao dich Trace403113</div>
+                    </div>
+
+                    <div class="txd-row">
+                        <div class="txd-lbl">
+                            <i class="far fa-bookmark fa-fw me-2"></i> Mã tham chiếu
+                        </div>
+                        <div class="txd-val" th:text="${referenceCode}">FT26069439320540</div>
+                    </div>
+
+                    <div class="txd-row">
+                        <div class="txd-lbl">
+                            <i class="far fa-clock fa-fw me-2"></i> Giao dịch lúc
+                        </div>
+                        <div class="txd-val">
+                            <div th:text="${transactionDate}">18:43:00 10-03-2026</div>
+                        </div>
+                    </div>
+
+                    <div class="txd-row border-0 pb-0">
+                        <div class="txd-lbl">
+                            <i class="fas fa-robot fa-fw me-2"></i> Trạng thái
+                        </div>
+                        <div class="txd-val d-flex align-items-center">
+                            <div class="txd-status-dot me-2"></div>
+                            <span th:text="${paymentStatus == 'PAID'} ? 'Hoàn tất' : ${paymentStatus}">Hoàn tất</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <div class="text-center mt-4 mb-5">
+                <a href="/account/orders" class="btn btn-outline-secondary px-4 py-2" style="border-radius: 8px;">
+                     Quay lại danh sách Đơn hàng
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ STYLES ══ -->
+    <style>
+        body { background-color: #f3f4f6; }
+        
+        .txd-topbar {
+            background: #ffffff;
+            padding: 16px 0;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .txd-back-btn {
+            color: #374151; font-size: 1.1rem; text-decoration: none; font-weight: 600;
+        }
+        .txd-back-btn:hover { color: #111827; }
+        .txd-breadcrumb-sep { color: #9ca3af; font-size: 0.9rem; margin: 0 4px; }
+        .txd-breadcrumb-cur { color: #6b7280; font-size: 0.9rem; }
+
+        .txd-main { min-height: calc(100vh - 80px); }
+
+        .txd-card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+            padding-bottom: 32px;
+        }
+
+        /* ─ Header ─ */
+        .txd-amount-header {
+            text-align: center;
+            padding: 40px 20px 32px;
+        }
+        .txd-in-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            font-size: 0.85rem; font-weight: 600;
+            padding: 4px 12px; border-radius: 100px;
+            margin-bottom: 16px;
+        }
+        .txd-amount {
+            font-size: 2.25rem;
+            font-weight: 500;
+            color: #1f2937;
+            margin-bottom: 8px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .txd-separator {
+            width: 80%;
+            height: 1px;
+            background: #f3f4f6;
+            margin: 0 auto;
+        }
+
+        /* ─ Info Rows ─ */
+        .txd-info-container {
+            padding: 32px 48px;
+        }
+        .txd-row {
+            display: flex;
+            padding: 24px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        @media (max-width: 600px) {
+            .txd-info-container { padding: 24px 20px; }
+            .txd-row { flex-direction: column; gap: 8px; padding: 16px 0; }
+        }
+        .txd-lbl {
+            width: 200px;
+            flex-shrink: 0;
+            color: #6b7280;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+        }
+        .txd-lbl i {
+            color: #9ca3af;
+            font-size: 1.1rem;
+        }
+        .txd-val {
+            flex-grow: 1;
+            color: #374151;
+            font-size: 0.95rem;
+            font-weight: 500;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        
+        .txd-bank-logo {
+            width: 48px; height: 48px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid #e5e7eb;
+            font-size: 1.2rem;
+        }
+        
+        .txd-status-dot {
+            width: 8px; height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+        }
+
+        /* ─ Dark mode (optional/adaptive) ─ */
+        [data-theme="dark"] .txd-topbar,
+        [data-theme="dark"] .txd-card { background: var(--card-bg); border-color: var(--border-color); }
+        [data-theme="dark"] body { background-color: var(--body-bg); }
+        [data-theme="dark"] .txd-row { border-color: var(--border-color); }
+        [data-theme="dark"] .txd-separator { background: var(--border-color); }
+        [data-theme="dark"] .txd-lbl { color: var(--text-secondary); }
+        [data-theme="dark"] .txd-val, 
+        [data-theme="dark"] .txd-amount, 
+        [data-theme="dark"] .txd-back-btn { color: var(--text-primary); }
+    </style>
+
+</article>
+</body>
+</html>

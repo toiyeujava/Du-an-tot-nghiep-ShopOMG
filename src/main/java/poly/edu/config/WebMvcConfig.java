@@ -17,7 +17,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 		registry.addResourceHandler("/images/**")
 				.addResourceLocations("classpath:/static/images/");
 
-		// Add mapping for uploaded files (avatars, etc.)
+		// Add mapping for uploaded files (avatars, reviews, etc.)
 		String absolutePath = Paths.get(uploadDir).toAbsolutePath().toString();
 		if (!absolutePath.endsWith("/") && !absolutePath.endsWith("\\")) {
 			absolutePath += "/";

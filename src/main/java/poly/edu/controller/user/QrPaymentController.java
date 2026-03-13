@@ -60,8 +60,6 @@ public class QrPaymentController {
     @GetMapping("/checkout/qr/{orderId}")
     public String qrPaymentPage(
             @PathVariable Integer orderId,
-            @RequestParam(value = "shippingFee", required = false, defaultValue = "30000") Long shippingFee,
-            @RequestParam(value = "discountAmount", required = false, defaultValue = "0") Long discountAmount,
             Model model, Principal principal) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
@@ -73,12 +71,9 @@ public class QrPaymentController {
             return "redirect:/account/orders";
         }
 
-        String orderCode = "OMG-" + orderId;
-        BigDecimal productAmount = order.getFinalAmount() != null ? order.getFinalAmount() : BigDecimal.ZERO;
-        long safeFee = (shippingFee != null && shippingFee > 0) ? shippingFee : 30000L;
-        long safeDiscount = (discountAmount != null && discountAmount > 0) ? discountAmount : 0L;
-        // Final QR amount = product total + shipping - discount
-        long amountLong = Math.max(0, productAmount.longValue() + safeFee - safeDiscount);
+        String orderCode = "OMG" + orderId;
+        BigDecimal finalAmount = order.getFinalAmount() != null ? order.getFinalAmount() : BigDecimal.ZERO;
+        long amountLong = Math.max(0, finalAmount.longValue());
 
         // Build VietQR URL with dynamic amount and description
         String encodedDesc;

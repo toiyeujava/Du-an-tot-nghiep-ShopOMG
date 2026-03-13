@@ -18,6 +18,7 @@ import poly.edu.service.AccountService;
 import poly.edu.service.CartService;
 import poly.edu.service.OrderCommandService;
 
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
@@ -213,16 +214,24 @@ public class CheckoutController {
             if ("QR".equalsIgnoreCase(paymentMethod)) {
                 order.setPaymentMethod("QR");
                 order.setPaymentStatus("QR_PENDING");
-                orderRepository.save(order);
-                long safeFee = (shippingFee != null && shippingFee > 0) ? shippingFee : 30000L;
-                long safeDiscount = (discountAmount != null && discountAmount > 0) ? discountAmount : 0L;
-                return "redirect:/checkout/qr/" + order.getId()
-                        + "?shippingFee=" + safeFee
-                        + "&discountAmount=" + safeDiscount;
             } else {
                 order.setPaymentMethod("COD");
                 order.setPaymentStatus("NOT_REQUIRED");
-                orderRepository.save(order);
+            }
+
+            // Update the amounts on the order entity itself
+            long safeFee = (shippingFee != null && shippingFee > 0) ? shippingFee : 30000L;
+            long safeDiscount = (discountAmount != null && discountAmount > 0) ? discountAmount : 0L;
+            order.setShippingFee(BigDecimal.valueOf(safeFee));
+            order.setDiscountAmount(BigDecimal.valueOf(safeDiscount));
+            
+            long finalAmt = Math.max(0, order.getTotalAmount().longValue() + safeFee - safeDiscount);
+            order.setFinalAmount(BigDecimal.valueOf(finalAmt));
+            
+            orderRepository.save(order);
+
+            if ("QR".equalsIgnoreCase(paymentMethod)) {
+                return "redirect:/checkout/qr/" + order.getId();
             }
 
             String maskedPhone = maskPhoneNumber(phone);

@@ -27,6 +27,7 @@ import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * AccountProfileController - Manages user profile, orders, reviews, addresses.
@@ -165,15 +166,13 @@ public class AccountProfileController {
         List<Order> orders = orderRepository.findByAccountIdOrderByOrderDateDesc(
                 acc.getId(), org.springframework.data.domain.Pageable.unpaged()).getContent();
 
-        // Build set of product IDs the user has already reviewed (for button state)
-        java.util.Set<Integer> reviewedProductIds = productReviewRepository
-                .findByAccountIdOrderByReviewDateDesc(acc.getId())
-                .stream()
-                .map(r -> r.getProduct().getId())
-                .collect(java.util.stream.Collectors.toSet());
+        // Build set of "orderId_productId" keys the user has already reviewed.
+        // This enables per-order (not per-product) review button state.
+        Set<String> reviewedOrderProductKeys = new java.util.HashSet<>(
+                productReviewRepository.findReviewedOrderProductKeys(acc.getId()));
 
         model.addAttribute("orders", orders);
-        model.addAttribute("reviewedProductIds", reviewedProductIds);
+        model.addAttribute("reviewedOrderProductKeys", reviewedOrderProductKeys);
         model.addAttribute("activePage", "orders");
         return "user/account-orders";
     }
@@ -222,13 +221,18 @@ public class AccountProfileController {
 
     /**
      * Submit a product review (AJAX POST from review modal).
-     * Body: { productId, rating, comment }
+     * Body: { productId, orderId, rating, comment }
      * Returns 200 OK on success, 400/401 on error.
      */
     @PostMapping("/reviews/submit")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> submitReview(
-            @RequestBody Map<String, Object> body,
+            @RequestParam("productId") Integer productId,
+            @RequestParam("rating") Integer rating,
+            @RequestParam(value = "comment", required = false) String comment,
+            @RequestParam(value = "orderId", required = false) Integer orderId,
+            @RequestParam(value = "reviewId", required = false) Integer reviewId,
+            @RequestParam(value = "media", required = false) MultipartFile media,
             Principal principal) {
 
         Account acc = getAuthenticatedAccount(principal);
@@ -237,10 +241,6 @@ public class AccountProfileController {
         }
 
         try {
-            Integer productId = Integer.valueOf(body.get("productId").toString());
-            Integer rating = Integer.valueOf(body.get("rating").toString());
-            String comment = body.containsKey("comment") ? body.get("comment").toString() : "";
-
             if (rating < 1 || rating > 5) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Số sao không hợp lệ"));
             }
@@ -250,19 +250,53 @@ public class AccountProfileController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Sản phẩm không tồn tại"));
             }
 
-            // Upsert: if already reviewed this product, update; otherwise insert
-            ProductReview review = productReviewRepository
-                    .findByProductIdAndAccountId(productId, acc.getId())
-                    .orElse(new ProductReview());
+            // Upsert strategy:
+            // 1. If reviewId provided (from edit page) → find by ID directly (most precise)
+            // 2. Else if orderId provided → find by orderId+productId+accountId
+            // 3. Else → find by productId+accountId (legacy, may fail if multi-order)
+            ProductReview review;
+            if (reviewId != null) {
+                review = productReviewRepository.findById(reviewId)
+                        .filter(r -> r.getAccount().getId().equals(acc.getId()))
+                        .orElse(new ProductReview());
+            } else if (orderId != null) {
+                review = productReviewRepository
+                        .findByOrderIdAndProductIdAndAccountId(orderId, productId, acc.getId())
+                        .orElse(new ProductReview());
+            } else {
+                // Fall back: take the first review for this product+account (not upsert all)
+                review = productReviewRepository
+                        .findFirstByProductIdAndAccountId(productId, acc.getId())
+                        .orElse(new ProductReview());
+            }
 
             review.setProduct(productOpt.get());
             review.setAccount(acc);
             review.setRating(rating);
             review.setComment(comment.isBlank() ? null : comment);
 
+            // Link to the specific order so the per-order key set stays accurate
+            if (orderId != null) {
+                orderRepository.findById(orderId).ifPresent(review::setOrder);
+            }
+
+            if (media != null && !media.isEmpty()) {
+                String mediaUrl = fileService.save(media);
+                review.setMediaUrl(mediaUrl);
+            }
+
             productReviewRepository.save(review);
 
-            return ResponseEntity.ok(Map.of("success", true, "message", "Đánh giá đã được gửi thành công!"));
+            Map<String, Object> reviewData = new java.util.HashMap<>();
+            reviewData.put("id", review.getId());
+            reviewData.put("mediaUrl", review.getMediaUrl());
+
+            Map<String, Object> resp = new java.util.HashMap<>();
+            resp.put("success", true);
+            resp.put("message", "Đánh giá đã được gửi thành công!");
+            resp.put("review", reviewData);
+
+            return ResponseEntity.ok(resp);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Đã xảy ra lỗi: " + e.getMessage()));

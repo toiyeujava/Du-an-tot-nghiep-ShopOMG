@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/sales-layout :: view(~{::title}, ~{::article})}">
+<head><title>Tra cứu khách hàng</title></head>
+<body>
+<article>
+
+    <!-- ===== SEARCH BAR (4.10) ===== -->
+    <div class="card-box mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <label class="form-label small fw-bold text-muted">Tìm kiếm khách hàng</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
+                           placeholder="Nhập tên, email hoặc số điện thoại..."
+                           th:value="${keyword}">
+                </div>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button class="btn btn-dark flex-fill" onclick="applySearch()">
+                    <i class="fas fa-search me-1"></i> Tìm kiếm
+                </button>
+                <a href="/sales/customers" class="btn btn-outline-secondary">
+                    <i class="fas fa-redo"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== DANH SÁCH KHÁCH HÀNG ===== -->
+    <div class="card-box">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0">
+                <i class="fas fa-users me-2 text-success"></i>Danh sách khách hàng
+                <span class="badge bg-success-subtle text-success ms-2"
+                      th:text="${customers.totalElements + ' khách'}">0 khách</span>
+            </h5>
+        </div>
+
+        <!-- Không có kết quả -->
+        <div th:if="${customers.isEmpty()}" class="text-center text-muted py-5">
+            <i class="fas fa-user-slash fa-3x mb-3 d-block opacity-25"></i>
+            Không tìm thấy khách hàng nào
+        </div>
+
+        <!-- Grid khách hàng -->
+        <div class="row g-3" th:unless="${customers.isEmpty()}">
+            <div class="col-md-6 col-lg-4" th:each="customer : ${customers}">
+                <div class="d-flex align-items-center gap-3 p-3 border rounded-3 bg-light h-100
+                            hover-card" style="transition: all 0.2s;">
+                    <!-- Avatar -->
+                    <img th:src="${customer.avatar != null ? customer.avatar :
+                                  'https://ui-avatars.com/api/?background=random&color=fff&name=' + customer.fullName}"
+                         class="rounded-circle flex-shrink-0"
+                         width="50" height="50" style="object-fit:cover;">
+                    <!-- Info -->
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="fw-semibold text-truncate" th:text="${customer.fullName}">-</div>
+                        <small class="text-muted text-truncate d-block" th:text="${customer.email}">-</small>
+                        <small class="text-muted" th:text="${customer.phone ?: 'Chưa có SĐT'}">-</small>
+                    </div>
+                    <!-- Nút xem -->
+                    <a th:href="@{/sales/customers/{id}(id=${customer.id})}"
+                       class="btn-icon btn-icon-view flex-shrink-0" title="Xem chi tiết">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${customers.totalPages > 1}"
+             class="d-flex justify-content-between align-items-center mt-4">
+            <small class="text-muted"
+                   th:text="'Trang ' + (${currentPage} + 1) + ' / ' + ${customers.totalPages}"></small>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/sales/customers(page=${currentPage - 1}, keyword=${keyword})}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, customers.totalPages - 1)}"
+                        th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/sales/customers(page=${i}, keyword=${keyword})}"
+                           th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == customers.totalPages - 1} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/sales/customers(page=${currentPage + 1}, keyword=${keyword})}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <script>
+        function applySearch() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            const params = new URLSearchParams();
+            if (keyword) params.set('keyword', keyword);
+            params.set('page', '0');
+            window.location.href = '/sales/customers?' + params.toString();
+        }
+        document.getElementById('searchInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') applySearch();
+        });
+    </script>
+
+</article>
+</body>
+</html>

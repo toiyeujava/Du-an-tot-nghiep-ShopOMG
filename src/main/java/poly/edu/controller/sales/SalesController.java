@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import poly.edu.entity.Account;
 import poly.edu.repository.AccountRepository;
 import poly.edu.repository.OrderRepository;
-import poly.edu.service.EmailService; // 4.9
+import poly.edu.service.EmailService;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,7 +35,7 @@ public class SalesController {
 
     private final OrderRepository orderRepository;
     private final AccountRepository accountRepository;
-    private final EmailService emailService; // 4.9
+    private final EmailService emailService;
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, @AuthenticationPrincipal UserDetails userDetails) {
@@ -123,7 +123,7 @@ public class SalesController {
         return "sales/order-detail";
     }
     
- // 4.7: Cập nhật trạng thái đơn hàng
+    // Cập nhật trạng thái đơn hàng
     @PutMapping("/orders/{id}/status")
     @ResponseBody
     public ResponseEntity<?> updateStatus(@PathVariable Integer id,
@@ -133,14 +133,14 @@ public class SalesController {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn #" + id));
             order.setStatus(body.get("status"));
             orderRepository.save(order);
-            emailService.sendOrderStatusEmail(order); // 4.9: gửi email thông báo trạng thái
+            emailService.sendOrderStatusEmail(order); // gửi email thông báo trạng thái
             return ResponseEntity.ok(Map.of("success", true, "message", "Cập nhật thành công!"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 
-    // 4.8: Hủy đơn hàng
+    // Hủy đơn hàng
     @PutMapping("/orders/{id}/cancel")
     @ResponseBody
     public ResponseEntity<?> cancelOrder(@PathVariable Integer id,
@@ -156,10 +156,69 @@ public class SalesController {
             order.setStatus("CANCELLED");
             order.setNote(reason != null ? "[Hủy bởi NV] " + reason : "[Hủy bởi nhân viên]");
             orderRepository.save(order);
-            emailService.sendOrderCancelledEmail(order, reason); // 4.9: gửi email hủy đơn kèm lý do
+            emailService.sendOrderCancelledEmail(order, reason); // gửi email hủy đơn kèm lý do
             return ResponseEntity.ok(Map.of("success", true, "message", "Đã hủy đơn hàng!"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }
+    }
+    
+ // 4.10: Tìm kiếm khách hàng
+    @GetMapping("/customers")
+    public String customers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            Model model,
+            @AuthenticationPrincipal UserDetails userDetails) {
+ 
+        model.addAttribute("pageTitle", "Tra cứu khách hàng");
+        if (userDetails != null) {
+            accountRepository.findByEmail(userDetails.getUsername())
+                .ifPresent(acc -> model.addAttribute("currentAccount", acc));
+        }
+ 
+        String kw = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+        Pageable pageable = PageRequest.of(page, 12);
+        Page<poly.edu.entity.Account> customers = accountRepository.searchCustomers(kw, pageable);
+ 
+        model.addAttribute("pendingCount", orderRepository.countByStatus("PENDING"));
+        model.addAttribute("customers",    customers);
+        model.addAttribute("keyword",      kw != null ? kw : "");
+        model.addAttribute("currentPage",  page);
+ 
+        return "sales/customers";
+    }
+ 
+    // 4.11 + 4.12: Xem profile + lịch sử mua hàng
+    @GetMapping("/customers/{id}")
+    public String customerDetail(@PathVariable Integer id, Model model,
+                                 @AuthenticationPrincipal UserDetails userDetails) {
+ 
+        poly.edu.entity.Account customer = accountRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng #" + id));
+ 
+        model.addAttribute("pageTitle", "Khách hàng - " + customer.getFullName());
+        model.addAttribute("customer", customer);
+        model.addAttribute("pendingCount", orderRepository.countByStatus("PENDING"));
+ 
+        // 4.12: Lịch sử mua hàng
+        var orderHistory = orderRepository.findByAccountIdOrderByOrderDateDesc(id,
+                PageRequest.of(0, 20));
+        model.addAttribute("orderHistory", orderHistory);
+ 
+        // Đếm đơn hoàn thành / hủy (tránh dùng lambda trong Thymeleaf)
+        long completedCount = orderHistory.getContent().stream()
+                .filter(o -> "COMPLETED".equals(o.getStatus())).count();
+        long cancelledCount = orderHistory.getContent().stream()
+                .filter(o -> "CANCELLED".equals(o.getStatus())).count();
+        model.addAttribute("completedCount", completedCount);
+        model.addAttribute("cancelledCount", cancelledCount);
+ 
+        if (userDetails != null) {
+            accountRepository.findByEmail(userDetails.getUsername())
+                .ifPresent(acc -> model.addAttribute("currentAccount", acc));
+        }
+ 
+        return "sales/customer-detail";
     }
 }

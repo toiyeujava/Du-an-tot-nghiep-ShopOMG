@@ -80,3 +80,7 @@ application-prod.yml
 .windsurf/
 
 .application.properties
+
+.mcp.json
+
+.claude

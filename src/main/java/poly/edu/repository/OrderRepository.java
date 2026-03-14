@@ -57,6 +57,16 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
         List<Object[]> getDailyRevenue(@Param("startDate") LocalDateTime startDate,
                         @Param("endDate") LocalDateTime endDate);
 
+        // Get hourly revenue for chart (for today view)
+        @Query("SELECT HOUR(o.orderDate) as hr, COALESCE(SUM(o.finalAmount), 0) as revenue " +
+                        "FROM Order o " +
+                        "WHERE o.status = 'COMPLETED' " +
+                        "AND o.orderDate BETWEEN :startDate AND :endDate " +
+                        "GROUP BY HOUR(o.orderDate) " +
+                        "ORDER BY HOUR(o.orderDate)")
+        List<Object[]> getHourlyRevenue(@Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
+
         // Get revenue grouped by status for a given month/year
         @Query("SELECT o.status, COALESCE(SUM(o.finalAmount), 0) " +
                         "FROM Order o " +

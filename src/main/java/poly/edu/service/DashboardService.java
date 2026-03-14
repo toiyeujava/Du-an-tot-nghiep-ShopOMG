@@ -10,6 +10,8 @@ import poly.edu.entity.Order;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.*;
@@ -146,9 +148,68 @@ public class DashboardService {
     }
 
     /**
-     * Get daily revenue for current month (COMPLETED orders only).
+     * Get hourly revenue for today (COMPLETED orders only).
      */
-    public List<Map<String, Object>> getDailyRevenueForMonth() {
+    public List<Map<String, Object>> getDailyRevenueByHour() {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(23, 59, 59);
+
+        List<Object[]> results = orderRepository.getHourlyRevenue(startOfDay, endOfDay);
+
+        Map<Integer, BigDecimal> hourMap = new HashMap<>();
+        for (Object[] result : results) {
+            int hour = ((Number) result[0]).intValue();
+            BigDecimal revenue = (BigDecimal) result[1];
+            hourMap.put(hour, revenue != null ? revenue : BigDecimal.ZERO);
+        }
+
+        List<Map<String, Object>> hourlyData = new ArrayList<>();
+        for (int h = 0; h <= 23; h++) {
+            Map<String, Object> dataPoint = new HashMap<>();
+            dataPoint.put("label", String.format("%02d:00", h));
+            dataPoint.put("revenue", hourMap.getOrDefault(h, BigDecimal.ZERO));
+            hourlyData.add(dataPoint);
+        }
+        return hourlyData;
+    }
+
+    /**
+     * Get daily revenue for current week Mon-Sun (COMPLETED orders only).
+     */
+    public List<Map<String, Object>> getWeeklyRevenueByDay() {
+        LocalDate today = LocalDate.now();
+        LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
+        LocalDate endOfWeek = startOfWeek.plusDays(6);
+
+        LocalDateTime startDT = startOfWeek.atStartOfDay();
+        LocalDateTime endDT = endOfWeek.atTime(23, 59, 59);
+
+        List<Object[]> results = orderRepository.getDailyRevenue(startDT, endDT);
+
+        Map<String, BigDecimal> dayMap = new HashMap<>();
+        for (Object[] result : results) {
+            String dateStr = result[0].toString();
+            BigDecimal revenue = (BigDecimal) result[1];
+            dayMap.put(dateStr, revenue != null ? revenue : BigDecimal.ZERO);
+        }
+
+        String[] dayNames = {"T2", "T3", "T4", "T5", "T6", "T7", "CN"};
+        List<Map<String, Object>> weeklyData = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            LocalDate day = startOfWeek.plusDays(i);
+            Map<String, Object> dataPoint = new HashMap<>();
+            dataPoint.put("label", dayNames[i]);
+            dataPoint.put("revenue", dayMap.getOrDefault(day.toString(), BigDecimal.ZERO));
+            weeklyData.add(dataPoint);
+        }
+        return weeklyData;
+    }
+
+    /**
+     * Get daily revenue for current month with all days filled (COMPLETED orders only).
+     */
+    public List<Map<String, Object>> getMonthlyRevenueByDay() {
         LocalDateTime now = LocalDateTime.now();
         YearMonth yearMonth = YearMonth.from(now);
         LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
@@ -156,15 +217,38 @@ public class DashboardService {
 
         List<Object[]> results = orderRepository.getDailyRevenue(startOfMonth, endOfMonth);
 
-        List<Map<String, Object>> dailyData = new ArrayList<>();
+        Map<String, BigDecimal> dayMap = new HashMap<>();
         for (Object[] result : results) {
-            Map<String, Object> dataPoint = new HashMap<>();
-            dataPoint.put("date", result[0]);
-            dataPoint.put("revenue", result[1]);
-            dailyData.add(dataPoint);
+            String dateStr = result[0].toString();
+            BigDecimal revenue = (BigDecimal) result[1];
+            dayMap.put(dateStr, revenue != null ? revenue : BigDecimal.ZERO);
         }
 
+        List<Map<String, Object>> dailyData = new ArrayList<>();
+        int daysInMonth = yearMonth.lengthOfMonth();
+        for (int day = 1; day <= daysInMonth; day++) {
+            LocalDate date = yearMonth.atDay(day);
+            Map<String, Object> dataPoint = new HashMap<>();
+            dataPoint.put("label", String.valueOf(day));
+            dataPoint.put("revenue", dayMap.getOrDefault(date.toString(), BigDecimal.ZERO));
+            dailyData.add(dataPoint);
+        }
         return dailyData;
+    }
+
+    /**
+     * Get monthly revenue for current year T1-T12 (COMPLETED orders only).
+     */
+    public List<Map<String, Object>> getYearlyRevenueByMonth() {
+        int currentYear = LocalDateTime.now().getYear();
+        List<Map<String, Object>> yearlyData = new ArrayList<>();
+        for (int month = 1; month <= 12; month++) {
+            Map<String, Object> dataPoint = new HashMap<>();
+            dataPoint.put("label", String.format("T%d", month));
+            dataPoint.put("revenue", getMonthlyRevenue(month, currentYear));
+            yearlyData.add(dataPoint);
+        }
+        return yearlyData;
     }
 
     /**

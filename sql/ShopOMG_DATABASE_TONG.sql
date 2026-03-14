@@ -188,6 +188,8 @@ CREATE TABLE ProductReviews (
     CONSTRAINT FK_ProductReviews_Orders FOREIGN KEY (order_id) REFERENCES Orders(id)
 );
 GO
+
+--new
 -- 1. Tạo bảng InventoryLogs (Lịch sử Nhập/Xuất kho)
 CREATE TABLE InventoryLogs (
     id INT IDENTITY(1,1) PRIMARY KEY,

@@ -5,8 +5,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import poly.edu.service.DashboardService;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,8 +69,19 @@ public class AdminDashboardController {
         model.addAttribute("orderStatsByStatus", stats.get("orderStatsByStatus"));
         model.addAttribute("topProducts", stats.get("topProducts"));
 
-        model.addAttribute("revenueChartData", dashboardService.getRevenueChartData(7));
+        model.addAttribute("revenueChartData", dashboardService.getMonthlyRevenueByDay());
 
         return "admin/dashboard";
+    }
+
+    @GetMapping("/dashboard/chart-data")
+    @ResponseBody
+    public List<Map<String, Object>> getChartData(@RequestParam(defaultValue = "month") String period) {
+        return switch (period) {
+            case "day" -> dashboardService.getDailyRevenueByHour();
+            case "week" -> dashboardService.getWeeklyRevenueByDay();
+            case "year" -> dashboardService.getYearlyRevenueByMonth();
+            default -> dashboardService.getMonthlyRevenueByDay();
+        };
     }
 }

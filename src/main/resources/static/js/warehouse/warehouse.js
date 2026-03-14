@@ -41,6 +41,37 @@ function filterInventory() {
     }
 }
 
+// ── Log Filter ──────────────────────────────────────────────
+function filterLogs() {
+    const search = document.getElementById('logSearch')?.value.toLowerCase() ?? '';
+    const type = document.getElementById('logTypeFilter')?.value ?? '';
+    const dateFrom = document.getElementById('logDateFrom')?.value ?? '';
+    const dateTo = document.getElementById('logDateTo')?.value ?? '';
+
+    const rows = document.querySelectorAll('#logBody tr');
+
+    rows.forEach(row => {
+        // Skip empty state row if it exists
+        if (row.querySelector('td[colspan]')) return;
+
+        const sku = (row.dataset.sku ?? '').toLowerCase();
+        const rowType = row.dataset.type ?? '';
+        const rowDate = row.dataset.timestamp ?? '';
+        const text = row.textContent.toLowerCase();
+
+        const matchSearch = !search || sku.includes(search) || text.includes(search);
+        const matchType = !type || rowType === type;
+        
+        let matchDate = true;
+        if (dateFrom && rowDate < dateFrom) matchDate = false;
+        if (dateTo && rowDate > dateTo) matchDate = false;
+
+        const show = matchSearch && matchType && matchDate;
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+
 // ── Update Stock Modal ────────────────────────────────────────────
 let _currentQty = 0;
 let _currentVariantId = null;
@@ -76,14 +107,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Radio highlight style
     document.querySelectorAll('input[name="txType"]').forEach(radio => {
         radio.addEventListener('change', () => {
-            document.querySelectorAll('input[name="txType"]').forEach(r => {
-                r.closest('.form-check').classList.remove('border-warning', 'bg-warning-subtle',
-                    'border-danger', 'bg-danger-subtle', 'border-indigo', 'bg-indigo-subtle');
+            const allContainers = document.querySelectorAll('input[name="txType"]');
+            allContainers.forEach(r => {
+                const btnDiv = r.closest('.form-check');
+                if (btnDiv) {
+                    // Remove all possible highlight classes
+                    btnDiv.classList.remove('border-success', 'bg-success-subtle',
+                        'border-danger', 'bg-danger-subtle', 'border-primary', 'bg-primary-subtle');
+                    btnDiv.style.borderColor = ''; 
+                }
             });
+            
             const parent = radio.closest('.form-check');
-            if (radio.value === 'in') parent.classList.add('border-success', 'bg-success-subtle');
-            if (radio.value === 'out') parent.classList.add('border-danger', 'bg-danger-subtle');
-            if (radio.value === 'adj') parent.style.borderColor = '#6366f1';
+            if (parent) {
+                if (radio.value === 'in') parent.classList.add('border-success', 'bg-success-subtle');
+                if (radio.value === 'out') parent.classList.add('border-danger', 'bg-danger-subtle');
+                if (radio.value === 'adj') parent.classList.add('border-primary', 'bg-primary-subtle');
+            }
             updatePreview();
         });
     });
@@ -91,7 +131,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Highlight radio on init
     const checkedRadio = document.querySelector('input[name="txType"]:checked');
     if (checkedRadio) {
-        checkedRadio.closest('.form-check').classList.add('border-success', 'bg-success-subtle');
+        const parent = checkedRadio.closest('.form-check');
+        if (parent) {
+            if (checkedRadio.value === 'in') parent.classList.add('border-success', 'bg-success-subtle');
+            if (checkedRadio.value === 'out') parent.classList.add('border-danger', 'bg-danger-subtle');
+            if (checkedRadio.value === 'adj') parent.classList.add('border-primary', 'bg-primary-subtle');
+        }
     }
 });
 
@@ -145,8 +190,65 @@ function submitUpdate() {
 
                     showToast(`Đã cập nhật ${sku}: tồn kho mới = ${data.newQuantity} đơn vị.`);
 
-                    // Reload after short delay so table refreshes
-                    setTimeout(() => location.reload(), 1800);
+                    // Tải lại các thành phần giao diện bằng AJAX thay vì load lại toàn bộ trang
+                    fetch(window.location.href)
+                        .then(res => res.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            
+                            // 1. Cập nhật tab Tồn kho
+                            const invBody = document.getElementById('inventoryBody');
+                            if (invBody && doc.getElementById('inventoryBody')) {
+                                invBody.innerHTML = doc.getElementById('inventoryBody').innerHTML;
+                            }
+                            
+                            // 2. Cập nhật tab Cảnh báo (ID: tab-alerts)
+                            const alertsTab = document.getElementById('tab-alerts');
+                            if (alertsTab && doc.getElementById('tab-alerts')) {
+                                alertsTab.innerHTML = doc.getElementById('tab-alerts').innerHTML;
+                            }
+
+                            // 3. Cập nhật tab Logs
+                            const logBody = document.getElementById('logBody');
+                            if (logBody && doc.getElementById('logBody')) {
+                                logBody.innerHTML = doc.getElementById('logBody').innerHTML;
+                            }
+
+                            // 4. Chỉ cập nhật badge trên Sidebar thay vì toàn bộ Sidebar
+                            // Để không làm mất các event listeners của thẻ <a>
+                            const oldAlertLink = document.querySelector('a[data-wh-tab="tab-alerts"]');
+                            const newAlertLink = doc.querySelector('a[data-wh-tab="tab-alerts"]');
+                            if (oldAlertLink && newAlertLink) {
+                                oldAlertLink.innerHTML = newAlertLink.innerHTML;
+                            }
+
+                            // 5. Cập nhật badge trên thanh tabs
+                            const oldAlertTabBtn = document.getElementById('alert-tab');
+                            const newAlertTabBtn = doc.getElementById('alert-tab');
+                            if (oldAlertTabBtn && newAlertTabBtn) {
+                                oldAlertTabBtn.innerHTML = newAlertTabBtn.innerHTML;
+                            }
+
+                            // Lưu ý: Không cập nhật HTML của #tab-dashboard vì nó chứa các script 
+                            // sẽ không chạy nếu thêm bằng innerHTML và số lượng bán ra không thay đổi
+                            // khi update tồn kho thủ công.
+                            
+                            // Cập nhật Header warning badge (nếu có)
+                            const topHeader = document.querySelector('.wh-top-header');
+                            if (topHeader && doc.querySelector('.wh-top-header')) {
+                                topHeader.innerHTML = doc.querySelector('.wh-top-header').innerHTML;
+                            }
+
+                            // Áp dụng lại các bộ lọc hiện tại để giao diện không bị giật/reset
+                            if (typeof filterInventory === 'function') filterInventory();
+                            if (typeof filterLogs === 'function') filterLogs();
+                        })
+                        .catch(err => {
+                            console.error("Lỗi khi tải lại giao diện:", err);
+                            // Nếu lỗi AJAX thì fallback load lại trang
+                            setTimeout(() => location.reload(), 1800);
+                        });
                 } else {
                     alert('Lỗi: ' + data.message);
                 }
@@ -162,10 +264,84 @@ function submitUpdate() {
 }
 
 // ── Log by SKU Modal ──────────────────────────────────────────────
-function openLogModal(sku) {
-    document.getElementById('log-sku-title').textContent = sku;
+function openLogModal(variantId, sku) {
+    document.getElementById('log-sku-title').textContent = sku ?? 'SKU';
+
+    // Reset states
+    document.getElementById('logLoading').classList.remove('d-none');
+    document.getElementById('logTableWrapper').classList.add('d-none');
+    document.getElementById('logEmpty').classList.add('d-none');
+    document.getElementById('logModalBody').innerHTML = '';
+    document.getElementById('logVariantProduct').textContent = '–';
+    document.getElementById('logVariantDetail').textContent = '–';
+    document.getElementById('logVariantQty').textContent = '–';
+
     const modal = new bootstrap.Modal(document.getElementById('skuLogModal'));
     modal.show();
+
+    // Fetch logs from API
+    fetch(`/warehouse/api/variants/${variantId}/logs`)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('logLoading').classList.add('d-none');
+
+            // Fill variant info bar
+            document.getElementById('logVariantProduct').textContent = data.productName ?? '–';
+            document.getElementById('logVariantDetail').textContent =
+                `Màu: ${data.color || '–'} · Size: ${data.size || '–'}`;
+            document.getElementById('logVariantQty').textContent =
+                `Tồn hiện tại: ${data.currentQty ?? 0}`;
+
+            const logs = data.logs ?? [];
+            if (logs.length === 0) {
+                document.getElementById('logEmpty').classList.remove('d-none');
+                return;
+            }
+
+            document.getElementById('logTableWrapper').classList.remove('d-none');
+            const tbody = document.getElementById('logModalBody');
+
+            logs.forEach((log, i) => {
+                // Type badge
+                let typeBadge;
+                if (log.type === 'in')       typeBadge = '<span class="badge bg-success">Nhập kho</span>';
+                else if (log.type === 'out')  typeBadge = '<span class="badge bg-danger">Xuất kho</span>';
+                else                          typeBadge = '<span class="badge bg-primary">Điều chỉnh</span>';
+
+                // Change indicator
+                let changeText;
+                if (log.changeAmount > 0)       changeText = `<span class="text-success fw-bold">+${log.changeAmount}</span>`;
+                else if (log.changeAmount < 0)  changeText = `<span class="text-danger fw-bold">${log.changeAmount}</span>`;
+                else                            changeText = `<span class="text-muted">0</span>`;
+
+                // Format timestamp
+                let ts = '–';
+                if (log.timestamp) {
+                    const d = new Date(log.timestamp);
+                    ts = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} `
+                       + `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="text-center text-muted">${i + 1}</td>
+                    <td class="text-nowrap">${ts}</td>
+                    <td class="text-center">${typeBadge}</td>
+                    <td class="text-end">${log.oldQuantity}</td>
+                    <td class="text-center">${changeText}</td>
+                    <td class="text-end fw-bold">${log.newQuantity}</td>
+                    <td>${log.note ? `<small>${log.note}</small>` : '<span class="text-muted">–</span>'}</td>
+                    <td><small>${log.accountName ?? '–'}</small></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(err => {
+            console.error('Lỗi tải log:', err);
+            document.getElementById('logLoading').classList.add('d-none');
+            document.getElementById('logEmpty').classList.remove('d-none');
+            document.getElementById('logEmpty').querySelector('p').textContent = 'Lỗi khi tải dữ liệu. Vui lòng thử lại.';
+        });
 }
 
 // ── Toast ─────────────────────────────────────────────────────────
@@ -179,10 +355,104 @@ function showToast(message) {
     }
 }
 
-// ── Export CSV (fake) ─────────────────────────────────────────────
+// ── Export Excel (.xlsx) via SheetJS ──────────────────────────────
 function exportCSV() {
-    showToast('Đang xuất file CSV… Vui lòng chờ.');
+    if (typeof XLSX === 'undefined') {
+        alert('Thư viện xuất file chưa tải xong. Vui lòng thử lại sau vài giây.');
+        return;
+    }
+
+    showToast('Đang xuất file Excel… Vui lòng chờ.');
+
+    const tbody = document.getElementById('inventoryBody');
+    if (!tbody) { alert('Không tìm thấy bảng dữ liệu.'); return; }
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('vi-VN');
+    const hourStr = now.toLocaleTimeString('vi-VN');
+
+    // ── Collect visible rows from DOM ───────────────────────────────
+    const dataRows = [];
+    tbody.querySelectorAll('tr').forEach(tr => {
+        if (tr.style.display === 'none') return;
+        const cells = tr.querySelectorAll('td');
+        if (cells.length === 0) return;
+
+        const sku      = cells[1]?.innerText?.trim() ?? '';
+        const product  = cells[2]?.querySelector('.fw-semibold, .fw-bold, span, div')?.innerText?.trim()
+                       ?? cells[2]?.innerText?.trim() ?? '';
+        const category = cells[3]?.innerText?.trim() ?? '';
+        const color    = cells[4]?.innerText?.trim() ?? '';
+        const size     = cells[5]?.innerText?.trim() ?? '';
+        const qtyRaw   = cells[6]?.innerText?.trim() ?? '';
+        const qty      = parseInt(qtyRaw) || 0;
+        const levelEl  = cells[7]?.querySelector('[aria-valuenow]');
+        const levelPct = levelEl ? parseInt(levelEl.getAttribute('aria-valuenow')) : null;
+        const status   = cells[8]?.innerText?.trim() ?? '';
+
+        dataRows.push({ sku, product, category, color, size, qty, levelPct, status });
+    });
+
+    if (dataRows.length === 0) { alert('Không có dữ liệu để xuất.'); return; }
+
+    // ── Build worksheet data array (each item = one cell row) ──────
+    // Row 1: Title
+    const titleRow  = ['DANH SÁCH TỒN KHO - SHOP OMG!', '', '', '', '', '', '', '', ''];
+    // Row 2: Metadata
+    const metaRow   = [`Ngày xuất: ${dateStr} ${hourStr}`, '', '', '', '', `Tổng SKU: ${dataRows.length}`, '', '', ''];
+    // Row 3: blank spacer
+    const spacer    = ['', '', '', '', '', '', '', '', ''];
+    // Row 4: headers
+    const headers   = ['STT', 'SKU', 'Sản phẩm', 'Danh mục', 'Màu sắc', 'Size', 'Tồn kho', 'Mức tồn (%)', 'Trạng thái'];
+
+    const wsData = [titleRow, metaRow, spacer, headers];
+
+    dataRows.forEach((row, i) => {
+        wsData.push([
+            i + 1,
+            row.sku,
+            row.product,
+            row.category,
+            row.color,
+            row.size,
+            row.qty,
+            row.levelPct ?? '',
+            row.status,
+        ]);
+    });
+
+    // ── Create worksheet ────────────────────────────────────────────
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Column widths (in characters)
+    ws['!cols'] = [
+        { wch: 6 },   // STT
+        { wch: 14 },  // SKU
+        { wch: 30 },  // Sản phẩm
+        { wch: 16 },  // Danh mục
+        { wch: 10 },  // Màu sắc
+        { wch: 8 },   // Size
+        { wch: 10 },  // Tồn kho
+        { wch: 13 },  // Mức tồn %
+        { wch: 16 },  // Trạng thái
+    ];
+
+    // Merge title across all columns (A1:I1)
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }, // title row
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }, // meta left
+        { s: { r: 1, c: 5 }, e: { r: 1, c: 8 } }, // meta right
+    ];
+
+    // ── Create workbook and download ────────────────────────────────
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Tồn kho');
+
+    const fileName = `ton-kho-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
 }
+
+
 
 // ═══════════════════════════════════════════════════════════════════
 // SPA SIDEBAR NAVIGATION

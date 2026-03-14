@@ -17,6 +17,7 @@ import poly.edu.repository.AccountRepository;
 import poly.edu.repository.OrderRepository;
 import poly.edu.repository.ProductRepository;
 import poly.edu.repository.ProductReviewRepository;
+import poly.edu.repository.VoucherRepository;
 import poly.edu.service.AccountService;
 import poly.edu.service.FileService;
 import poly.edu.service.OrderQueryService;
@@ -64,6 +65,7 @@ public class AccountProfileController {
     private final poly.edu.service.OrderCommandService orderCommandService;
     private final ProductReviewRepository productReviewRepository;
     private final ProductRepository productRepository;
+    private final VoucherRepository voucherRepository;
 
     /**
      * Display user profile page (GET).
@@ -84,6 +86,7 @@ public class AccountProfileController {
         form.setGender(acc.getGender());
 
         model.addAttribute("profileForm", form);
+        model.addAttribute("vouchers", voucherRepository.findAllValid(java.time.LocalDateTime.now()));
         model.addAttribute("activePage", "profile");
         return "user/account-profile";
     }

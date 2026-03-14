@@ -15,13 +15,9 @@
             </a>
         </div>
 
-        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
             <i class="fas fa-exclamation-circle me-2"></i>
-            <span th:if="${param.error[0] == 'stock'}">Lỗi: Một số sản phẩm trong đơn hàng không đủ số lượng tồn
-                kho.</span>
-            <span th:if="${param.error[0] == 'empty'}">Lỗi: Không tìm thấy thông tin sản phẩm để thanh toán.</span>
-            <span th:unless="${param.error[0] == 'stock' || param.error[0] == 'empty'}">Lỗi hệ thống khi xử lý thanh
-                toán. Vui lòng thử lại.</span>
+            <span th:text="${error}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
@@ -119,11 +115,12 @@
                             </div>
                         </div>
 
-                        <div class="input-group mb-3">
-                            <input type="text" id="couponInput" class="form-control" placeholder="Mã giảm giá"
-                                oninput="resetCoupon()">
-                            <button class="btn btn-dark" type="button" id="couponBtn" onclick="applyCoupon()">Áp
-                                dụng</button>
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-dark w-100 d-flex justify-content-between align-items-center"
+                                    data-bs-toggle="modal" data-bs-target="#voucherModal">
+                                <span><i class="fas fa-ticket-alt me-2 text-danger"></i> Chọn hoặc nhập mã giảm giá</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
                         </div>
                         <div id="couponMsg" class="small mb-2" style="display:none"></div>
 
@@ -133,6 +130,7 @@
                                 th:text="${#numbers.formatInteger(cartTotal, 0, 'COMMA') + 'đ'}">0đ</span>
                             <span id="subtotalDisplay" th:unless="${checkoutMode == 'CART'}">0đ</span>
                         </div>
+                        <input type="hidden" id="cartTotalAmountRaw" th:value="${cartTotal ?: 0}">
                         <div class="d-flex justify-content-between mb-1 small align-items-center">
                             <span class="text-muted">Phí vận chuyển:</span>
                             <span id="shippingDisplay">...đờiến tính địa chỉ</span>
@@ -141,9 +139,9 @@
                             <span></span>
                             <span id="shippingZoneBadge" class="badge" style="font-size:.7rem;opacity:0"></span>
                         </div>
-                        <div class="d-flex justify-content-between mb-3 small text-success">
+                        <div class="d-flex justify-content-between mb-3 small text-success" id="discountRow" style="display:none !important;">
                             <span>Giảm giá:</span>
-                            <span id="discountDisplay">-0đ</span>
+                            <span id="discountAmountDisplay">-0đ</span>
                         </div>
                         <div class="d-flex justify-content-between border-top pt-3 align-items-center">
                             <span class="fw-bold fs-5">Tổng cộng</span>
@@ -169,7 +167,7 @@
             <input type="hidden" name="shippingFee" id="shippingFeeInput" value="30000">
             <!-- Coupon discount -->
             <input type="hidden" name="discountAmount" id="discountAmountInput" value="0">
-            <input type="hidden" name="couponCode" id="couponCodeInput" value="">
+            <input type="hidden" name="couponCode" id="appliedVoucherCode" value="">
 
             <!-- Hidden inputs for Buy Now flow (optional) -->
             <input type="hidden" name="buyNowVariantId" id="buyNowVariantId">
@@ -361,6 +359,27 @@
                 </div>
             </div>
         </div>
+
+        <!-- Include Voucher Modal -->
+        <div th:replace="~{fragments/voucher-modal :: voucherModal}"></div>
+        <!-- Load voucher.js is inside the fragment -->
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const prefilledCode = "[[${appliedVoucherCode != null ? appliedVoucherCode : ''}]]";
+                if (prefilledCode) {
+                    var inputEl = document.getElementById('voucherInput');
+                    if (inputEl) inputEl.value = prefilledCode;
+                    var hiddenInput = document.getElementById('appliedVoucherCode');
+                    if (hiddenInput) hiddenInput.value = prefilledCode;
+
+                    setTimeout(() => {
+                        const btn = document.getElementById('btnApplyVoucher');
+                        if (btn) btn.click();
+                    }, 600);
+                }
+            });
+        </script>
 
         <style>
             /* ═══════════════════════════════════════════
@@ -730,7 +749,7 @@
 
 
 
-        <script>
+        <script th:inline="javascript">
             // Vietnam Provinces and Districts Data (2026) - All 63 Provinces
             const vietnamData = {
                 "An Giang": ["Long Xuyên", "Châu Đốc", "An Phú", "Tân Châu", "Phú Tân", "Châu Phú", "Tịnh Biên", "Tri Tôn", "Châu Thành", "Chợ Mới", "Thoại Sơn"],
@@ -938,25 +957,14 @@
             }
 
             // ─── Address storage: keyed per logged-in account ────────────────
-            // We use the account email (injected by Thymeleaf) so one user's
-            // saved addresses cannot leak to a different account on the same
-            // browser.
-            const _accountKey = 'checkoutAddresses_' + (/*[[${#authentication != null ? #authentication.name : 'guest'}]]*/ 'guest');
-
-            // Global addresses array — start EMPTY; never pre-fill fake data
-            let addressesData = JSON.parse(localStorage.getItem(_accountKey)) || [];
-
-            // Save addresses to localStorage (keyed per account)
-            function saveAddressesToStorage() {
-                localStorage.setItem(_accountKey, JSON.stringify(addressesData));
+            // Initialize from server-rendered addresses
+            let addressesData = /*[[${addresses}]]*/ [];
+            if (!addressesData) {
+                addressesData = [];
             }
 
-            // Load addresses from storage
+            // Load addresses
             function loadAddresses() {
-                const stored = localStorage.getItem(_accountKey);
-                if (stored) {
-                    addressesData = JSON.parse(stored);
-                }
                 displayAddresses(addressesData);
             }
 
@@ -1127,8 +1135,8 @@
                     badgeEl.style.opacity = '1';
                 }
 
-                // Recalculate total (re-apply coupon if active)
-                var disc = _couponApplied ? _discountAmount : 0;
+                // Recalculate total
+                var disc = _discountAmount || 0;
                 if (subEl && totalEl) {
                     totalEl.textContent = new Intl.NumberFormat('vi-VN').format(Math.max(0, sub + fee - disc)) + 'đ';
                 }
@@ -1137,11 +1145,6 @@
                 window._shippingFee = fee;
                 var feeInput = document.getElementById('shippingFeeInput');
                 if (feeInput) feeInput.value = fee;
-
-                // If coupon was applied, recalculate discount base (sub + new fee)
-                if (_couponApplied && _lastDiscountPercent > 0) {
-                    applyDiscount(_lastDiscountPercent);
-                }
             }
 
             // Init with default 30,000đ if no address selected yet
@@ -1257,21 +1260,38 @@
                     addressesData.forEach(addr => addr.isDefault = false);
                 }
 
-                // Add to array
-                addressesData.push(newAddress);
+                // Call server API to save then update UI
+                fetch('/account/addresses', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newAddress)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Lỗi khi lưu địa chỉ');
+                })
+                .then(data => {
+                    // Update array with real ID from server
+                    addressesData.push(data);
+                    
+                    // Close modal and reload addresses
+                    const addModal = bootstrap.Modal.getInstance(document.getElementById('addAddressModal'));
+                    if (addModal) {
+                        addModal.hide();
+                    }
+                    loadAddresses();
 
-                // Save to localStorage
-                saveAddressesToStorage();
-
-                // Close modal and reload addresses
-                const addModal = bootstrap.Modal.getInstance(document.getElementById('addAddressModal'));
-                if (addModal) {
-                    addModal.hide();
-                }
-                loadAddresses();
-
-                // Reset form
-                document.getElementById('addressForm').reset();
+                    // Reset form
+                    document.getElementById('addressForm').reset();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Không thể lưu địa chỉ. Vui lòng thử lại sau.');
+                });
             }
 
             // Update address
@@ -1317,13 +1337,8 @@
                 // Find and update address in array
                 const addressIndex = addressesData.findIndex(addr => addr.id == id);
                 if (addressIndex !== -1) {
-                    // If this is default, remove default from others
-                    if (isDefault) {
-                        addressesData.forEach(addr => addr.isDefault = false);
-                    }
-
-                    // Update address
-                    addressesData[addressIndex] = {
+                    // Create updated object
+                    const updatedAddress = {
                         id: parseInt(id),
                         recipientName: name,
                         phone: phone,
@@ -1333,13 +1348,37 @@
                         isDefault: isDefault
                     };
 
-                    // Save to localStorage
-                    saveAddressesToStorage();
-                }
+                    fetch(`/account/addresses/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(updatedAddress)
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        }
+                        throw new Error('Lỗi khi cập nhật địa chỉ');
+                    })
+                    .then(data => {
+                        // If this is default, remove default from others
+                        if (isDefault) {
+                            addressesData.forEach(addr => addr.isDefault = false);
+                        }
 
-                // Close modal and reload addresses
-                bootstrap.Modal.getInstance(document.getElementById('editAddressModal')).hide();
-                loadAddresses();
+                        // Update address locally
+                        addressesData[addressIndex] = data;
+
+                        // Close modal and reload addresses
+                        bootstrap.Modal.getInstance(document.getElementById('editAddressModal')).hide();
+                        loadAddresses();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Không thể cập nhật địa chỉ. Vui lòng thử lại sau.');
+                    });
+                }
             }
 
             // Delete address
@@ -1358,21 +1397,39 @@
             function confirmDeleteAddress() {
                 const id = document.getElementById('deleteConfirmModal').getAttribute('data-address-id');
 
-                // Remove from array
-                addressesData = addressesData.filter(addr => addr.id != id);
+                fetch(`/account/addresses/${id}`, {
+                    method: 'DELETE',
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Remove from array
+                        addressesData = addressesData.filter(addr => addr.id != id);
 
-                // Save to localStorage
-                saveAddressesToStorage();
+                        // Close both modals
+                        const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
+                        const editModal = bootstrap.Modal.getInstance(document.getElementById('editAddressModal'));
 
-                // Close both modals
-                const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
-                const editModal = bootstrap.Modal.getInstance(document.getElementById('editAddressModal'));
+                        if (deleteModal) deleteModal.hide();
+                        if (editModal) editModal.hide();
 
-                if (deleteModal) deleteModal.hide();
-                if (editModal) editModal.hide();
-
-                // Reload addresses
-                loadAddresses();
+                        // Reload addresses
+                        loadAddresses();
+                    } else {
+                         return response.text().then(text => {
+                            throw new Error(text || 'Lỗi khi xóa địa chỉ');
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Close delete modal first so we can see alert
+                    const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
+                    if (deleteModal) deleteModal.hide();
+                    
+                    setTimeout(() => {
+                        alert('Không thể xóa địa chỉ: ' + error.message);
+                    }, 500);
+                });
             }
 
             // Show/Hide QR Code section & update button label
@@ -1472,92 +1529,33 @@
 
 
             /* ════════════════════════════
-               COUPON - OPENING 20% off
+               VOUCHER INTEGRATION
                ════════════════════════════ */
-            var _couponApplied = false;
             var _discountAmount = 0;
 
-            function applyCoupon() {
-                var code = (document.getElementById('couponInput').value || '').trim().toUpperCase();
-                var msgEl = document.getElementById('couponMsg');
-                var btn = document.getElementById('couponBtn');
+            // Set up an observer to watch for discount changes made by voucher.js
+            document.addEventListener('DOMContentLoaded', function() {
+                const targetNode = document.getElementById("discountAmountDisplay");
+                if (targetNode) {
+                    const observer = new MutationObserver((mutations) => {
+                        const discText = targetNode.innerText.replace(/[^\d]/g, '');
+                        _discountAmount = parseInt(discText) || 0;
+                        
+                        const discInput = document.getElementById('discountAmountInput');
+                        if (discInput) discInput.value = _discountAmount;
 
-                if (!code) {
-                    showCouponMsg('Vui lòng nhập mã giảm giá.', 'warning');
-                    return;
-                }
-
-                // Disable button while checking
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-
-                fetch('/checkout/validate-coupon?code=' + encodeURIComponent(code))
-                    .then(function (r) { return r.json(); })
-                    .then(function (data) {
-                        btn.disabled = false;
-                        btn.textContent = 'Áp dụng';
-                        if (data.valid) {
-                            _couponApplied = true;
-                            applyDiscount(data.discountPercent);
-                            document.getElementById('couponCodeInput').value = code;
-                            showCouponMsg('✅ ' + data.message, 'success');
-                        } else {
-                            _couponApplied = false;
-                            applyDiscount(0);
-                            document.getElementById('couponCodeInput').value = '';
-                            showCouponMsg('❌ ' + data.message, 'danger');
+                        const subEl = document.getElementById('subtotalDisplay');
+                        const sub = parseInt((subEl ? subEl.textContent : '0').replace(/[^0-9]/g, ''), 10) || 0;
+                        const ship = window._shippingFee || 0;
+                        
+                        const totalEl = document.getElementById('totalDisplay');
+                        if (totalEl) {
+                            totalEl.textContent = new Intl.NumberFormat('vi-VN').format(Math.max(0, sub + ship - _discountAmount)) + 'đ';
                         }
-                    })
-                    .catch(function () {
-                        btn.disabled = false;
-                        btn.textContent = 'Áp dụng';
-                        showCouponMsg('Lỗi kết nối. Vui lòng thử lại.', 'danger');
                     });
-            }
-
-            // Track last discount % so we can recalculate when shipping changes
-            var _lastDiscountPercent = 0;
-
-            function applyDiscount(percent) {
-                _lastDiscountPercent = percent;
-
-                var subEl = document.getElementById('subtotalDisplay');
-                var discEl = document.getElementById('discountDisplay');
-                var totalEl = document.getElementById('totalDisplay');
-                var hidDisc = document.getElementById('discountAmountInput');
-
-                var sub = parseInt((subEl ? subEl.textContent : '0').replace(/[^0-9]/g, ''), 10) || 0;
-                var ship = window._shippingFee || 0;
-
-                // Discount base = subtotal + shipping fee
-                var disc = percent > 0 ? Math.round((sub + ship) * percent / 100) : 0;
-                _discountAmount = disc;
-
-                if (discEl) discEl.textContent = '-' + new Intl.NumberFormat('vi-VN').format(disc) + 'đ';
-                if (hidDisc) hidDisc.value = disc;
-                if (totalEl) totalEl.textContent =
-                    new Intl.NumberFormat('vi-VN').format(Math.max(0, sub + ship - disc)) + 'đ';
-
-                // Also update discountAmountInput for form submit
-                var discInput = document.getElementById('discountAmountInput');
-                if (discInput) discInput.value = disc;
-            }
-
-            function resetCoupon() {
-                if (!_couponApplied) return; // only reset if coupon was applied
-                _couponApplied = false;
-                applyDiscount(0);
-                document.getElementById('couponCodeInput').value = '';
-                document.getElementById('couponMsg').style.display = 'none';
-            }
-
-            function showCouponMsg(msg, type) {
-                var el = document.getElementById('couponMsg');
-                if (!el) return;
-                el.textContent = msg;
-                el.className = 'small mb-2 text-' + type;
-                el.style.display = 'block';
-            }
+                    observer.observe(targetNode, { childList: true, characterData: true, subtree: true });
+                }
+            });
 
             // Load product when page loads
             loadBuyNowProduct();

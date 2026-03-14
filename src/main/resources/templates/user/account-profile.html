@@ -13,8 +13,18 @@
 
             <div class="col-lg-9">
                 <div class="card-box">
-                    <h5 class="fw-bold mb-4">Hồ sơ của tôi</h5>
-                    <p class="text-muted small mb-4">Quản lý thông tin hồ sơ để bảo mật tài khoản</p>
+                    <ul class="nav nav-tabs mb-4" id="profileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold text-dark" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">Hồ sơ của tôi</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold text-dark" id="voucher-tab" data-bs-toggle="tab" data-bs-target="#voucher" type="button" role="tab" aria-controls="voucher" aria-selected="false">Ví Voucher</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="profileTabsContent">
+                        <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                            <p class="text-muted small mb-4">Quản lý thông tin hồ sơ để bảo mật tài khoản</p>
                     
                     <form th:action="@{/account/update}" method="post" enctype="multipart/form-data" th:object="${profileForm}">
 
@@ -90,12 +100,51 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
                     </form>
+                        </div>
+                        
+                        <!-- VOUCHER WALLET TAB -->
+                        <div class="tab-pane fade" id="voucher" role="tabpanel" aria-labelledby="voucher-tab">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="text-muted small mb-0">Lưu trữ và quản lý các mã giảm giá của bạn</p>
+                            </div>
+                            
+                            <div th:if="${vouchers == null or vouchers.empty}" class="alert alert-secondary text-center py-5">
+                                <i class="fas fa-ticket-alt fs-1 text-muted mx-auto d-block mb-3"></i>
+                                Hiện chưa có mã giảm giá nào khả dụng
+                            </div>
+
+                            <div th:if="${vouchers != null and !vouchers.empty}" class="row g-3">
+                                <div class="col-md-6" th:each="v : ${vouchers}">
+                                    <div class="card border-1 border-secondary h-100 position-relative voucher-card" style="border-radius: 8px; overflow: hidden; border-style: dashed !important;">
+                                        <div class="row g-0 h-100">
+                                            <div class="col-4 bg-dark text-white d-flex flex-column align-items-center justify-content-center p-2 text-center" style="border-right: 2px dashed #ccc;">
+                                                <i class="fas fa-ticket-alt fs-2 mb-2"></i>
+                                                <span class="fw-bold fs-5" th:text="${v.discountPercent != null and v.discountPercent > 0 ? v.discountPercent + '%' : #numbers.formatDecimal(v.discountAmount, 0, 'COMMA', 0, 'POINT') + 'đ'}">20%</span>
+                                            </div>
+                                            <div class="col-8 p-3 d-flex flex-column justify-content-between">
+                                                <div>
+                                                    <h6 class="fw-bold mb-1" th:text="${v.code}">CODE</h6>
+                                                    <p class="small text-muted mb-1" th:text="${'Đơn tối thiểu: ' + #numbers.formatDecimal(v.minOrderAmount, 0, 'COMMA', 0, 'POINT') + 'đ'}">Min</p>
+                                                    <p class="small text-danger mb-0 fw-bold" th:text="${'HSD: ' + #temporals.format(v.endDate, 'dd/MM/yyyy')}">HSD</p>
+                                                </div>
+                                                <div class="text-end mt-2">
+                                                    <button type="button" class="btn btn-sm btn-dark px-3 fw-bold rounded-pill btn-use-voucher">Dùng ngay</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </article>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function previewImage(input) {
             if (input.files && input.files[0]) {
@@ -106,6 +155,36 @@
                 reader.readAsDataURL(input.files[0]);
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const btns = document.querySelectorAll('.btn-use-voucher');
+            btns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    fetch('/api/cart/count')
+                        .then(response => response.json())
+                        .then(count => {
+                            if (count > 0) {
+                                window.location.href = '/cart';
+                            } else {
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: 'Oops...',
+                                    text: 'Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm trước khi dùng Voucher!',
+                                    confirmButtonColor: '#212529',
+                                    confirmButtonText: 'Mua sắm ngay'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        window.location.href = '/';
+                                    }
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                });
+            });
+        });
     </script>
 </body>
 </html>

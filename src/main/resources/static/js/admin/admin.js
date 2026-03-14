@@ -250,14 +250,16 @@ function showToast(message, type = 'success') {
 
 
 // ===== DASHBOARD CHART =====
+let revenueChartInstance = null;
+
 function initRevenueChart(chartData) {
     if (!chartData || !document.getElementById('revenueChart')) return;
 
-    const labels = chartData.map(d => d.month);
+    const labels = chartData.map(d => d.label || d.month);
     const values = chartData.map(d => Number(d.revenue) / 1000000);
 
     const ctx = document.getElementById('revenueChart').getContext('2d');
-    new Chart(ctx, {
+    revenueChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
@@ -275,4 +277,22 @@ function initRevenueChart(chartData) {
             scales: { x: { grid: { display: false } } }
         }
     });
+
+    const periodSelect = document.getElementById('revenuePeriodSelect');
+    if (periodSelect) {
+        periodSelect.addEventListener('change', function () {
+            updateRevenueChart(this.value);
+        });
+    }
+}
+
+function updateRevenueChart(period) {
+    fetch('/admin/dashboard/chart-data?period=' + period)
+        .then(res => res.json())
+        .then(data => {
+            if (!revenueChartInstance) return;
+            revenueChartInstance.data.labels = data.map(d => d.label || d.month);
+            revenueChartInstance.data.datasets[0].data = data.map(d => Number(d.revenue) / 1000000);
+            revenueChartInstance.update();
+        });
 }

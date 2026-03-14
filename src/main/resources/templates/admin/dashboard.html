@@ -68,9 +68,11 @@
                 <div class="card-box h-100">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h5 class="fw-bold m-0">Phân tích doanh thu</h5>
-                        <select class="form-select form-select-sm w-auto border-0 bg-light">
-                            <option>Tháng này</option>
-                            <option>Năm nay</option>
+                        <select id="revenuePeriodSelect" class="form-select form-select-sm w-auto border-0 bg-light">
+                            <option value="day">Hôm nay</option>
+                            <option value="week">Tuần này</option>
+                            <option value="month" selected>Tháng này</option>
+                            <option value="year">Năm nay</option>
                         </select>
                     </div>
                     <canvas id="revenueChart" height="150"></canvas>

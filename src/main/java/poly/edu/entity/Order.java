@@ -34,9 +34,9 @@ public class Order {
     @Column(name = "shipping_fee", precision = 18, scale = 2)
     private BigDecimal shippingFee;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "voucher_id")
-//    private Voucher voucher;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "voucher_id")
+    private Voucher voucher;
 
     @Column(name = "discount_amount", precision = 18, scale = 2)
     private BigDecimal discountAmount;

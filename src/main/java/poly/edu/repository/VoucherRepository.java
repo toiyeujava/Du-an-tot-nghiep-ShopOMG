@@ -24,4 +24,12 @@ public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
 
     // 3. Tìm kiếm voucher theo mã code có chứa từ khóa (cho Admin search)
     List<Voucher> findByCodeContainingIgnoreCase(String keyword);
+
+    // 4. Lấy Flash Sale vouchers của ngày hôm nay
+    @Query("SELECT v FROM Voucher v WHERE v.isFlashSale = true AND v.isActive = true " +
+           "AND v.quantity > 0 AND CAST(v.startDate AS date) = CAST(:today AS date)")
+    List<Voucher> findTodayFlashSaleVouchers(@Param("today") LocalDateTime today);
+
+    // 5. Kiểm tra mã voucher đã tồn tại chưa
+    boolean existsByCode(String code);
 }

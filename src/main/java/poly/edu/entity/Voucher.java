@@ -47,4 +47,13 @@ public class Voucher {
 
     @Column(name = "is_active", columnDefinition = "bit default 1")
     private Boolean isActive;
+
+    @Column(name = "is_flash_sale", columnDefinition = "bit default 0")
+    private Boolean isFlashSale;
+
+    @Column(name = "flash_sale_start_hour")
+    private Integer flashSaleStartHour;
+
+    @Column(name = "flash_sale_end_hour")
+    private Integer flashSaleEndHour;
 }

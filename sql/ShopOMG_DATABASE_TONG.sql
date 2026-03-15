@@ -146,7 +146,9 @@ CREATE TABLE Orders (
     payment_status NVARCHAR(30) DEFAULT 'NOT_REQUIRED',
     payment_confirmed_at DATETIME2 NULL,
     payment_confirmed_by NVARCHAR(100) NULL,
-    CONSTRAINT FK_Orders_Accounts FOREIGN KEY (account_id) REFERENCES Accounts(id)
+    voucher_id INT NULL, -- Thêm trường lưu ID mã giảm giá
+    CONSTRAINT FK_Orders_Accounts FOREIGN KEY (account_id) REFERENCES Accounts(id),
+    CONSTRAINT FK_Orders_Vouchers FOREIGN KEY (voucher_id) REFERENCES Vouchers(id) -- Khóa ngoại liên kết bảng Vouchers
 );
 
 -- Bảng Chi tiết đơn hàng

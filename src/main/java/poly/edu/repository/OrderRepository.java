@@ -101,4 +101,10 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
         Long countByPaymentStatus(String paymentStatus);
 
         List<Order> findByPaymentStatusAndStatus(String paymentStatus, String status);
+
+        // Check if user already used a specific voucher (excluding cancelled orders)
+        @Query("SELECT COUNT(o) > 0 FROM Order o WHERE o.account.id = :accountId " +
+                        "AND o.voucher.id = :voucherId AND o.status <> 'CANCELLED'")
+        boolean hasUserUsedVoucher(@Param("accountId") Integer accountId,
+                        @Param("voucherId") Integer voucherId);
 }

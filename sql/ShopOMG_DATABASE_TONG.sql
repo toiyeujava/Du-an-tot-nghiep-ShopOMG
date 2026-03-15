@@ -2763,3 +2763,9 @@ INSERT INTO ProductReviews (product_id, account_id, rating, comment, review_date
 -- ── SẢN PHẨM 76: Áo Măng Tô Dạ ──
 (76, 2, 5, N'Dài qua gối, vải dạ dày rất ấm. Mặc mùa đông cực sang trọng!', '2026-01-06 16:30:00'),
 (76, 3, 5, N'Đẳng cấp! Màu đẹp, form chuẩn. Tặng mẹ nhân dịp Tết.', '2026-01-19 10:00:00');
+
+go
+ALTER TABLE Vouchers ADD 
+    is_flash_sale BIT DEFAULT 0, 
+    flash_sale_start_hour INT, 
+    flash_sale_end_hour INT;

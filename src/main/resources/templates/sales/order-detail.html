@@ -88,12 +88,19 @@
                 </div>
             </div>
 
-            <!-- Ghi chú -->
-            <div class="card-box" th:if="${order.note != null and !order.note.isEmpty()}">
+            <!-- Ghi chú: hiện cả ghi chú user lẫn lý do hủy bởi NV -->
+            <div class="card-box" th:if="${order.note != null and !#strings.isEmpty(order.note)}">
                 <h6 class="fw-bold mb-2">
-                    <i class="fas fa-sticky-note me-2 text-warning"></i>Ghi chú khách hàng
+                    <i class="fas fa-sticky-note me-2"
+                       th:classappend="${#strings.startsWith(order.note, '[Hủy bởi NV]')} ? 'text-danger' : 'text-warning'">
+                    </i>
+                    <span th:text="${#strings.startsWith(order.note, '[Hủy bởi NV]')} ? 'Lý do hủy (Nhân viên)' : 'Ghi chú khách hàng'">
+                        Ghi chú
+                    </span>
                 </h6>
-                <p class="mb-0 text-muted fst-italic" th:text="${order.note}"></p>
+                <p class="mb-0 fst-italic"
+                   th:classappend="${#strings.startsWith(order.note, '[Hủy bởi NV]')} ? 'text-danger' : 'text-muted'"
+                   th:text="${order.note}"></p>
             </div>
         </div>
 

@@ -20,6 +20,7 @@ import poly.edu.repository.ProductReviewRepository;
 import poly.edu.repository.VoucherRepository;
 import poly.edu.service.AccountService;
 import poly.edu.service.FileService;
+import poly.edu.service.LookbookService;
 import poly.edu.service.OrderQueryService;
 
 import jakarta.validation.Valid;
@@ -66,6 +67,7 @@ public class AccountProfileController {
     private final ProductReviewRepository productReviewRepository;
     private final ProductRepository productRepository;
     private final VoucherRepository voucherRepository;
+    private final LookbookService lookbookService;
 
     /**
      * Display user profile page (GET).
@@ -174,8 +176,17 @@ public class AccountProfileController {
         Set<String> reviewedOrderProductKeys = new java.util.HashSet<>(
                 productReviewRepository.findReviewedOrderProductKeys(acc.getId()));
 
+        // Build set of orderIds that already have a Lookbook post
+        Set<Integer> lookbookPostedOrderIds = new java.util.HashSet<>();
+        for (Order o : orders) {
+            if (lookbookService.hasPosted(o.getId(), acc.getId())) {
+                lookbookPostedOrderIds.add(o.getId());
+            }
+        }
+
         model.addAttribute("orders", orders);
         model.addAttribute("reviewedOrderProductKeys", reviewedOrderProductKeys);
+        model.addAttribute("lookbookPostedOrderIds", lookbookPostedOrderIds);
         model.addAttribute("activePage", "orders");
         return "user/account-orders";
     }

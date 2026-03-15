@@ -23,6 +23,9 @@
         <a href="/account/reviews" class="nav-link" th:classappend="${activePage == 'reviews'} ? 'active'">
             <i class="fas fa-star"></i> Đánh giá sản phẩm
         </a>
+        <a href="/account/lookbook" class="nav-link" th:classappend="${activePage == 'lookbook'} ? 'active'">
+            <i class="fas fa-camera-retro"></i> Bài đăng Lookbook
+        </a>
         <form th:action="@{/logout}" method="post" class="m-0">
             <button type="submit" class="nav-link text-danger border-0 bg-transparent w-100 text-start">
                 <i class="fas fa-sign-out-alt"></i> Đăng xuất

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+
+<head>
+    <title>Lookbook - ShopOMG</title>
+</head>
+
+<body>
+    <article>
+        <link rel="stylesheet" th:href="@{/css/lookbook.css}">
+
+        <!-- Hero Banner -->
+        <div class="lookbook-hero">
+            <div class="container text-center">
+                <h1 class="lookbook-hero-title">LOOKBOOK</h1>
+                <p class="lookbook-hero-sub">Cảm hứng thời trang từ cộng đồng ShopOMG</p>
+            </div>
+        </div>
+
+        <div class="container py-5">
+            <!-- Empty State -->
+            <div th:if="${#lists.isEmpty(posts)}" class="text-center py-5">
+                <i class="fas fa-camera-retro fa-5x text-muted mb-4" style="opacity:0.3;"></i>
+                <h4 class="text-muted">Chưa có bài đăng nào</h4>
+                <p class="text-muted">Hãy mua sắm và chia sẻ outfit của bạn!</p>
+                <a href="/home" class="btn btn-dark px-4 mt-2">Mua sắm ngay</a>
+            </div>
+
+            <!-- Masonry Grid -->
+            <div th:if="${!#lists.isEmpty(posts)}" class="lookbook-grid">
+                <div th:each="post : ${posts}" class="lookbook-card">
+                    <a th:href="@{/product/{slug}(slug=${post.product.slug})}" class="lookbook-card-link">
+                        <div class="lookbook-card-img-wrap">
+                            <img th:src="@{${post.imagePath}}" th:alt="${post.caption}" loading="lazy">
+                            <div class="lookbook-card-overlay">
+                                <span class="lookbook-product-badge">
+                                    <i class="fas fa-shopping-bag me-1"></i>
+                                    <span th:text="${post.product.name}">Tên sản phẩm</span>
+                                </span>
+                                <span class="lookbook-price-badge"
+                                    th:text="${#numbers.formatDecimal(post.product.price, 0, 'COMMA', 0, 'POINT') + 'đ'}">299.000đ</span>
+                            </div>
+                        </div>
+                        <div class="lookbook-card-body">
+                            <div class="d-flex align-items-center mb-2">
+                                <img th:src="${post.account.avatar != null ? post.account.avatar : 'https://ui-avatars.com/api/?name=' + post.account.fullName.replace(' ', '+') + '&background=8B0000&color=fff'}"
+                                    class="lookbook-avatar" th:alt="${post.account.fullName}">
+                                <div class="ms-2">
+                                    <span class="fw-bold small" th:text="${post.account.fullName}">Nguyễn Văn A</span>
+                                    <div class="text-muted" style="font-size:0.7rem;"
+                                        th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy')}">01/01/2026</div>
+                                </div>
+                            </div>
+                            <p th:if="${post.caption != null and !post.caption.isEmpty()}" class="lookbook-caption"
+                                th:text="${post.caption}">Caption here</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </article>
+</body>
+
+</html>

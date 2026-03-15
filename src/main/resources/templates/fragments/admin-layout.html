@@ -54,6 +54,11 @@
             <a href="/admin/chat" th:classappend="${pageTitle == 'Hỗ trợ khách hàng'} ? 'active'">
                 <i class="fas fa-comments"></i> CSKH
             </a>
+            <small class="text-uppercase text-muted fw-bold ms-3 mb-2 mt-4 d-block"
+                style="font-size: 0.7rem; letter-spacing: 1px;">Nội dung</small>
+            <a href="/admin/lookbook" th:classappend="${pageTitle == 'Quản lý Lookbook'} ? 'active'">
+                <i class="fas fa-camera-retro"></i> Lookbook
+            </a>
             <form th:action="@{/logout}" method="post" class="mt-4 ms-3 mb-2 d-block">
                 <button type="submit"
                     class="btn btn-link text-danger text-decoration-none p-0 d-flex align-items-center">

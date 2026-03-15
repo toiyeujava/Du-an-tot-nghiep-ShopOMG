@@ -6,6 +6,7 @@
     <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}" />
     <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}" />
     <title th:replace="${title}">ShopOMG</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
     
     <!-- Anti-FOUC: Apply saved theme BEFORE any rendering to prevent flash -->
     <script>

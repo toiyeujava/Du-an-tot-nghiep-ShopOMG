@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCE19B"/>
+      <stop offset="50%" stop-color="#BD903C"/>
+      <stop offset="100%" stop-color="#FCE19B"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="60" fill="#13233E"/>
+  <path d="M47 38 V26 A13 13 0 0 1 73 26 V38 M37 38 L28 72 H92 L83 38 Z" fill="none" stroke="url(#gold)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="60" y="108" font-family="Georgia, 'Times New Roman', serif" font-size="36" font-weight="900" fill="url(#gold)" text-anchor="middle" letter-spacing="-1">OMG!</text>
+</svg>

@@ -175,14 +175,26 @@
                         <span class="text-muted">Tạm tính:</span>
                         <span class="fw-bold" id="subTotalDisplay">0đ</span>
                     </div>
-
-
+                    <input type="hidden" id="cartTotalAmountRaw" value="0">
+                    <input type="hidden" id="appliedVoucherCode" value="">
 
                     <hr class="my-3">
 
+                    <!-- Voucher Modal Trigger -->
+                    <button type="button" class="btn btn-outline-dark w-100 mb-3 d-flex justify-content-between align-items-center"
+                            data-bs-toggle="modal" data-bs-target="#voucherModal">
+                        <span><i class="fas fa-ticket-alt me-2 text-danger"></i> Chọn hoặc nhập mã giảm giá</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+
+                    <div class="d-flex justify-content-between mb-2 text-success" id="discountRow" style="display: none !important;">
+                        <span>Giảm giá:</span>
+                        <span id="discountAmountDisplay">-0đ</span>
+                    </div>
+
                     <div class="d-flex justify-content-between mb-4">
                         <span class="fw-bold fs-5">Tổng thanh toán:</span>
-                        <span class="text-danger fw-bold fs-4" id="finalTotalDisplay">0đ</span>
+                        <span class="text-danger fw-bold fs-4 finalTotalDisplay" id="finalTotalDisplay">0đ</span>
                     </div>
 
                     <div class="d-grid gap-2">
@@ -314,6 +326,12 @@
 
                 document.getElementById('subTotalDisplay').innerText = formatCurrency(total);
                 document.getElementById('finalTotalDisplay').innerText = formatCurrency(total);
+                
+                const rawTotalEl = document.getElementById('cartTotalAmountRaw');
+                if(rawTotalEl) rawTotalEl.value = total;
+                // If there's an active discount displayed, we might need to reset it or recalculate, but for now we just let the user re-apply.
+                const discountRow = document.getElementById('discountRow');
+                if(discountRow) discountRow.style.setProperty('display', 'none', 'important');
 
                 const btn = document.getElementById('checkoutBtn');
                 btn.innerText = `THANH TOÁN (${count})`;
@@ -334,10 +352,14 @@
             }
 
             function submitCheckout() {
-                // Here we would gather IDs and submit to checkout
                 const selectedIds = Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => cb.value);
                 if (selectedIds.length > 0) {
-                    window.location.href = '/checkout?ids=' + selectedIds.join(',');
+                    let url = '/checkout?ids=' + selectedIds.join(',');
+                    const voucherCode = document.getElementById("appliedVoucherCode")?.value;
+                    if (voucherCode) {
+                        url += '&voucherCode=' + encodeURIComponent(voucherCode);
+                    }
+                    window.location.href = url;
                 }
             }
 
@@ -567,6 +589,9 @@
             </div>
         </div>
 
+        <!-- Include Voucher Modal -->
+        <div th:replace="~{fragments/voucher-modal :: voucherModal}"></div>
+        <!-- Load voucher.js will be done inside the fragment or explicitly here if needed. Since the fragment includes it, we ensure no double load, but it's safe to just include the fragment. -->
     </article>
 </body>
 

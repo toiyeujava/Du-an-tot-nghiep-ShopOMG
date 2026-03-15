@@ -14,9 +14,14 @@ import poly.edu.entity.Cart;
 import poly.edu.entity.Order;
 import poly.edu.repository.AccountRepository;
 import poly.edu.repository.OrderRepository;
+import poly.edu.repository.VoucherRepository;
 import poly.edu.service.AccountService;
 import poly.edu.service.CartService;
 import poly.edu.service.OrderCommandService;
+import poly.edu.entity.Voucher;
+import poly.edu.service.AddressService;
+import poly.edu.dto.AddressDTO;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import poly.edu.service.NotificationService;
 
 import java.math.BigDecimal;
@@ -54,7 +59,9 @@ public class CheckoutController {
     private final AccountRepository accountRepository;
     private final AccountService accountService;
     private final OrderRepository orderRepository;
+    private final VoucherRepository voucherRepository;
     private final NotificationService notificationService;
+    private final AddressService addressService;
 
     /**
      * Display checkout page with cart summary.
@@ -62,6 +69,7 @@ public class CheckoutController {
     @GetMapping("/checkout")
     public String checkout(@RequestParam(value = "source", required = false) String source,
             @RequestParam(value = "ids", required = false) List<Integer> ids,
+            @RequestParam(value = "voucherCode", required = false) String voucherCode,
             Model model, Principal principal) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
@@ -92,11 +100,16 @@ public class CheckoutController {
             cartTotal = cartService.getCartTotal(account.getId());
         }
 
+        // Fetch addresses from DB
+        List<AddressDTO> addresses = addressService.getAllAddresses(account.getId());
+        model.addAttribute("addresses", addresses);
+
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("cartTotal", cartTotal);
         model.addAttribute("pageTitle", "Thanh toán");
         model.addAttribute("checkoutMode", isBuyNow ? "BUY_NOW" : "CART");
         model.addAttribute("selectedCartItemIds", ids);
+        model.addAttribute("appliedVoucherCode", voucherCode);
         return "user/checkout";
     }
 
@@ -172,7 +185,9 @@ public class CheckoutController {
             @RequestParam(value = "payment", required = false, defaultValue = "COD") String paymentMethod,
             @RequestParam(value = "shippingFee", required = false, defaultValue = "30000") Long shippingFee,
             @RequestParam(value = "discountAmount", required = false, defaultValue = "0") Long discountAmount,
+            @RequestParam(value = "couponCode", required = false) String couponCode,
             Principal principal,
+            RedirectAttributes redirectAttributes,
             Model model) {
 
         Account account = getAuthenticatedAccount(principal);
@@ -201,7 +216,8 @@ public class CheckoutController {
                 }
 
                 if (cartItems == null || cartItems.isEmpty()) {
-                    return "redirect:/checkout?error=empty";
+                    redirectAttributes.addFlashAttribute("error", "Lỗi: Không tìm thấy thông tin sản phẩm để thanh toán.");
+                    return "redirect:/checkout";
                 }
                 order = orderCommandService.createOrder(account, cartItems, recipientName, phone, address);
 
@@ -221,9 +237,23 @@ public class CheckoutController {
                 order.setPaymentStatus("NOT_REQUIRED");
             }
 
-            // Update the amounts on the order entity itself
             long safeFee = (shippingFee != null && shippingFee > 0) ? shippingFee : 30000L;
             long safeDiscount = (discountAmount != null && discountAmount > 0) ? discountAmount : 0L;
+
+            if (couponCode != null && !couponCode.trim().isEmpty()) {
+                Voucher voucher = voucherRepository.findByCode(couponCode).orElse(null);
+                if (voucher != null) {
+                    if (voucher.getQuantity() > 0) {
+                        order.setVoucher(voucher);
+                        voucher.setQuantity(voucher.getQuantity() - 1);
+                        voucherRepository.save(voucher);
+                    } else if (safeDiscount > 0) {
+                        throw new RuntimeException("Mã giảm giá đã hết lượt sử dụng.");
+                    }
+                }
+            }
+
+            // Update the amounts on the order entity itself
             order.setShippingFee(BigDecimal.valueOf(safeFee));
             order.setDiscountAmount(BigDecimal.valueOf(safeDiscount));
             
@@ -245,8 +275,9 @@ public class CheckoutController {
             model.addAttribute("orderId", order.getId());
             return "user/order-success";
         } catch (Exception e) {
-            model.addAttribute("error", e.getMessage());
-            return "redirect:/checkout?error=stock";
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+            return "redirect:/checkout";
         }
     }
 

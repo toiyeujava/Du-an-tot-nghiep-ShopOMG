@@ -293,7 +293,7 @@ public class OrderCommandService {
         detail.setQuantity(quantity);
 
         double price = variant.getProduct().getPrice();
-        int discount = variant.getProduct().getDiscount();
+        int discount = variant.getProduct().getDiscount() != null ? variant.getProduct().getDiscount() : 0;
         double finalPrice = price * (1 - (double) discount / 100);
 
         detail.setPrice(BigDecimal.valueOf(finalPrice));

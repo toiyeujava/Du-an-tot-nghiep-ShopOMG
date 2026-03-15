@@ -1,0 +1,134 @@
+<div th:fragment="voucherModal" class="modal fade" id="voucherModal" tabindex="-1" aria-labelledby="voucherModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            
+            <!-- Phần Header -->
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                <h5 class="modal-title fw-bold" id="voucherModalLabel">
+                    <i class="fas fa-ticket-alt me-2"></i> Chọn mã giảm giá
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Phần Body -->
+            <div class="modal-body p-4 bg-light">
+                
+                <!-- Khu vực 1: Ô nhập mã thủ công -->
+                <div class="input-group mb-4 shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                    <span class="input-group-text bg-white border-0 text-muted">
+                        <i class="fas fa-keyboard"></i>
+                    </span>
+                    <input type="text" id="voucherInput" class="form-control border-0 px-2 py-3" placeholder="Nhập mã giảm giá (VD: OPENING)">
+                    <button class="btn btn-dark fw-bold px-4" id="btnApplyVoucher" type="button">ÁP DỤNG</button>
+                </div>
+
+                <!-- Tiêu đề danh sách mã -->
+                <h6 class="fw-bold mb-3 text-secondary text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px;">
+                    Mã giảm giá có sẵn
+                </h6>
+                
+                <!-- Khu vực 2: Danh sách các mã hardcode -->
+                <div class="voucher-list d-flex flex-column gap-3">
+                    
+                    <!-- Voucher 1 -->
+                    <div class="voucher-ticket">
+                        <div class="ticket-left">
+                            <i class="fas fa-gift text-white fs-4"></i>
+                        </div>
+                        <div class="ticket-right d-flex justify-content-between align-items-center">
+                            <div class="ticket-info">
+                                <h6 class="fw-bold text-dark mb-1">Mã: <span class="text-danger">OPENING</span></h6>
+                                <p class="text-muted mb-0" style="font-size: 0.85rem;">Giảm giá 20% cho đơn hàng bất kỳ.</p>
+                            </div>
+                            <button class="btn btn-outline-danger btn-sm fw-bold px-3 btn-select-voucher" data-code="OPENING">
+                                Chọn
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Voucher 2 -->
+                    <div class="voucher-ticket">
+                        <div class="ticket-left" style="background: linear-gradient(135deg, #3498db, #2980b9);">
+                            <i class="fas fa-shipping-fast text-white fs-4"></i>
+                        </div>
+                        <div class="ticket-right d-flex justify-content-between align-items-center">
+                            <div class="ticket-info">
+                                <h6 class="fw-bold text-dark mb-1">Mã: <span class="text-primary">FREESHIP</span></h6>
+                                <p class="text-muted mb-0" style="font-size: 0.85rem;">Miễn phí vận chuyển toàn quốc.</p>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm fw-bold px-3 btn-select-voucher" data-code="FREESHIP">
+                                Chọn
+                            </button>
+                        </div>
+                    </div>
+
+                </div> <!-- End voucher-list -->
+
+            </div><!-- End Modal Body -->
+
+        </div>
+    </div>
+
+    <!-- Đoạn CSS trang trí cho layout dạng vé (Ticket) -->
+    <style>
+        .voucher-ticket {
+            display: flex;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .voucher-ticket:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+
+        .ticket-left {
+            width: 80px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            /* Tạo viền răng cưa đứt khúc ngăn cách (tùy chọn) */
+            border-right: 2px dashed rgba(255, 255, 255, 0.4);
+        }
+
+        /* Hình bán nguyệt cắt lõm ở trên và dưới của mép nối */
+        .ticket-left::before, .ticket-left::after {
+            content: '';
+            position: absolute;
+            right: -8px; /* Dịch nốt cắt ra chính giữa viền nối */
+            width: 16px;
+            height: 16px;
+            background-color: #f8f9fa; /* Trùng với màu nền modal-body (bg-light) */
+            border-radius: 50%;
+        }
+
+        .ticket-left::before {
+            top: -8px;
+        }
+
+        .ticket-left::after {
+            bottom: -8px;
+        }
+
+        .ticket-right {
+            flex-grow: 1;
+            padding: 15px;
+            background-color: #fff;
+        }
+
+        #voucherInput:focus {
+            box-shadow: none;
+            outline: none;
+        }
+    </style>
+
+    <!-- Load external JS for voucher logic -->
+    <script th:src="@{/js/voucher.js}"></script>
+</div>

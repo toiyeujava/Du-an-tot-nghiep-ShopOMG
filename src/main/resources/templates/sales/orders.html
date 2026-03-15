@@ -14,7 +14,7 @@
         <div class="row g-3 align-items-end">
 
             <!-- Tìm kiếm (4.5) -->
-            <div class="col-md-5">
+            <div class="col-md-6">
                 <label class="form-label small fw-bold text-muted">Tìm kiếm đơn hàng</label>
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0">
@@ -27,7 +27,7 @@
             </div>
 
             <!-- Lọc trạng thái (4.4) -->
-            <div class="col-md-4">
+            <div class="col-md-5">
                 <label class="form-label small fw-bold text-muted">Trạng thái</label>
                 <select id="statusFilter" class="form-select">
                     <option value="">Tất cả trạng thái</option>
@@ -39,12 +39,9 @@
                 </select>
             </div>
 
-            <!-- Nút tìm + reset -->
-            <div class="col-md-3 d-flex gap-2">
-                <button class="btn btn-dark flex-fill" onclick="applyFilter()">
-                    <i class="fas fa-filter me-1"></i> Lọc
-                </button>
-                <a href="/sales/orders" class="btn btn-outline-secondary">
+            <!-- Nút reset -->
+            <div class="col-md-1 d-flex align-items-end">
+                <a href="/sales/orders" class="btn btn-outline-secondary w-100" title="Xóa bộ lọc">
                     <i class="fas fa-redo"></i>
                 </a>
             </div>
@@ -98,7 +95,7 @@
                         </td>
                         <td th:text="${order.receiverPhone ?: '-'}">-</td>
                         <td class="text-end fw-bold"
-                            th:text="${#numbers.formatInteger(order.finalAmount, 3, 'POINT') + ' ₫'}">0 ₫</td>
+                            th:text="${order.finalAmount != null ? #numbers.formatInteger(order.finalAmount, 3, 'POINT') + ' ₫' : 'Chưa có'}">0 ₫</td>
                         <td class="text-center">
                             <span th:switch="${order.status}">
                                 <span th:case="'PENDING'"   class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Chờ xử lý</span>
@@ -154,7 +151,7 @@
     </div>
 
     <script>
-        function applyFilter() {
+        function goFilter() {
             const keyword = document.getElementById('searchInput').value.trim();
             const status  = document.getElementById('statusFilter').value;
             const params  = new URLSearchParams();
@@ -164,10 +161,13 @@
             window.location.href = '/sales/orders?' + params.toString();
         }
 
-        // Nhấn Enter trong ô search cũng tìm kiếm
+        // Search: chỉ tìm khi nhấn Enter
         document.getElementById('searchInput').addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') applyFilter();
+            if (e.key === 'Enter') goFilter();
         });
+
+        // Status: lọc ngay khi chọn
+        document.getElementById('statusFilter').addEventListener('change', goFilter);
     </script>
 
 </article>

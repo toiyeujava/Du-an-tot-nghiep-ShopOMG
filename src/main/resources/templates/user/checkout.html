@@ -1241,12 +1241,8 @@
 
                 if (!isValid) return;
 
-                // Generate new ID
-                const maxId = addressesData.length > 0 ? Math.max(...addressesData.map(a => a.id)) : 0;
-
                 // Create new address object
                 const newAddress = {
-                    id: maxId + 1,
                     recipientName: name,
                     phone: phone,
                     city: city,
@@ -1255,42 +1251,45 @@
                     isDefault: isDefault
                 };
 
-                // If this is default, remove default from others
-                if (isDefault) {
-                    addressesData.forEach(addr => addr.isDefault = false);
-                }
+                const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+                const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
 
                 // Call server API to save then update UI
-                fetch('/account/addresses', {
+                fetch('/api/addresses', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
                     },
                     body: JSON.stringify(newAddress)
                 })
-                .then(response => {
-                    if (response.ok) {
-                        return response.json();
-                    }
-                    throw new Error('Lỗi khi lưu địa chỉ');
-                })
-                .then(data => {
-                    // Update array with real ID from server
-                    addressesData.push(data);
-                    
-                    // Close modal and reload addresses
-                    const addModal = bootstrap.Modal.getInstance(document.getElementById('addAddressModal'));
-                    if (addModal) {
-                        addModal.hide();
-                    }
-                    loadAddresses();
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        // If this is default, remove default from others
+                        if (isDefault) {
+                            addressesData.forEach(addr => addr.isDefault = false);
+                        }
 
-                    // Reset form
-                    document.getElementById('addressForm').reset();
+                        // Update array with real ID from server
+                        addressesData.push(result.data);
+                        
+                        // Close modal and reload addresses
+                        const addModal = bootstrap.Modal.getInstance(document.getElementById('addAddressModal'));
+                        if (addModal) {
+                            addModal.hide();
+                        }
+                        loadAddresses();
+
+                        // Reset form
+                        document.getElementById('addressForm').reset();
+                    } else {
+                        throw new Error(result.message || 'Lỗi khi lưu địa chỉ');
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Không thể lưu địa chỉ. Vui lòng thử lại sau.');
+                    alert(error.message || 'Không thể lưu địa chỉ. Vui lòng thử lại sau.');
                 });
             }
 

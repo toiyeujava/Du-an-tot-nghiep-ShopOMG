@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+
+<head>
+    <title>Bài đăng Lookbook - ShopOMG</title>
+</head>
+
+<body>
+    <article class="container py-5">
+        <div class="row">
+            <div class="col-lg-3 mb-4">
+                <div th:replace="~{fragments/account-sidebar :: sidebar('lookbook')}"></div>
+            </div>
+            <div class="col-lg-9">
+                <h4 class="fw-bold mb-4"><i class="fas fa-camera-retro me-2"></i>Bài đăng của tôi</h4>
+
+                <!-- Empty State -->
+                <div th:if="${#lists.isEmpty(posts)}" class="text-center py-5 bg-white border rounded">
+                    <i class="fas fa-image fa-4x text-muted mb-3" style="opacity:0.3;"></i>
+                    <h5>Bạn chưa đăng bài nào</h5>
+                    <p class="text-muted">Mua sắm và chia sẻ outfit phong cách của bạn lên Lookbook!</p>
+                    <a href="/account/orders" class="btn btn-primary mt-2">Xem đơn hàng</a>
+                </div>
+
+                <!-- Posts List -->
+                <div th:each="post : ${posts}" class="card mb-3 border-0 shadow-sm" style="border-radius:12px; overflow:hidden;">
+                    <div class="row g-0">
+                        <div class="col-md-4">
+                            <img th:src="@{${post.imagePath}}" class="w-100 h-100" style="object-fit:cover; min-height:180px;" th:alt="${post.caption}">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold mb-0" th:text="${post.product.name}">Sản phẩm</h6>
+                                    <span th:if="${post.status == 'PENDING'}" class="badge bg-warning text-dark">Chờ duyệt</span>
+                                    <span th:if="${post.status == 'APPROVED'}" class="badge bg-success">Đã duyệt</span>
+                                    <span th:if="${post.status == 'REJECTED'}" class="badge bg-danger">Bị từ chối</span>
+                                </div>
+                                <p th:if="${post.caption != null and !post.caption.isEmpty()}" class="text-muted small mb-2" th:text="${post.caption}">Caption</p>
+                                <small class="text-muted">
+                                    <i class="far fa-clock me-1"></i>
+                                    <span th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </article>
+</body>
+
+</html>

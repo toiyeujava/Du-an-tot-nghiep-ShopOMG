@@ -118,6 +118,18 @@
                                             <i class="fas fa-check-circle me-1"></i>Xem đánh giá
                                         </a>
                                     </span>
+                                    <!-- Lookbook Post Button — only for COMPLETED orders not yet posted -->
+                                    <button
+                                        th:if="${order.status == 'COMPLETED' and !lookbookPostedOrderIds.contains(order.id)}"
+                                        type="button" class="btn btn-outline-primary btn-sm px-3 fw-bold lookbook-btn"
+                                        th:attr="data-order-id=${order.id}, data-product-id=${order.orderDetails[0].productVariant.product.id}, data-product-name=${order.orderDetails[0].productName}"
+                                        data-bs-toggle="modal" data-bs-target="#lookbookModal">
+                                        <i class="fas fa-camera me-1"></i>Đăng Lookbook
+                                    </button>
+                                    <span th:if="${order.status == 'COMPLETED' and lookbookPostedOrderIds.contains(order.id)}"
+                                        class="badge bg-info text-white px-3 py-2 align-self-center">
+                                        <i class="fas fa-check me-1"></i>Đã đăng Lookbook
+                                    </span>
                                     <a th:href="@{/product/{slug}(slug=${order.orderDetails[0].productVariant.product.slug})}"
                                         class="btn btn-dark btn-sm px-4">Mua lại</a>
                                 </div>
@@ -210,6 +222,66 @@
                         <p id="notificationMessage" class="text-muted mb-0"></p>
                         <button type="button" class="btn btn-dark w-100 mt-4" data-bs-dismiss="modal">OK</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== LOOKBOOK MODAL ===== -->
+        <div class="modal fade" id="lookbookModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+                    <div class="modal-header border-0 px-4 pt-4 pb-2">
+                        <h5 class="fw-bold mb-0"><i class="fas fa-camera-retro me-2 text-primary"></i>Đăng lên Lookbook</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="lookbookForm" th:action="@{/account/lookbook/create}" method="post" enctype="multipart/form-data">
+                        <div class="modal-body px-4 py-3">
+                            <input type="hidden" name="orderId" id="lookbookOrderId">
+                            <input type="hidden" name="productId" id="lookbookProductId">
+
+                            <!-- Product Info Preview -->
+                            <div class="d-flex align-items-center p-3 rounded mb-3" style="background:#f8f9fa;">
+                                <i class="fas fa-tshirt fa-2x text-primary me-3"></i>
+                                <div>
+                                    <strong id="lookbookProductName">Sản phẩm</strong>
+                                    <div class="text-muted small">Sản phẩm sẽ được gắn tag tự động</div>
+                                </div>
+                            </div>
+
+                            <!-- Image Upload -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Ảnh outfit của bạn <span class="text-danger">*</span></label>
+                                <div id="lookbookDropZone" class="border-2 border-dashed rounded text-center p-4 position-relative"
+                                    style="border: 2px dashed #dee2e6; cursor:pointer; transition: all 0.3s;">
+                                    <div id="lookbookUploadPlaceholder">
+                                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
+                                        <p class="text-muted mb-0">Kéo thả hoặc bấm để chọn ảnh</p>
+                                        <small class="text-muted">JPG, PNG — tối đa 5MB</small>
+                                    </div>
+                                    <img id="lookbookPreview" src="" alt="Preview" class="img-fluid rounded d-none" style="max-height: 300px;">
+                                    <input type="file" name="image" id="lookbookImageInput" accept="image/*" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor:pointer;" required>
+                                </div>
+                            </div>
+
+                            <!-- Caption -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Caption</label>
+                                <textarea name="caption" id="lookbookCaption" class="form-control" rows="3"
+                                    maxlength="500" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..."></textarea>
+                                <div class="text-end text-muted small mt-1"><span id="lookbookCharCount">0</span>/500</div>
+                            </div>
+
+                            <div class="alert alert-info small mb-0">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Bài đăng sẽ được kiểm duyệt trước khi hiển thị trên Lookbook.
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                            <button type="submit" id="lookbookSubmitBtn" class="btn btn-primary w-100 py-2 fw-bold" style="border-radius:12px;">
+                                <i class="fas fa-paper-plane me-2"></i>Đăng bài
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -1027,6 +1099,46 @@
 
             // Start polling every 10 seconds
             setInterval(pollOrderStatuses, 10000);
+
+            // ===== LOOKBOOK MODAL LOGIC =====
+            document.querySelectorAll('.lookbook-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.getElementById('lookbookOrderId').value = this.dataset.orderId;
+                    document.getElementById('lookbookProductId').value = this.dataset.productId;
+                    document.getElementById('lookbookProductName').textContent = this.dataset.productName;
+                    // Reset form
+                    document.getElementById('lookbookImageInput').value = '';
+                    document.getElementById('lookbookCaption').value = '';
+                    document.getElementById('lookbookCharCount').textContent = '0';
+                    document.getElementById('lookbookPreview').classList.add('d-none');
+                    document.getElementById('lookbookUploadPlaceholder').classList.remove('d-none');
+                });
+            });
+
+            // Image preview
+            document.getElementById('lookbookImageInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Ảnh không được vượt quá 5MB');
+                        e.target.value = '';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        const preview = document.getElementById('lookbookPreview');
+                        preview.src = ev.target.result;
+                        preview.classList.remove('d-none');
+                        document.getElementById('lookbookUploadPlaceholder').classList.add('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Caption character counter
+            document.getElementById('lookbookCaption').addEventListener('input', function() {
+                document.getElementById('lookbookCharCount').textContent = this.value.length;
+            });
 
         </script>
     </article>

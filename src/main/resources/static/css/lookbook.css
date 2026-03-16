@@ -1,0 +1,171 @@
+/* ===== LOOKBOOK FEED ===== */
+
+/* Hero Banner */
+.lookbook-hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 60px 0 50px;
+    margin-bottom: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.lookbook-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    animation: lookbook-dots 20s linear infinite;
+}
+
+@keyframes lookbook-dots {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(30px, 30px); }
+}
+
+.lookbook-hero-title {
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: 12px;
+    color: #fff;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+.lookbook-hero-sub {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    position: relative;
+}
+
+/* Masonry Grid */
+.lookbook-grid {
+    columns: 4 280px;
+    column-gap: 20px;
+}
+
+.lookbook-card {
+    break-inside: avoid;
+    margin-bottom: 20px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.lookbook-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+}
+
+.lookbook-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.lookbook-card-img-wrap {
+    position: relative;
+    overflow: hidden;
+}
+
+.lookbook-card-img-wrap img {
+    width: 100%;
+    display: block;
+    transition: transform 0.5s ease;
+}
+
+.lookbook-card:hover .lookbook-card-img-wrap img {
+    transform: scale(1.05);
+}
+
+/* Overlay on hover */
+.lookbook-card-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.lookbook-card:hover .lookbook-card-overlay {
+    opacity: 1;
+}
+
+.lookbook-product-badge {
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.lookbook-price-badge {
+    color: #ff6b6b;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* Card body */
+.lookbook-card-body {
+    padding: 14px 16px 16px;
+}
+
+.lookbook-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #eee;
+}
+
+.lookbook-caption {
+    font-size: 0.85rem;
+    color: #555;
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .lookbook-grid {
+        columns: 2 160px;
+        column-gap: 12px;
+    }
+
+    .lookbook-card {
+        margin-bottom: 12px;
+    }
+
+    .lookbook-hero-title {
+        font-size: 2rem;
+        letter-spacing: 6px;
+    }
+
+    .lookbook-hero {
+        padding: 40px 0 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    .lookbook-grid {
+        columns: 1;
+    }
+}

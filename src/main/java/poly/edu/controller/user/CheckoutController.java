@@ -243,6 +243,13 @@ public class CheckoutController {
             if (couponCode != null && !couponCode.trim().isEmpty()) {
                 Voucher voucher = voucherRepository.findByCode(couponCode).orElse(null);
                 if (voucher != null) {
+                    // Flash Sale: mỗi user chỉ được dùng 1 lần (không tính đơn CANCELLED)
+                    if (Boolean.TRUE.equals(voucher.getIsFlashSale())
+                            && order.getAccount() != null
+                            && orderRepository.hasUserUsedVoucher(order.getAccount().getId(), voucher.getId())) {
+                        throw new RuntimeException("Bạn đã sử dụng mã Flash Sale này rồi. Mỗi người chỉ được dùng 1 lần!");
+                    }
+
                     if (voucher.getQuantity() > 0) {
                         order.setVoucher(voucher);
                         voucher.setQuantity(voucher.getQuantity() - 1);

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+
+<head>
+    <title>Quản lý Lookbook</title>
+</head>
+
+<body>
+    <article>
+        <!-- Flash Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i><span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <div class="card-body">
+                        <h3 class="fw-bold text-warning" th:text="${#lists.size(posts.?[status == 'PENDING'])}">0</h3>
+                        <small class="text-muted">Chờ duyệt</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <div class="card-body">
+                        <h3 class="fw-bold text-success" th:text="${#lists.size(posts.?[status == 'APPROVED'])}">0</h3>
+                        <small class="text-muted">Đã duyệt</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <div class="card-body">
+                        <h3 class="fw-bold text-danger" th:text="${#lists.size(posts.?[status == 'REJECTED'])}">0</h3>
+                        <small class="text-muted">Bị từ chối</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Posts Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 80px;">Ảnh</th>
+                                <th>Người đăng</th>
+                                <th>Sản phẩm</th>
+                                <th>Caption</th>
+                                <th>Ngày đăng</th>
+                                <th>Trạng thái</th>
+                                <th class="text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(posts)}">
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block" style="opacity:0.3;"></i>
+                                    Chưa có bài đăng nào
+                                </td>
+                            </tr>
+                            <tr th:each="post : ${posts}">
+                                <td>
+                                    <img th:src="@{${post.imagePath}}" class="rounded"
+                                        style="width:60px; height:60px; object-fit:cover;">
+                                </td>
+                                <td>
+                                    <div class="fw-bold small" th:text="${post.account.fullName}">User</div>
+                                    <small class="text-muted" th:text="${post.account.email}">email</small>
+                                </td>
+                                <td>
+                                    <span class="fw-bold small" th:text="${post.product.name}">Product</span>
+                                </td>
+                                <td>
+                                    <span class="small" th:text="${post.caption != null ? (#strings.abbreviate(post.caption, 50)) : '—'}">Caption</span>
+                                </td>
+                                <td>
+                                    <small th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Date</small>
+                                </td>
+                                <td>
+                                    <span th:if="${post.status == 'PENDING'}" class="badge bg-warning text-dark">Chờ duyệt</span>
+                                    <span th:if="${post.status == 'APPROVED'}" class="badge bg-success">Đã duyệt</span>
+                                    <span th:if="${post.status == 'REJECTED'}" class="badge bg-danger">Bị từ chối</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        <form th:if="${post.status != 'APPROVED'}" th:action="@{/admin/lookbook/{id}/approve(id=${post.id})}" method="post">
+                                            <button type="submit" class="btn btn-outline-success btn-sm" title="Duyệt">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                        <form th:if="${post.status != 'REJECTED'}" th:action="@{/admin/lookbook/{id}/reject(id=${post.id})}" method="post">
+                                            <button type="submit" class="btn btn-outline-warning btn-sm" title="Từ chối">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        </form>
+                                        <form th:action="@{/admin/lookbook/{id}/delete(id=${post.id})}" method="post"
+                                            onsubmit="return confirm('Xóa bài đăng này?')">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Xóa">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </article>
+</body>
+
+</html>

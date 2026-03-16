@@ -331,6 +331,27 @@
                 color: #999;
                 margin-left: 4px;
             }
+
+            /* --- FILTER SLIDE ANIMATION --- */
+            #sidebarFilter {
+                transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+                overflow: hidden;
+            }
+            #sidebarFilter.slide-hide {
+                flex: 0 0 0% !important;
+                width: 0 !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                opacity: 0;
+                margin: 0 !important;
+            }
+            #sidebarFilter .filter-section {
+                min-width: 250px;
+                transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            }
+            #sidebarFilter.slide-hide .filter-section {
+                transform: translateX(-100%);
+            }
         </style>
 
         <!-- ==========================================
@@ -397,6 +418,386 @@
         </div>
 
         <!-- ==========================================
+             FLASH SALE COUNTDOWN BANNER
+             ========================================== -->
+        <style>
+            /* ── FLASH SALE BANNER ────────────────────────── */
+            .flash-sale-banner {
+                position: relative;
+                border-radius: 16px;
+                padding: 32px 28px;
+                margin-bottom: 24px;
+                overflow: hidden;
+                color: #fff;
+                transition: all 0.5s ease;
+            }
+
+            .flash-sale-banner::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: 16px;
+                z-index: 0;
+            }
+
+            .flash-sale-banner > * {
+                position: relative;
+                z-index: 1;
+            }
+
+            /* — State: UPCOMING (purple-blue) — */
+            .flash-sale-banner.state-upcoming {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+            }
+
+            /* — State: ACTIVE (red-orange FOMO) — */
+            .flash-sale-banner.state-active {
+                background: linear-gradient(135deg, #f5222d 0%, #fa541c 50%, #fa8c16 100%);
+                box-shadow: 0 8px 32px rgba(245, 34, 45, 0.35);
+                animation: flashPulse 2s ease-in-out infinite;
+            }
+
+            @keyframes flashPulse {
+                0%, 100% { box-shadow: 0 8px 32px rgba(245, 34, 45, 0.35); }
+                50% { box-shadow: 0 8px 48px rgba(245, 34, 45, 0.55); }
+            }
+
+            /* — State: ENDED (dark) — */
+            .flash-sale-banner.state-ended {
+                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            }
+
+            .flash-sale-banner .fs-icon {
+                font-size: 2.5rem;
+                margin-bottom: 8px;
+            }
+
+            .flash-sale-banner .fs-title {
+                font-size: 1.5rem;
+                font-weight: 800;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                margin-bottom: 4px;
+            }
+
+            .flash-sale-banner .fs-subtitle {
+                font-size: 1rem;
+                opacity: 0.9;
+                margin-bottom: 16px;
+            }
+
+            /* Countdown boxes */
+            .flash-countdown {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+                margin: 16px 0;
+            }
+
+            .flash-countdown .cd-box {
+                background: rgba(255,255,255, 0.2);
+                backdrop-filter: blur(8px);
+                border-radius: 12px;
+                padding: 12px 16px;
+                min-width: 70px;
+                text-align: center;
+                border: 1px solid rgba(255,255,255,0.25);
+            }
+
+            .flash-countdown .cd-value {
+                font-size: 2rem;
+                font-weight: 900;
+                line-height: 1;
+                font-variant-numeric: tabular-nums;
+            }
+
+            .flash-countdown .cd-label {
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                opacity: 0.85;
+                margin-top: 4px;
+            }
+
+            /* Voucher cards */
+            .flash-voucher-card {
+                background: rgba(255,255,255, 0.15);
+                backdrop-filter: blur(8px);
+                border: 1px dashed rgba(255,255,255,0.5);
+                border-radius: 12px;
+                padding: 16px 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 16px;
+                flex-wrap: wrap;
+            }
+
+            .flash-voucher-code {
+                font-size: 1.4rem;
+                font-weight: 900;
+                letter-spacing: 3px;
+                font-family: 'Courier New', monospace;
+            }
+
+            .flash-voucher-info {
+                font-size: 0.85rem;
+                opacity: 0.9;
+            }
+
+            .btn-copy-voucher {
+                background: rgba(255,255,255, 0.25);
+                color: #fff;
+                border: 1px solid rgba(255,255,255,0.5);
+                border-radius: 8px;
+                padding: 8px 20px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                white-space: nowrap;
+            }
+
+            .btn-copy-voucher:hover {
+                background: #fff;
+                color: #f5222d;
+                transform: scale(1.05);
+            }
+
+            .btn-copy-voucher.copied {
+                background: #52c41a;
+                border-color: #52c41a;
+                color: #fff;
+            }
+
+            .flash-voucher-qty {
+                font-size: 0.8rem;
+                background: rgba(255,255,255,0.2);
+                padding: 4px 10px;
+                border-radius: 20px;
+            }
+
+            /* Sparkle particles (decorative) */
+            .flash-sale-banner .sparkle {
+                position: absolute;
+                width: 6px;
+                height: 6px;
+                background: rgba(255,255,255,0.6);
+                border-radius: 50%;
+                animation: sparkleFloat 3s ease-in-out infinite;
+            }
+
+            .flash-sale-banner .sparkle:nth-child(1) { top: 10%; left: 5%; animation-delay: 0s; }
+            .flash-sale-banner .sparkle:nth-child(2) { top: 20%; right: 10%; animation-delay: 1s; }
+            .flash-sale-banner .sparkle:nth-child(3) { bottom: 15%; left: 15%; animation-delay: 0.5s; }
+            .flash-sale-banner .sparkle:nth-child(4) { top: 50%; right: 20%; animation-delay: 1.5s; }
+            .flash-sale-banner .sparkle:nth-child(5) { bottom: 25%; right: 5%; animation-delay: 2s; }
+
+            @keyframes sparkleFloat {
+                0%, 100% { opacity: 0.3; transform: translateY(0) scale(1); }
+                50% { opacity: 1; transform: translateY(-10px) scale(1.5); }
+            }
+
+            @media (max-width: 576px) {
+                .flash-sale-banner .fs-title { font-size: 1.1rem; }
+                .flash-countdown .cd-box { min-width: 55px; padding: 8px 10px; }
+                .flash-countdown .cd-value { font-size: 1.4rem; }
+                .flash-voucher-code { font-size: 1rem; letter-spacing: 2px; }
+            }
+        </style>
+
+        <section id="flashSaleBanner" class="flash-sale-banner state-upcoming" style="display:none;">
+            <!-- Sparkle particles -->
+            <span class="sparkle"></span>
+            <span class="sparkle"></span>
+            <span class="sparkle"></span>
+            <span class="sparkle"></span>
+            <span class="sparkle"></span>
+
+            <div class="text-center">
+                <div class="fs-icon" id="fsIcon">⏳</div>
+                <div class="fs-title" id="fsTitle">Flash Sale</div>
+                <div class="fs-subtitle" id="fsSubtitle">Đang tải...</div>
+
+                <!-- Countdown -->
+                <div class="flash-countdown" id="fsCountdown">
+                    <div class="cd-box">
+                        <div class="cd-value" id="cdHours">00</div>
+                        <div class="cd-label">Giờ</div>
+                    </div>
+                    <div class="cd-box">
+                        <div class="cd-value" id="cdMinutes">00</div>
+                        <div class="cd-label">Phút</div>
+                    </div>
+                    <div class="cd-box">
+                        <div class="cd-value" id="cdSeconds">00</div>
+                        <div class="cd-label">Giây</div>
+                    </div>
+                </div>
+
+                <!-- Voucher cards (only visible when ACTIVE) -->
+                <div id="fsVoucherList" class="mt-3" style="display:none;">
+                </div>
+            </div>
+        </section>
+
+        <script>
+            (function flashSaleModule() {
+                let flashState = null;
+                let countdownInterval = null;
+                let remainingSec = 0;
+
+                const banner = document.getElementById('flashSaleBanner');
+                const icon = document.getElementById('fsIcon');
+                const title = document.getElementById('fsTitle');
+                const subtitle = document.getElementById('fsSubtitle');
+                const countdown = document.getElementById('fsCountdown');
+                const cdH = document.getElementById('cdHours');
+                const cdM = document.getElementById('cdMinutes');
+                const cdS = document.getElementById('cdSeconds');
+                const voucherList = document.getElementById('fsVoucherList');
+
+                function fetchStatus() {
+                    fetch('/api/flash-sale/status')
+                        .then(r => r.json())
+                        .then(data => {
+                            flashState = data;
+                            remainingSec = data.remainingSeconds;
+                            renderBanner(data);
+                            banner.style.display = 'block';
+                            startCountdown();
+                        })
+                        .catch(err => {
+                            console.warn('Flash Sale API error:', err);
+                            banner.style.display = 'none';
+                        });
+                }
+
+                function renderBanner(data) {
+                    banner.classList.remove('state-upcoming', 'state-active', 'state-ended');
+
+                    if (data.status === 'UPCOMING') {
+                        banner.classList.add('state-upcoming');
+                        icon.textContent = '⏳';
+                        title.textContent = '⚡ Flash Sale Sắp Diễn Ra!';
+                        subtitle.textContent = 'Giảm giá đặc biệt từ ' + data.startHour + ':00 đến ' + data.endHour + ':00. Chuẩn bị săn deal nào!';
+                        countdown.style.display = 'flex';
+                        voucherList.style.display = 'none';
+
+                    } else if (data.status === 'ACTIVE') {
+                        banner.classList.add('state-active');
+                        icon.textContent = '🔥';
+                        title.textContent = '🔥 FLASH SALE ĐANG DIỄN RA!';
+                        subtitle.textContent = 'Nhanh tay lấy mã giảm giá — số lượng có hạn!';
+                        countdown.style.display = 'flex';
+                        voucherList.style.display = 'block';
+                        renderVouchers(data.vouchers || []);
+
+                    } else {
+                        banner.classList.add('state-ended');
+                        icon.textContent = '💤';
+                        title.textContent = 'Flash Sale Hôm Nay Đã Kết Thúc';
+                        subtitle.textContent = 'Hẹn gặp lại ngày mai lúc ' + data.startHour + ':00! Đừng bỏ lỡ nhé 🙌';
+                        countdown.style.display = 'none';
+                        voucherList.style.display = 'none';
+                    }
+                }
+
+                function renderVouchers(vouchers) {
+                    if (!vouchers.length) {
+                        voucherList.innerHTML = '<p class="text-white-50">Voucher đã hết 😢</p>';
+                        return;
+                    }
+                    let html = '';
+                    vouchers.forEach(v => {
+                        const discountText = v.discountPercent
+                            ? 'Giảm ' + v.discountPercent + '%'
+                            : 'Giảm ' + Number(v.discountAmount).toLocaleString('vi-VN') + 'đ';
+                        const minText = v.minOrderAmount
+                            ? 'Đơn tối thiểu ' + Number(v.minOrderAmount).toLocaleString('vi-VN') + 'đ'
+                            : '';
+                        const maxText = v.maxDiscountAmount
+                            ? 'Tối đa giảm ' + Number(v.maxDiscountAmount).toLocaleString('vi-VN') + 'đ'
+                            : '';
+
+                        html += '<div class="flash-voucher-card mb-2">'
+                            + '  <div>'
+                            + '    <div class="flash-voucher-code">' + v.code + '</div>'
+                            + '    <div class="flash-voucher-info">' + discountText
+                            + (minText ? ' · ' + minText : '')
+                            + (maxText ? ' · ' + maxText : '')
+                            + '</div>'
+                            + '  </div>'
+                            + '  <div class="d-flex align-items-center gap-2">'
+                            + '    <span class="flash-voucher-qty">Còn ' + v.remainingQuantity + ' lượt</span>'
+                            + '    <button class="btn-copy-voucher" onclick="copyFlashCode(this, \'' + v.code + '\')">📋 Copy mã</button>'
+                            + '  </div>'
+                            + '</div>';
+                    });
+                    voucherList.innerHTML = html;
+                }
+
+                function startCountdown() {
+                    if (countdownInterval) clearInterval(countdownInterval);
+                    updateCountdownDisplay();
+                    countdownInterval = setInterval(function() {
+                        remainingSec--;
+                        if (remainingSec <= 0) {
+                            clearInterval(countdownInterval);
+                            // Status changed — re-fetch from server
+                            setTimeout(fetchStatus, 1000);
+                            return;
+                        }
+                        updateCountdownDisplay();
+                    }, 1000);
+                }
+
+                function updateCountdownDisplay() {
+                    const sec = Math.max(0, remainingSec);
+                    const h = Math.floor(sec / 3600);
+                    const m = Math.floor((sec % 3600) / 60);
+                    const s = sec % 60;
+                    cdH.textContent = String(h).padStart(2, '0');
+                    cdM.textContent = String(m).padStart(2, '0');
+                    cdS.textContent = String(s).padStart(2, '0');
+                }
+
+                // Copy voucher code to clipboard
+                window.copyFlashCode = function(btn, code) {
+                    navigator.clipboard.writeText(code).then(function() {
+                        btn.textContent = '✅ Đã copy!';
+                        btn.classList.add('copied');
+                        setTimeout(function() {
+                            btn.textContent = '📋 Copy mã';
+                            btn.classList.remove('copied');
+                        }, 2000);
+                    }).catch(function() {
+                        // Fallback for older browsers
+                        var ta = document.createElement('textarea');
+                        ta.value = code;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        btn.textContent = '✅ Đã copy!';
+                        btn.classList.add('copied');
+                        setTimeout(function() {
+                            btn.textContent = '📋 Copy mã';
+                            btn.classList.remove('copied');
+                        }, 2000);
+                    });
+                };
+
+                // Init: fetch on load, poll every 60 seconds
+                document.addEventListener('DOMContentLoaded', function() {
+                    fetchStatus();
+                    setInterval(fetchStatus, 60000);
+                });
+            })();
+        </script>
+
+        <!-- ==========================================
              VÌ SAO CHỌN CHÚNG TÔI (Why Choose Us)
              ========================================== -->
         <section class="why-choose-us-section mt-5 mb-5 pb-3">
@@ -450,19 +851,21 @@
         <!-- ==========================================
              PRODUCT LISTING
              ========================================== -->
-        <div class="row justify-content-center" id="productRow">
-            <!-- Full-width toggle bar (always visible) -->
-            <div class="col-12 mb-3">
+        <!-- Full-width toggle bar (always visible) -->
+        <div class="row justify-content-center mb-3">
+            <div class="col-12">
                 <div id="filterToggleBar"
                     class="d-flex justify-content-between align-items-center p-3 border rounded-3 bg-white shadow-sm"
-                    onclick="toggleFilterSidebar()">
+                    onclick="toggleFilterSidebar()" style="cursor: pointer;">
                     <h5 class="fw-bold mb-0 text-uppercase ls-1"><i class="fas fa-filter me-2"></i>Bộ lọc</h5>
                     <i class="fas fa-chevron-down transition-icon" id="filterToggleIcon"></i>
                 </div>
             </div>
+        </div>
 
+        <div class="row justify-content-center flex-lg-nowrap" id="productRow">
             <!-- Sidebar filter panel (slides in/out, NO header) -->
-            <aside class="col-lg-3 d-none" id="sidebarFilter">
+            <aside class="col-lg-3 slide-hide" id="sidebarFilter">
                 <div class="filter-section p-4 border rounded-3 bg-white shadow-sm" th:with="isFiltering=${(selectedGender != null and selectedGender != '') 
                                          or (selectedCategory != null) 
                                          or (selectedColor != null and selectedColor != '') 
@@ -500,7 +903,7 @@
                     </div>
                     <div class="mb-4">
                         <h6 class="fw-bold mb-3 small text-uppercase text-muted">Danh mục</h6>
-                        <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                        <div class="list-group list-group-flush" style="max-height: 600px; overflow-y: auto;">
                             <a th:href="@{/home(category='', gender=${selectedGender}, color=${selectedColor}, sale=${isSale}, min=${minPrice}, max=${maxPrice}, sort=${selectedSort}, keyword=${keyword})}"
                                 class="list-group-item list-group-item-action border-0 px-0 py-2"
                                 th:classappend="${selectedCategory == null} ? 'fw-bold text-dark' : 'text-secondary'">Tất
@@ -516,7 +919,7 @@
                     </div>
                     <div class="mb-4">
                         <h6 class="fw-bold mb-3 small text-uppercase text-muted">Khoảng giá (đ)</h6>
-                        <form id="homePriceForm" onsubmit="return false;">
+                        <form id="homePriceForm">
                             <input type="hidden" name="gender" th:value="${selectedGender}"> <input type="hidden"
                                 name="category" th:value="${selectedCategory}"> <input type="hidden" name="color"
                                 th:value="${selectedColor}"> <input type="hidden" name="sort"
@@ -526,8 +929,7 @@
                                     class="form-control form-control-sm" placeholder="Từ" th:value="${minPrice}">
                                 <span>-</span> <input type="number" name="max" class="form-control form-control-sm"
                                     placeholder="Đến" th:value="${maxPrice}">
-                            </div> <button type="button" class="btn btn-dark btn-sm w-100"
-                                onclick="homeAjaxPriceFilter()">Áp dụng</button>
+                            </div> <button type="submit" class="btn btn-dark btn-sm w-100">Áp dụng</button>
                         </form>
                     </div>
                     <div>
@@ -554,7 +956,7 @@
                 </div>
             </aside>
 
-            <main class="col-lg-12" id="mainProducts">
+            <main class="col-12 col-lg" id="mainProducts">
                 <div id="homeAjaxContent">
 
                     <div id="productList"
@@ -571,7 +973,7 @@
                         <div class="d-flex align-items-center">
                             <label class="me-2 text-nowrap small fw-bold text-muted">Sắp xếp theo:</label>
                             <select id="homeSortSelect" class="form-select form-select-sm border-0 bg-light fw-bold"
-                                style="width: 160px; cursor: pointer;" onchange="homeAjaxSort(this.value)">
+                                style="width: 160px; cursor: pointer;">
                                 <option value="newest" th:selected="${selectedSort == 'newest'}">Mới nhất</option>
                                 <option value="price_asc" th:selected="${selectedSort == 'price_asc'}">Giá tăng dần
                                 </option>
@@ -721,7 +1123,6 @@
 
                     <!-- SECTION 2: GỢI Ý CHO BẠN -->
                     <div th:if="${products.totalElements > 0}">
-                        <h3 class="fw-bold mb-4 pt-2 text-uppercase">Gợi Ý Cho Bạn</h3>
                         <div class="row g-3 g-md-4">
                             <th:block th:each="product, iterStat : ${products.content}" th:if="${iterStat.index >= 6}">
                                 <div class="col-6 col-md-4">
@@ -1167,7 +1568,9 @@
 
                             // Push URL to browser history
                             if (pushState !== false) {
-                                history.pushState({ ajaxFilter: true }, '', url);
+                                // Keep the URL clean but store the actual requested URL in state
+                                // so back/forward works across clean URLs
+                                history.pushState({ ajaxFilter: true, fetchUrl: url }, '', '/home' + window.location.hash);
                             }
 
                             // Re-init modals & quick view
@@ -1247,10 +1650,19 @@
                     if (sortSelect) {
                         // Replace the inline onchange
                         sortSelect.removeAttribute('onchange');
-                        sortSelect.addEventListener('change', function () {
-                            ajaxNavigate(this.value);
-                        });
+                        sortSelect.removeEventListener('change', handleSortChange);
+                        sortSelect.addEventListener('change', handleSortChange);
                     }
+                }
+
+                function handleSortChange(e) {
+                    var newSort = this.value;
+                    var currentFetchUrl = history.state && history.state.fetchUrl ? history.state.fetchUrl : window.location.href;
+                    var currentUrl = new URL(currentFetchUrl, window.location.origin);
+                    currentUrl.searchParams.set('sort', newSort);
+                    // Reset page to 0 when sorting changes
+                    currentUrl.searchParams.delete('page');
+                    ajaxNavigate(currentUrl.toString());
                 }
 
                 // --- Bind price filter form ---
@@ -1346,7 +1758,9 @@
 
                 // --- Handle browser back/forward ---
                 window.addEventListener('popstate', function (e) {
-                    if (e.state && e.state.ajaxFilter) {
+                    if (e.state && e.state.ajaxFilter && e.state.fetchUrl) {
+                        ajaxNavigate(e.state.fetchUrl, false);
+                    } else if (e.state && e.state.ajaxFilter) {
                         ajaxNavigate(location.href, false);
                     } else {
                         // For non-AJAX history entries, do a normal load
@@ -1356,8 +1770,9 @@
 
                 // --- Initial binding on page load ---
                 document.addEventListener('DOMContentLoaded', function () {
-                    // Mark initial state so popstate works correctly
-                    history.replaceState({ ajaxFilter: true }, '', location.href);
+                    // Mark initial state so popstate works correctly with the current actual URL params
+                    var initialUrl = location.href;
+                    history.replaceState({ ajaxFilter: true, fetchUrl: initialUrl }, '', '/home' + window.location.hash);
 
                     bindFilterLinks();
                     bindSortSelect();
@@ -1377,209 +1792,26 @@
                         sidebar.querySelector('.color-dot.border-primary')
                     );
 
+                    var toggleIcon = document.getElementById('filterToggleIcon');
+
                     // Auto-open if filters are active, otherwise start hidden
                     if (hasActiveFilters && sidebar) {
-                        sidebar.classList.remove('d-none');
-                        sidebar.classList.add('d-lg-block');
-                        mainProducts.classList.remove('col-lg-12');
-                        mainProducts.classList.add('col-lg-9');
+                        sidebar.classList.remove('slide-hide');
                         if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
                     }
 
                     // Make toggle function globally available
                     window.toggleFilterSidebar = function () {
                         if (!sidebar) return;
-                        var isHidden = sidebar.classList.contains('d-none') || !sidebar.classList.contains('d-lg-block');
-                        if (isHidden) {
-                            // Show sidebar
-                            sidebar.classList.remove('d-none');
-                            sidebar.classList.add('d-lg-block');
-                            mainProducts.classList.remove('col-lg-12');
-                            mainProducts.classList.add('col-lg-9');
-                            if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
-                        } else {
-                            // Hide sidebar
-                            sidebar.classList.add('d-none');
-                            sidebar.classList.remove('d-lg-block');
-                            mainProducts.classList.remove('col-lg-9');
-                            mainProducts.classList.add('col-lg-12');
-                            if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
+                        sidebar.classList.toggle('slide-hide');
+                        var isHidden = sidebar.classList.contains('slide-hide');
+                        if (toggleIcon) {
+                            toggleIcon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
                         }
                     };
                 });
             })();
         </script>
-
-        <!-- ===== HOME AJAX FILTER SYSTEM ===== -->
-        <script>
-            // ===== CLEAN URL ON PAGE LOAD (prevents flicker) =====
-            // Preserve hash fragment (e.g. #productRow) so browser can scroll to it
-            history.replaceState({}, '', '/home' + window.location.hash);
-
-            // Track current filter state
-            var homeFilterState = {
-                gender: '',
-                category: '',
-                color: '',
-                sale: '',
-                min: '',
-                max: '',
-                sort: 'newest',
-                keyword: '',
-                page: 0
-            };
-
-            // Initialize state from current page data
-            (function initFilterState() {
-                var sidebar = document.getElementById('sidebarFilter');
-                if (!sidebar) return;
-
-                // Extract current state from the links/inputs
-                var genderLinks = sidebar.querySelectorAll('.list-group-item.fw-bold.text-dark');
-                genderLinks.forEach(function (link) {
-                    var href = link.getAttribute('href') || '';
-                    if (href.includes("gender=Nam")) homeFilterState.gender = 'Nam';
-                    else if (href.includes("gender=N")) homeFilterState.gender = 'Nữ';
-                    else if (href.includes("gender=Unisex")) homeFilterState.gender = 'Unisex';
-                });
-
-                // Read from hidden inputs in price form
-                var priceForm = document.getElementById('homePriceForm');
-                if (priceForm) {
-                    var g = priceForm.querySelector('input[name="gender"]');
-                    if (g && g.value) homeFilterState.gender = g.value;
-                    var c = priceForm.querySelector('input[name="category"]');
-                    if (c && c.value) homeFilterState.category = c.value;
-                    var co = priceForm.querySelector('input[name="color"]');
-                    if (co && co.value) homeFilterState.color = co.value;
-                    var s = priceForm.querySelector('input[name="sort"]');
-                    if (s && s.value) homeFilterState.sort = s.value;
-                    var k = priceForm.querySelector('input[name="keyword"]');
-                    if (k && k.value) homeFilterState.keyword = k.value;
-                    var sa = priceForm.querySelector('input[name="sale"]');
-                    if (sa && sa.value && sa.value !== 'false') homeFilterState.sale = sa.value;
-                    var mi = priceForm.querySelector('input[name="min"]');
-                    if (mi && mi.value) homeFilterState.min = mi.value;
-                    var ma = priceForm.querySelector('input[name="max"]');
-                    if (ma && ma.value) homeFilterState.max = ma.value;
-                }
-
-                // Read sort
-                var sortSel = document.getElementById('homeSortSelect');
-                if (sortSel) homeFilterState.sort = sortSel.value;
-            })();
-
-            function homeAjaxFetch(url) {
-                var content = document.getElementById('homeAjaxContent');
-                if (!content) return;
-                content.style.opacity = '0.5';
-                content.style.pointerEvents = 'none';
-
-                const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
-                const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
-                
-                fetch(url, { 
-                    headers: { 
-                        'X-Requested-With': 'XMLHttpRequest',
-                        ...(csrfHeader && csrfToken ? { [csrfHeader]: csrfToken } : {})
-                    } 
-                })
-                    .then(function (r) { return r.text(); })
-                    .then(function (html) {
-                        var parser = new DOMParser();
-                        var doc = parser.parseFromString(html, 'text/html');
-                        var newContent = doc.getElementById('homeAjaxContent');
-                        if (newContent) {
-                            content.innerHTML = newContent.innerHTML;
-                        }
-                        // Also update sidebar filter state (active styles)
-                        var newSidebar = doc.getElementById('sidebarFilter');
-                        var curSidebar = document.getElementById('sidebarFilter');
-                        if (newSidebar && curSidebar) {
-                            curSidebar.innerHTML = newSidebar.innerHTML;
-                        }
-                        // Keep URL clean
-                        history.replaceState({}, '', '/home');
-                        // Re-bind pagination and sort
-                        homeBindPagination();
-                        homeBindSort();
-                    })
-                    .catch(function (err) { console.error('Home filter error:', err); })
-                    .finally(function () {
-                        content.style.opacity = '1';
-                        content.style.pointerEvents = 'auto';
-                    });
-            }
-
-            // Intercept sidebar filter link clicks
-            (function () {
-                var sidebar = document.getElementById('sidebarFilter');
-                if (!sidebar) return;
-
-                sidebar.addEventListener('click', function (e) {
-                    var link = e.target.closest('a[href*="/home"]');
-                    if (!link) return;
-                    var href = link.getAttribute('href');
-                    if (!href || !href.startsWith('/home')) return;
-
-                    e.preventDefault();
-                    homeAjaxFetch(href);
-                });
-            })();
-
-            // Sort handler
-            function homeAjaxSort(sortVal) {
-                homeFilterState.sort = sortVal;
-                var params = new URLSearchParams();
-                params.set('sort', sortVal);
-                if (homeFilterState.gender) params.set('gender', homeFilterState.gender);
-                if (homeFilterState.category) params.set('category', homeFilterState.category);
-                if (homeFilterState.color) params.set('color', homeFilterState.color);
-                if (homeFilterState.sale) params.set('sale', homeFilterState.sale);
-                if (homeFilterState.min) params.set('min', homeFilterState.min);
-                if (homeFilterState.max) params.set('max', homeFilterState.max);
-                if (homeFilterState.keyword) params.set('keyword', homeFilterState.keyword);
-                homeAjaxFetch('/home?' + params.toString());
-            }
-
-            // Price filter handler
-            function homeAjaxPriceFilter() {
-                var priceForm = document.getElementById('homePriceForm');
-                if (!priceForm) return;
-                var params = new URLSearchParams();
-                var inputs = priceForm.querySelectorAll('input[name]');
-                inputs.forEach(function (inp) {
-                    if (inp.value) params.set(inp.name, inp.value);
-                });
-                // Add sort from select
-                var sortSel = document.getElementById('homeSortSelect');
-                if (sortSel) params.set('sort', sortSel.value);
-                homeAjaxFetch('/home?' + params.toString());
-            }
-
-            // Pagination interception
-            function homeBindPagination() {
-                document.querySelectorAll('#homeAjaxContent .pagination a.page-link').forEach(function (link) {
-                    link.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        var href = this.getAttribute('href');
-                        if (href) homeAjaxFetch(href);
-                    });
-                });
-            }
-
-            // Sort re-binding after AJAX load
-            function homeBindSort() {
-                var sortSel = document.querySelector('#homeAjaxContent select');
-                if (sortSel) {
-                    sortSel.onchange = function () { homeAjaxSort(this.value); };
-                }
-            }
-
-            // Bind on initial load
-            document.addEventListener('DOMContentLoaded', function () {
-                homeBindPagination();
-            });
         </script>
     </article>
 </body>

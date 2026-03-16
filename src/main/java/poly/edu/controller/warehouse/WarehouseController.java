@@ -271,18 +271,62 @@ public class WarehouseController {
     }
 
     /**
+     * GET /warehouse/api/daily-sold?month=3&year=2026
+     * Returns daily sold labels and values for any given month/year.
+     */
+    @GetMapping("/api/daily-sold")
+    @ResponseBody
+    public ResponseEntity<?> getDailySoldByMonth(
+            @RequestParam int month,
+            @RequestParam int year) {
+        try {
+            java.time.YearMonth ym = java.time.YearMonth.of(year, month);
+            LocalDateTime startOfMonth = ym.atDay(1).atStartOfDay();
+            LocalDateTime endOfMonth = ym.plusMonths(1).atDay(1).atStartOfDay();
+
+            List<Object[]> dailySoldData = orderDetailRepository.getDailyUnitsSold(startOfMonth, endOfMonth);
+
+            java.util.Map<Integer, Long> unitsByDay = new java.util.HashMap<>();
+            for (Object[] row : dailySoldData) {
+                java.util.Date date = (java.util.Date) row[0];
+                java.time.LocalDate localDate = new java.sql.Date(date.getTime()).toLocalDate();
+                unitsByDay.put(localDate.getDayOfMonth(), ((Number) row[1]).longValue());
+            }
+
+            int maxDays = ym.lengthOfMonth();
+            List<String> labels = new ArrayList<>();
+            List<Long> values = new ArrayList<>();
+            for (int i = 1; i <= maxDays; i++) {
+                labels.add(i + "/" + month);
+                values.add(unitsByDay.getOrDefault(i, 0L));
+            }
+
+            return ResponseEntity.ok(Map.of(
+                "labels", labels,
+                "values", values,
+                "month", month,
+                "year", year
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
      * GET /warehouse/api/sold-products
      * Returns products sold on a specific date string (e.g. "1/3")
      */
     @GetMapping("/api/sold-products")
     @ResponseBody
-    public ResponseEntity<List<Object[]>> getSoldProductsOnDate(@RequestParam String dateStr) {
+    public ResponseEntity<List<Object[]>> getSoldProductsOnDate(
+            @RequestParam String dateStr,
+            @RequestParam(required = false) Integer year) {
         try {
             int day = Integer.parseInt(dateStr.split("/")[0]);
             int month = Integer.parseInt(dateStr.split("/")[1]);
-            int year = LocalDate.now().getYear(); // assume current year for the dashboard
+            int resolvedYear = (year != null) ? year : LocalDate.now().getYear();
 
-            LocalDateTime startOfDay = LocalDate.of(year, month, day).atStartOfDay();
+            LocalDateTime startOfDay = LocalDate.of(resolvedYear, month, day).atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1);
 
             List<Object[]> products = orderDetailRepository.getCompletedProductsSoldOnDate(startOfDay, endOfDay);

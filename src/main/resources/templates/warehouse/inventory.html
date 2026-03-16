@@ -74,13 +74,24 @@
                     <!-- Main Data Table: Daily Export Volume -->
                     <div class="col-lg-8">
                         <div class="card border-0 shadow-sm rounded-4 h-100">
-                            <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0 fw-bold fs-5 text-dark">Thống kê sản phẩm bán ra theo ngày</h6>
-                                <select class="form-select form-select-sm w-auto bg-light border-0 text-muted fw-medium rounded-3" style="font-size: 0.85rem;">
-                                    <option>Tháng này</option>
-                                    <option>Tháng trước</option>
-                                    <option>Năm nay</option>
-                                </select>
+                            <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 fw-bold fs-5 text-dark">Thống kê sản phẩm bán ra theo ngày</h6>
+                                    <!-- Year selector -->
+                                    <div class="d-flex align-items-center gap-1">
+                                        <button class="btn btn-sm btn-outline-secondary rounded-circle p-0" style="width:28px;height:28px;" onclick="changeYear(-1)" title="Năm trước">
+                                            <i class="fas fa-chevron-left fa-xs"></i>
+                                        </button>
+                                        <span id="currentYearLabel" class="fw-bold small px-2" style="min-width:45px;text-align:center;"></span>
+                                        <button id="yearNextBtn" class="btn btn-sm btn-outline-secondary rounded-circle p-0" style="width:28px;height:28px;" onclick="changeYear(1)" title="Năm sau">
+                                            <i class="fas fa-chevron-right fa-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Month pills -->
+                                <div id="monthPillsContainer" class="d-flex flex-wrap gap-1">
+                                    <!-- JS rendered -->
+                                </div>
                             </div>
                             <div class="card-body px-4 pb-4 pt-3 position-relative" style="height:340px; overflow-y: auto;">
                                 <div class="table-responsive h-100">
@@ -129,61 +140,186 @@
                     </div>
                 </div>
 
-                <!-- Table initialisation — Thymeleaf injects data as JSON -->
+                <!-- Table initialisation — Thymeleaf injects initial data, JS handles switching -->
                 <script th:inline="javascript">
                 /*<![CDATA[*/
-                (function() {
-                    // Data from server for daily sold chart
-                    const dailySoldLabels = /*[[${dailySoldLabels}]]*/ [];
-                    const dailySoldData = /*[[${dailySoldValues}]]*/ [];
-                    
-                    const tbody = document.getElementById('dailySoldTableBody');
-                    if (tbody && dailySoldLabels.length > 0) {
-                        let html = '';
-                        // Render in reverse chronological order (latest days first)
-                        for (let i = dailySoldLabels.length - 1; i >= 0; i--) {
-                            const dateStr = dailySoldLabels[i];
-                            const qty = dailySoldData[i];
-                            
-                            html += `
-                                <tr>
-                                    <td class="fw-medium text-dark">
-                                        <i class="fas fa-calendar-alt text-muted me-2"></i> ${dateStr}
-                                    </td>
-                                    <td>
-                                        <span class="badge ${qty > 0 ? 'bg-primary' : 'bg-secondary'} bg-opacity-10 ${qty > 0 ? 'text-primary' : 'text-secondary'} px-2 py-1">
-                                            ${qty} sản phẩm
-                                        </span>
-                                    </td>
-                                    <td class="text-end">
-                                        <button class="btn btn-sm btn-light text-primary fw-medium" onclick="fetchSoldProductsOnDate('${dateStr}')">
-                                            <i class="fas fa-eye me-1"></i> Xem chi tiết
-                                        </button>
-                                    </td>
-                                </tr>
-                            `;
-                        }
-                        tbody.innerHTML = html;
-                    }
+
+                // ── State ────────────────────────────────────
+                const NOW = new Date();
+                let selectedYear  = NOW.getFullYear();
+                let selectedMonth = NOW.getMonth() + 1; // 1-indexed
+
+                // Initial data from server (current month)
+                let currentLabels = /*[[${dailySoldLabels}]]*/ [];
+                let currentValues = /*[[${dailySoldValues}]]*/ [];
+
+                // ── Init on page load ────────────────────────
+                (function init() {
+                    renderMonthPills();
+                    updateYearLabel();
+                    renderDailySoldTable(currentLabels, currentValues);
                 })();
 
+                // ── Render month pill buttons ─────────────────
+                function renderMonthPills() {
+                    const container = document.getElementById('monthPillsContainer');
+                    const nowYear  = NOW.getFullYear();
+                    const nowMonth = NOW.getMonth() + 1;
+                    // For current year: show months 1..nowMonth. For past years: show all 12.
+                    const maxMonth = (selectedYear === nowYear) ? nowMonth : 12;
+
+                    let html = '';
+                    for (let m = 1; m <= 12; m++) {
+                        if (selectedYear === nowYear && m > nowMonth) {
+                            // Future month — hidden
+                            continue;
+                        }
+                        const isActive = (m === selectedMonth);
+                        const cls = isActive
+                            ? 'btn btn-sm btn-warning fw-bold text-dark shadow-sm'
+                            : 'btn btn-sm btn-outline-secondary';
+                        html += `<button class="${cls}" style="min-width:42px;font-size:.78rem;padding:4px 8px;"
+                                    onclick="selectMonth(${m})">T${m}</button>`;
+                    }
+                    container.innerHTML = html;
+                }
+
+                // ── Year navigation ──────────────────────────
+                function changeYear(delta) {
+                    const nowYear = NOW.getFullYear();
+                    const newYear = selectedYear + delta;
+                    if (newYear > nowYear) return; // can't go to future year
+                    selectedYear = newYear;
+
+                    // If switching to current year and selectedMonth > current month, reset
+                    const nowMonth = NOW.getMonth() + 1;
+                    if (selectedYear === nowYear && selectedMonth > nowMonth) {
+                        selectedMonth = nowMonth;
+                    }
+
+                    updateYearLabel();
+                    renderMonthPills();
+                    fetchMonthData(selectedMonth, selectedYear);
+                }
+
+                function updateYearLabel() {
+                    document.getElementById('currentYearLabel').textContent = selectedYear;
+                    // Disable forward button if at current year
+                    const nextBtn = document.getElementById('yearNextBtn');
+                    nextBtn.disabled = (selectedYear >= NOW.getFullYear());
+                    nextBtn.classList.toggle('opacity-25', selectedYear >= NOW.getFullYear());
+                }
+
+                // ── Select a month ───────────────────────────
+                function selectMonth(month) {
+                    selectedMonth = month;
+                    renderMonthPills();
+                    fetchMonthData(month, selectedYear);
+                }
+
+                // ── Fetch data from API ──────────────────────
+                function fetchMonthData(month, year) {
+                    const tbody = document.getElementById('dailySoldTableBody');
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">
+                        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+                        <span class="ms-2 small">Đang tải dữ liệu tháng ${month}/${year}…</span>
+                    </td></tr>`;
+
+                    fetch(`/warehouse/api/daily-sold?month=${month}&year=${year}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            currentLabels = data.labels || [];
+                            currentValues = data.values || [];
+                            renderDailySoldTable(currentLabels, currentValues);
+                        })
+                        .catch(() => {
+                            tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-danger">
+                                <i class="fas fa-exclamation-triangle me-1"></i> Lỗi khi tải dữ liệu.
+                            </td></tr>`;
+                        });
+                }
+
+                // ── Render daily sold table ──────────────────
+                function renderDailySoldTable(labels, values) {
+                    const tbody = document.getElementById('dailySoldTableBody');
+                    if (!labels || labels.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Không có dữ liệu.</td></tr>`;
+                        return;
+                    }
+
+                    const nowYear  = NOW.getFullYear();
+                    const nowMonth = NOW.getMonth() + 1;
+                    const todayDay = NOW.getDate();
+                    const isCurrentMonth = (selectedYear === nowYear && selectedMonth === nowMonth);
+
+                    let html = '';
+                    for (let i = labels.length - 1; i >= 0; i--) {
+                        const dayNum = i + 1;
+                        // Hide future dates only if viewing current month of current year
+                        if (isCurrentMonth && dayNum > todayDay) continue;
+
+                        const dateStr = labels[i];
+                        const qty = values[i];
+                        const isToday = isCurrentMonth && (dayNum === todayDay);
+
+                        if (isToday) {
+                            html = `
+                            <tr style="background: linear-gradient(90deg, #fff8e1, #fffde7); border-left: 4px solid #f59e0b;">
+                                <td class="fw-bold text-dark">
+                                    <i class="fas fa-calendar-day text-warning me-2"></i> ${dateStr}
+                                    <span class="badge bg-warning text-dark ms-2" style="font-size:.7rem;">Hôm nay</span>
+                                </td>
+                                <td>
+                                    <span class="badge ${qty > 0 ? 'bg-success' : 'bg-secondary'} bg-opacity-10 ${qty > 0 ? 'text-success' : 'text-secondary'} px-2 py-1 fw-bold">
+                                        ${qty} sản phẩm
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-warning text-dark fw-semibold" onclick="fetchSoldProductsOnDate('${dateStr}')">
+                                        <i class="fas fa-eye me-1"></i> Xem chi tiết
+                                    </button>
+                                </td>
+                            </tr>` + html;
+                        } else {
+                            html += `
+                            <tr>
+                                <td class="fw-medium text-dark">
+                                    <i class="fas fa-calendar-alt text-muted me-2"></i> ${dateStr}
+                                </td>
+                                <td>
+                                    <span class="badge ${qty > 0 ? 'bg-primary' : 'bg-secondary'} bg-opacity-10 ${qty > 0 ? 'text-primary' : 'text-secondary'} px-2 py-1">
+                                        ${qty} sản phẩm
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-light text-primary fw-medium" onclick="fetchSoldProductsOnDate('${dateStr}')">
+                                        <i class="fas fa-eye me-1"></i> Xem chi tiết
+                                    </button>
+                                </td>
+                            </tr>`;
+                        }
+                    }
+                    tbody.innerHTML = html;
+                }
+
+                // ── Fetch sold products detail for a date ────
                 function fetchSoldProductsOnDate(dateStr) {
                     const titleEl = document.getElementById('soldProductsTitle');
                     const subtitleEl = document.getElementById('soldProductsSubtitle');
                     const containerEl = document.getElementById('soldProductsContainer');
                     
-                    titleEl.innerHTML = `<i class="fas fa-box-open me-2 text-primary"></i>Sản phẩm đã bán ngày ${dateStr}`;
-                    subtitleEl.innerHTML = `Các sản phẩm thuộc đơn hàng Đã Hoàn Thành trong ngày`;
+                    titleEl.innerHTML = `<i class="fas fa-box-open me-2 text-primary"></i>Sản phẩm đã bán ngày ${dateStr}/${selectedYear}`;
+                    subtitleEl.innerHTML = `Các sản phẩm thuộc đơn hàng Đã Hoàn Thành`;
                     containerEl.innerHTML = `<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm" role="status"></div><p class="mb-0 mt-2">Đang tải...</p></div>`;
                     
-                    fetch(`/warehouse/api/sold-products?dateStr=${encodeURIComponent(dateStr)}`)
+                    fetch(`/warehouse/api/sold-products?dateStr=${encodeURIComponent(dateStr)}&year=${selectedYear}`)
                         .then(res => res.json())
                         .then(data => {
                             if (!data || data.length === 0) {
                                 containerEl.innerHTML = `
                                     <div class="text-center text-muted py-4">
                                         <i class="fas fa-inbox fs-2 mb-3 text-secondary opacity-50"></i>
-                                        <p class="mb-0">Chưa có sản phẩm nào được thanh toán ngày ${dateStr}.</p>
+                                        <p class="mb-0">Chưa có sản phẩm nào được thanh toán ngày ${dateStr}/${selectedYear}.</p>
                                     </div>`;
                                 return;
                             }

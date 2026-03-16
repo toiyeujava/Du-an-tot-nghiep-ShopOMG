@@ -69,6 +69,12 @@ public class Order {
     @Column(name = "payment_confirmed_by", length = 100)
     private String paymentConfirmedBy;
 
+    @Column(name = "transfer_content", length = 500)
+    private String transferContent;
+
+    @Column(name = "reference_code", length = 100)
+    private String referenceCode;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<OrderDetail> orderDetails;

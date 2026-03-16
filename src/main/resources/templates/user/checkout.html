@@ -135,10 +135,7 @@
                             <span class="text-muted">Phí vận chuyển:</span>
                             <span id="shippingDisplay">...đờiến tính địa chỉ</span>
                         </div>
-                        <div class="d-flex justify-content-between mb-1 small">
-                            <span></span>
-                            <span id="shippingZoneBadge" class="badge" style="font-size:.7rem;opacity:0"></span>
-                        </div>
+
                         <div class="d-flex justify-content-between mb-3 small text-success" id="discountRow" style="display:none !important;">
                             <span>Giảm giá:</span>
                             <span id="discountAmountDisplay">-0đ</span>
@@ -210,12 +207,16 @@
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="city" class="form-label small fw-bold">Tỉnh/Thành phố <span
+                                    <label for="cityInput" class="form-label small fw-bold">Tỉnh/Thành phố <span
                                             class="text-danger">*</span></label>
-                                    <select class="form-select" id="city">
-                                        <option value="">Chọn Tỉnh/Thành phố</option>
-                                    </select>
-                                    <div class="invalid-feedback"></div>
+                                    <div class="province-autocomplete" id="cityAutocomplete">
+                                        <input type="text" class="form-control" id="cityInput"
+                                            placeholder="Gõ hoặc chọn tỉnh/thành phố..."
+                                            autocomplete="off">
+                                        <input type="hidden" id="city">
+                                        <ul class="province-dropdown" id="cityDropdown"></ul>
+                                    </div>
+                                    <div class="invalid-feedback" id="cityFeedback"></div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="district" class="form-label small fw-bold">Quận/Huyện <span
@@ -287,12 +288,16 @@
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="editCity" class="form-label small fw-bold">Tỉnh/Thành phố <span
+                                    <label for="editCityInput" class="form-label small fw-bold">Tỉnh/Thành phố <span
                                             class="text-danger">*</span></label>
-                                    <select class="form-select" id="editCity">
-                                        <option value="">Chọn Tỉnh/Thành phố</option>
-                                    </select>
-                                    <div class="invalid-feedback"></div>
+                                    <div class="province-autocomplete" id="editCityAutocomplete">
+                                        <input type="text" class="form-control" id="editCityInput"
+                                            placeholder="Gõ hoặc chọn tỉnh/thành phố..."
+                                            autocomplete="off">
+                                        <input type="hidden" id="editCity">
+                                        <ul class="province-dropdown" id="editCityDropdown"></ul>
+                                    </div>
+                                    <div class="invalid-feedback" id="editCityFeedback"></div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="editDistrict" class="form-label small fw-bold">Quận/Huyện <span
@@ -359,6 +364,35 @@
                 </div>
             </div>
         </div>
+
+        <!-- Toast Notification -->
+        <div id="checkoutToast" style="
+            position: fixed; top: 24px; right: 24px; z-index: 9999;
+            min-width: 320px; max-width: 420px;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            padding: 16px 20px;
+            display: none;
+            align-items: center;
+            gap: 14px;
+            border-left: 5px solid #28a745;
+            animation: slideInToast 0.35s cubic-bezier(.4,0,.2,1);
+            transition: opacity 0.3s;
+        ">
+            <span id="checkoutToastIcon" style="font-size:1.6rem;">✅</span>
+            <div style="flex:1;">
+                <div id="checkoutToastTitle" style="font-weight:700;font-size:.9rem;color:#222;"></div>
+                <div id="checkoutToastMsg" style="font-size:.85rem;color:#555;margin-top:2px;"></div>
+            </div>
+            <button onclick="hideToast()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#aaa;padding:0 4px;">✕</button>
+        </div>
+        <style>
+            @keyframes slideInToast {
+                from { opacity: 0; transform: translateX(60px); }
+                to   { opacity: 1; transform: translateX(0); }
+            }
+        </style>
 
         <!-- Include Voucher Modal -->
         <div th:replace="~{fragments/voucher-modal :: voucherModal}"></div>
@@ -628,9 +662,7 @@
                 padding: 8px 12px;
             }
 
-            select#city[size],
             select#district[size],
-            select#editCity[size],
             select#editDistrict[size] {
                 height: auto !important;
                 max-height: 300px;
@@ -644,13 +676,58 @@
                 box-shadow: 0 8px 24px var(--shadow-strong, rgba(0, 0, 0, .15));
             }
 
-            select#city[size] option,
             select#district[size] option,
-            select#editCity[size] option,
             select#editDistrict[size] option {
                 padding: 8px 12px;
                 background: var(--dropdown-bg, white);
                 color: var(--text-primary, #333);
+            }
+
+            /* ── Province Autocomplete ── */
+            .province-autocomplete {
+                position: relative;
+            }
+
+            .province-dropdown {
+                display: none;
+                position: absolute;
+                top: calc(100% + 4px);
+                left: 0;
+                right: 0;
+                background: var(--dropdown-bg, #fff);
+                border: 1.5px solid var(--border-color, #ced4da);
+                border-radius: 10px;
+                box-shadow: 0 8px 24px var(--shadow-strong, rgba(0,0,0,.15));
+                max-height: 260px;
+                overflow-y: auto;
+                z-index: 1055;
+                padding: 4px 0;
+                margin: 0;
+                list-style: none;
+            }
+
+            .province-dropdown.open {
+                display: block;
+            }
+
+            .province-dropdown li {
+                padding: 8px 14px;
+                cursor: pointer;
+                font-size: .92rem;
+                color: var(--text-primary, #333);
+                transition: background .15s;
+            }
+
+            .province-dropdown li:hover,
+            .province-dropdown li.active {
+                background: rgba(231,76,60,.1);
+                color: #e74c3c;
+            }
+
+            .province-dropdown li.no-result {
+                color: var(--text-secondary, #888);
+                pointer-events: none;
+                font-style: italic;
             }
 
             /* ── Modal ── */
@@ -817,115 +894,175 @@
                 "Yên Bái": ["Yên Bái", "Nghĩa Lộ", "Lục Yên", "Mù Cang Chải", "Trạm Tấu", "Trấn Yên", "Văn Chấn", "Văn Yên", "Yên Bình"]
             };
 
-            // Initialize province dropdowns
-            function initializeProvinceDropdowns() {
-                const citySelects = [document.getElementById('city'), document.getElementById('editCity')];
+            // ── Province Autocomplete Combobox ──────────────────────────────
+            function createProvinceAutocomplete(inputId, hiddenId, dropdownId, onSelect) {
+                const input    = document.getElementById(inputId);
+                const hidden   = document.getElementById(hiddenId);
+                const dropdown = document.getElementById(dropdownId);
                 const provinces = Object.keys(vietnamData).sort();
+                let activeIdx = -1;
 
-                citySelects.forEach(citySelect => {
-                    if (citySelect) {
-                        provinces.forEach(province => {
-                            const option = document.createElement('option');
-                            option.value = province;
-                            option.textContent = province;
-                            citySelect.appendChild(option);
+                function buildList(filter) {
+                    const normalize = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                    const q = normalize(filter || '');
+                    const list = q
+                        ? provinces.filter(p => normalize(p).includes(q))
+                        : provinces;
+
+                    dropdown.innerHTML = '';
+                    activeIdx = -1;
+
+                    if (list.length === 0) {
+                        dropdown.innerHTML = '<li class="no-result">Không tìm thấy tỉnh/thành phố</li>';
+                    } else {
+                        list.forEach((p, i) => {
+                            const li = document.createElement('li');
+                            li.textContent = p;
+                            li.dataset.value = p;
+                            li.addEventListener('mousedown', e => {
+                                e.preventDefault();
+                                selectProvince(p);
+                            });
+                            dropdown.appendChild(li);
                         });
                     }
+                }
+
+                function openDropdown() {
+                    buildList(input.value);
+                    dropdown.classList.add('open');
+                }
+
+                function closeDropdown() {
+                    dropdown.classList.remove('open');
+                    activeIdx = -1;
+                }
+
+                function selectProvince(value) {
+                    input.value  = value;
+                    hidden.value = value;
+                    closeDropdown();
+                    // Remove invalid state
+                    const wrap = input.closest('.province-autocomplete');
+                    if (wrap) {
+                        const feedback = wrap.nextElementSibling;
+                        if (feedback && feedback.classList.contains('invalid-feedback')) {
+                            feedback.textContent = '';
+                        }
+                    }
+                    if (onSelect) onSelect(value);
+                }
+
+                // Show all on focus / click
+                input.addEventListener('focus', openDropdown);
+                input.addEventListener('click', openDropdown);
+
+                // Filter as user types
+                input.addEventListener('input', () => {
+                    hidden.value = ''; // clear hidden until a valid province is picked
+                    buildList(input.value);
+                    dropdown.classList.add('open');
                 });
+
+                // Keyboard navigation
+                input.addEventListener('keydown', e => {
+                    const items = dropdown.querySelectorAll('li:not(.no-result)');
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        activeIdx = Math.min(activeIdx + 1, items.length - 1);
+                        items.forEach((li, i) => li.classList.toggle('active', i === activeIdx));
+                        if (items[activeIdx]) items[activeIdx].scrollIntoView({ block: 'nearest' });
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        activeIdx = Math.max(activeIdx - 1, 0);
+                        items.forEach((li, i) => li.classList.toggle('active', i === activeIdx));
+                        if (items[activeIdx]) items[activeIdx].scrollIntoView({ block: 'nearest' });
+                    } else if (e.key === 'Enter' && activeIdx >= 0) {
+                        e.preventDefault();
+                        selectProvince(items[activeIdx].dataset.value);
+                    } else if (e.key === 'Escape') {
+                        closeDropdown();
+                    }
+                });
+
+                // Close when clicking outside
+                document.addEventListener('click', e => {
+                    if (!input.closest('.province-autocomplete').contains(e.target)) {
+                        closeDropdown();
+                        // If typed text doesn't match a valid province, clear both
+                        if (input.value && !vietnamData[input.value]) {
+                            input.value  = hidden.value || '';
+                        }
+                    }
+                });
+
+                // Expose setter for pre-filling on edit
+                return { setValue: (v) => { input.value = v; hidden.value = v; if (v && onSelect) onSelect(v); } };
             }
 
-            // Handle province selection for add modal
+            // ── District loader helper ───────────────────────────────────────
+            function loadDistricts(districtSelectId, province, currentDistrict) {
+                const districtSelect = document.getElementById(districtSelectId);
+                districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+                if (province && vietnamData[province]) {
+                    districtSelect.disabled = false;
+                    vietnamData[province].forEach(d => {
+                        const option = document.createElement('option');
+                        option.value = d;
+                        option.textContent = d;
+                        if (d === currentDistrict) option.selected = true;
+                        districtSelect.appendChild(option);
+                    });
+                } else {
+                    districtSelect.disabled = true;
+                }
+            }
+
+            // ── Init on DOM ready ────────────────────────────────────────────
             document.addEventListener('DOMContentLoaded', function () {
-                initializeProvinceDropdowns();
+                // Add modal province autocomplete
+                window._addCityAC = createProvinceAutocomplete('cityInput', 'city', 'cityDropdown', province => {
+                    loadDistricts('district', province, null);
+                });
+
+                // Edit modal province autocomplete
+                window._editCityAC = createProvinceAutocomplete('editCityInput', 'editCity', 'editCityDropdown', province => {
+                    loadDistricts('editDistrict', province, null);
+                });
+
                 loadAddresses();
 
-                // Setup dropdown limit for all select elements
-                ['city', 'district', 'editCity', 'editDistrict'].forEach(id => {
+                // Setup dropdown limit for district selects
+                ['district', 'editDistrict'].forEach(id => {
                     const select = document.getElementById(id);
                     if (select) setupDropdownLimit(select);
                 });
-
-                // Province change handler for add modal
-                const citySelect = document.getElementById('city');
-                if (citySelect) {
-                    citySelect.addEventListener('change', function () {
-                        const districtSelect = document.getElementById('district');
-                        const selectedProvince = this.value;
-
-                        districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
-
-                        if (selectedProvince) {
-                            districtSelect.disabled = false;
-                            const districts = vietnamData[selectedProvince];
-                            if (districts) {
-                                districts.forEach(district => {
-                                    const option = document.createElement('option');
-                                    option.value = district;
-                                    option.textContent = district;
-                                    districtSelect.appendChild(option);
-                                });
-                            }
-                            this.classList.remove('is-invalid');
-                        } else {
-                            districtSelect.disabled = true;
-                        }
-                    });
-                }
-
-                // Province change handler for edit modal
-                const editCitySelect = document.getElementById('editCity');
-                if (editCitySelect) {
-                    editCitySelect.addEventListener('change', function () {
-                        const districtSelect = document.getElementById('editDistrict');
-                        const selectedProvince = this.value;
-
-                        districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
-
-                        if (selectedProvince) {
-                            districtSelect.disabled = false;
-                            const districts = vietnamData[selectedProvince];
-                            if (districts) {
-                                districts.forEach(district => {
-                                    const option = document.createElement('option');
-                                    option.value = district;
-                                    option.textContent = district;
-                                    districtSelect.appendChild(option);
-                                });
-                            }
-                            this.classList.remove('is-invalid');
-                        } else {
-                            districtSelect.disabled = true;
-                        }
-                    });
-                }
             });
 
-            // District validation
+            // District validation — now check hidden input
             document.getElementById('district').addEventListener('click', function () {
-                const citySelect = document.getElementById('city');
-                if (!citySelect.value) {
-                    citySelect.classList.add('is-invalid');
-                    const feedback = citySelect.nextElementSibling;
-                    if (feedback) {
-                        feedback.textContent = 'ShopOMG! xin thông báo: Vui lòng chọn địa chỉ Tỉnh/Thành phố của bạn trước. Xin cảm ơn';
-                    }
-                    citySelect.focus();
+                const hiddenCity = document.getElementById('city');
+                if (!hiddenCity.value) {
+                    const input = document.getElementById('cityInput');
+                    input.classList.add('is-invalid');
+                    const feedback = document.getElementById('cityFeedback');
+                    if (feedback) feedback.textContent = 'ShopOMG! xin thông báo: Vui lòng chọn địa chỉ Tỉnh/Thành phố của bạn trước. Xin cảm ơn';
+                    input.focus();
                 }
             });
 
             document.getElementById('editDistrict').addEventListener('click', function () {
-                const citySelect = document.getElementById('editCity');
-                if (!citySelect.value) {
-                    citySelect.classList.add('is-invalid');
-                    const feedback = citySelect.nextElementSibling;
-                    if (feedback) {
-                        feedback.textContent = 'ShopOMG! xin thông báo: Vui lòng chọn địa chỉ Tỉnh/Thành phố của bạn trước. Xin cảm ơn';
-                    }
-                    citySelect.focus();
+                const hiddenCity = document.getElementById('editCity');
+                if (!hiddenCity.value) {
+                    const input = document.getElementById('editCityInput');
+                    input.classList.add('is-invalid');
+                    const feedback = document.getElementById('editCityFeedback');
+                    if (feedback) feedback.textContent = 'ShopOMG! xin thông báo: Vui lòng chọn địa chỉ Tỉnh/Thành phố của bạn trước. Xin cảm ơn';
+                    input.focus();
                 }
             });
 
-            // Limit dropdown height
+            // Limit dropdown height for district selects only
             function setupDropdownLimit(selectElement) {
                 let isExpanded = false;
 
@@ -1129,11 +1266,6 @@
                 var totalEl = document.getElementById('totalDisplay');
 
                 if (dispEl) dispEl.textContent = fee === 0 ? 'Miễn phí' : new Intl.NumberFormat('vi-VN').format(fee) + 'đ';
-                if (badgeEl) {
-                    badgeEl.textContent = badgeLabel;
-                    badgeEl.className = 'badge bg-' + badgeColor;
-                    badgeEl.style.opacity = '1';
-                }
 
                 // Recalculate total
                 var disc = _discountAmount || 0;
@@ -1150,32 +1282,14 @@
             // Init with default 30,000đ if no address selected yet
             window._shippingFee = 30000;
 
-            // Check free-ship eligibility immediately on page load (server-rendered subtotal)
-            document.addEventListener('DOMContentLoaded', function () {
-                var subEl = document.getElementById('subtotalDisplay');
-                var sub = parseInt((subEl ? subEl.textContent : '0').replace(/[^0-9]/g, ''), 10) || 0;
-                if (sub >= FREE_SHIP_THRESHOLD) {
-                    window._shippingFee = 0;
-                    var dispEl = document.getElementById('shippingDisplay');
-                    var badgeEl = document.getElementById('shippingZoneBadge');
-                    var totalEl = document.getElementById('totalDisplay');
-                    if (dispEl) dispEl.textContent = 'Miễn phí';
-                    if (badgeEl) {
-                        badgeEl.textContent = '🎉 Free Ship! Đơn ≥ 700k';
-                        badgeEl.className = 'badge bg-success';
-                        badgeEl.style.opacity = '1';
-                    }
-                    if (totalEl) totalEl.textContent = new Intl.NumberFormat('vi-VN').format(sub) + 'đ';
-                    var feeInput = document.getElementById('shippingFeeInput');
-                    if (feeInput) feeInput.value = 0;
-                }
-            });
-
             // Open address modal
             function openAddressModal() {
                 document.getElementById('addressForm').reset();
                 document.getElementById('addressId').value = '';
                 document.getElementById('district').disabled = true;
+                // Reset autocomplete
+                document.getElementById('cityInput').value = '';
+                document.getElementById('city').value = '';
                 const modal = new bootstrap.Modal(document.getElementById('addAddressModal'));
                 modal.show();
             }
@@ -1185,18 +1299,14 @@
                 document.getElementById('editAddressId').value = id;
                 document.getElementById('editRecipientName').value = name;
                 document.getElementById('editPhone').value = phone;
-                document.getElementById('editCity').value = city;
                 document.getElementById('editDetailAddress').value = detailAddress;
                 document.getElementById('editIsDefault').checked = isDefault;
 
-                // Trigger province change to load districts
-                const event = new Event('change');
-                document.getElementById('editCity').dispatchEvent(event);
-
-                // Set district after districts are loaded
-                setTimeout(() => {
-                    document.getElementById('editDistrict').value = district;
-                }, 100);
+                // Use autocomplete setValue to pre-fill province + load districts, then select district
+                if (window._editCityAC) {
+                    window._editCityAC.setValue(city);
+                    loadDistricts('editDistrict', city, district);
+                }
 
                 const modal = new bootstrap.Modal(document.getElementById('editAddressModal'));
                 modal.show();
@@ -1225,7 +1335,8 @@
                 }
 
                 if (!city) {
-                    document.getElementById('city').classList.add('is-invalid');
+                    document.getElementById('cityInput').classList.add('is-invalid');
+                    document.getElementById('cityFeedback').textContent = 'Vui lòng chọn Tỉnh/Thành phố';
                     isValid = false;
                 }
 
@@ -1289,7 +1400,7 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert(error.message || 'Không thể lưu địa chỉ. Vui lòng thử lại sau.');
+                    showToast('Lỗi', error.message || 'Không thể lưu địa chỉ. Vui lòng thử lại sau.', 'error');
                 });
             }
 
@@ -1317,7 +1428,8 @@
                 }
 
                 if (!city) {
-                    document.getElementById('editCity').classList.add('is-invalid');
+                    document.getElementById('editCityInput').classList.add('is-invalid');
+                    document.getElementById('editCityFeedback').textContent = 'Vui lòng chọn Tỉnh/Thành phố';
                     isValid = false;
                 }
 
@@ -1347,35 +1459,34 @@
                         isDefault: isDefault
                     };
 
-                    fetch(`/account/addresses/${id}`, {
+                    const csrfTokenUpdate = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+                    const csrfHeaderUpdate = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+
+                    fetch(`/api/addresses/${id}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
+                            ...(csrfHeaderUpdate && csrfTokenUpdate ? { [csrfHeaderUpdate]: csrfTokenUpdate } : {})
                         },
                         body: JSON.stringify(updatedAddress)
                     })
-                    .then(response => {
-                        if (response.ok) {
-                            return response.json();
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            if (isDefault) {
+                                addressesData.forEach(addr => addr.isDefault = false);
+                            }
+                            addressesData[addressIndex] = result.data || updatedAddress;
+                            bootstrap.Modal.getInstance(document.getElementById('editAddressModal')).hide();
+                            showToast('Thành công', result.message || 'Đã cập nhật địa chỉ thành công!', 'success');
+                            loadAddresses();
+                        } else {
+                            showToast('Lỗi', result.message || 'Không thể cập nhật địa chỉ.', 'error');
                         }
-                        throw new Error('Lỗi khi cập nhật địa chỉ');
-                    })
-                    .then(data => {
-                        // If this is default, remove default from others
-                        if (isDefault) {
-                            addressesData.forEach(addr => addr.isDefault = false);
-                        }
-
-                        // Update address locally
-                        addressesData[addressIndex] = data;
-
-                        // Close modal and reload addresses
-                        bootstrap.Modal.getInstance(document.getElementById('editAddressModal')).hide();
-                        loadAddresses();
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('Không thể cập nhật địa chỉ. Vui lòng thử lại sau.');
+                        showToast('Lỗi', 'Không thể cập nhật địa chỉ. Vui lòng thử lại sau.', 'error');
                     });
                 }
             }
@@ -1396,39 +1507,57 @@
             function confirmDeleteAddress() {
                 const id = document.getElementById('deleteConfirmModal').getAttribute('data-address-id');
 
-                fetch(`/account/addresses/${id}`, {
+                const csrfTokenDel = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+                const csrfHeaderDel = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+
+                fetch(`/api/addresses/${id}`, {
                     method: 'DELETE',
+                    headers: {
+                        ...(csrfHeaderDel && csrfTokenDel ? { [csrfHeaderDel]: csrfTokenDel } : {})
+                    }
                 })
-                .then(response => {
-                    if (response.ok) {
-                        // Remove from array
+                .then(response => response.json())
+                .then(result => {
+                    const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
+                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editAddressModal'));
+                    if (deleteModal) deleteModal.hide();
+                    if (editModal) editModal.hide();
+
+                    if (result.success) {
                         addressesData = addressesData.filter(addr => addr.id != id);
-
-                        // Close both modals
-                        const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
-                        const editModal = bootstrap.Modal.getInstance(document.getElementById('editAddressModal'));
-
-                        if (deleteModal) deleteModal.hide();
-                        if (editModal) editModal.hide();
-
-                        // Reload addresses
                         loadAddresses();
+                        showToast('Thành công', result.message || 'Đã xóa địa chỉ thành công!', 'success');
                     } else {
-                         return response.text().then(text => {
-                            throw new Error(text || 'Lỗi khi xóa địa chỉ');
-                        });
+                        showToast('Không thể xóa', result.message || 'Vui lòng thử lại.', 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    // Close delete modal first so we can see alert
                     const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
                     if (deleteModal) deleteModal.hide();
-                    
-                    setTimeout(() => {
-                        alert('Không thể xóa địa chỉ: ' + error.message);
-                    }, 500);
+                    showToast('Lỗi', 'Không thể xóa địa chỉ. Vui lòng thử lại sau.', 'error');
                 });
+            }
+
+            // ── Toast notification helper ──
+            let _toastTimer = null;
+            function showToast(title, message, type) {
+                const el = document.getElementById('checkoutToast');
+                const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+                const colors = { success: '#28a745', error: '#dc3545', warning: '#ffc107', info: '#17a2b8' };
+                document.getElementById('checkoutToastIcon').textContent = icons[type] || icons.info;
+                document.getElementById('checkoutToastTitle').textContent = title;
+                document.getElementById('checkoutToastMsg').textContent = message;
+                el.style.borderLeftColor = colors[type] || colors.info;
+                el.style.display = 'flex';
+                el.style.opacity = '1';
+                if (_toastTimer) clearTimeout(_toastTimer);
+                _toastTimer = setTimeout(hideToast, 5000);
+            }
+            function hideToast() {
+                const el = document.getElementById('checkoutToast');
+                el.style.opacity = '0';
+                setTimeout(() => { el.style.display = 'none'; el.style.opacity = '1'; }, 300);
             }
 
             // Show/Hide QR Code section & update button label

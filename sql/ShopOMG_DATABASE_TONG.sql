@@ -49,10 +49,33 @@ CREATE TABLE Accounts (
     avatar NVARCHAR(500) DEFAULT N'https://ui-avatars.com/api/?background=random&color=fff&name=User',
     role_id INT NOT NULL,
     is_active BIT DEFAULT 1,
+    birth_date DATE NULL,
+    gender NVARCHAR(10) NULL,
+    email_verified BIT DEFAULT 0,
+    failed_login_attempts INT DEFAULT 0,
+    account_locked_until DATETIME NULL,
+    last_login DATETIME NULL,
     created_at DATETIME DEFAULT GETDATE(),
     updated_at DATETIME DEFAULT GETDATE(),
     CONSTRAINT FK_Accounts_Roles FOREIGN KEY (role_id) REFERENCES Roles(id)
 );
+--NEW
+-- Bảng Nhật ký hoạt động quản trị
+CREATE TABLE AuditLogs (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    admin_id INT NULL,
+    action NVARCHAR(50) NOT NULL,
+    entity_type NVARCHAR(50) NOT NULL,
+    entity_id INT NULL,
+    details NVARCHAR(2000) NULL,
+    timestamp DATETIME NOT NULL DEFAULT GETDATE(),
+    ip_address NVARCHAR(50) NULL,
+    CONSTRAINT FK_AuditLogs_Accounts FOREIGN KEY (admin_id) REFERENCES Accounts(id) ON DELETE SET NULL
+);
+CREATE INDEX idx_audit_timestamp ON AuditLogs(timestamp);
+CREATE INDEX idx_audit_entity ON AuditLogs(entity_type, entity_id);
+CREATE INDEX idx_audit_admin ON AuditLogs(admin_id);
+GO
 
 -- Bảng Sổ địa chỉ
 CREATE TABLE Addresses (
@@ -1413,10 +1436,12 @@ GO
 USE ShopOMG;
 GO
 
+/* [COMMENTED - Đã tích hợp thẳng vào CREATE TABLE Accounts]
 ALTER TABLE Accounts
 ADD birth_date DATE NULL,
     gender NVARCHAR(10) NULL;
 GO
+*/
 
 -- Cập nhật lại ảnh chính cho sản phẩm 
 UPDATE p
@@ -1837,6 +1862,7 @@ GO
 
 GO
 
+/* [COMMENTED - Đã tích hợp thẳng vào CREATE TABLE Accounts]
 -- 1. Thêm field failed_login_attempts
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Accounts') AND name = 'failed_login_attempts')
 BEGIN
@@ -1887,6 +1913,7 @@ GO
 
 PRINT '🎉 Migration Login Attempt Limiting hoàn tất!';
 GO
+*/
 
 /*
 ===========================================================================
@@ -2302,8 +2329,8 @@ PRINT '🔓 Admin accounts can now login without email verification.';
 GO
 
 -- 12/3 --
--- Thêm cột media_url vào bảng ProductReviews (chạy 1 lần duy nhất)
-ALTER TABLE ProductReviews ADD media_url NVARCHAR(2000) NULL;
+-- [COMMENTED - Đã tích hợp thẳng vào CREATE TABLE ProductReviews]
+-- ALTER TABLE ProductReviews ADD media_url NVARCHAR(2000) NULL;
 
 go 
 

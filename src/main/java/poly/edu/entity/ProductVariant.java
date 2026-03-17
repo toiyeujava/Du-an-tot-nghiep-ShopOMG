@@ -18,7 +18,7 @@ public class ProductVariant implements Serializable {
     // --- SỬA ĐOẠN NÀY ---
     @ManyToOne
     @JoinColumn(name = "product_id")
-    @JsonIgnore // <--- 3. QUAN TRỌNG: Cắt đứt vòng lặp khi chuyển sang JSON cho JavaScript
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"variants", "productImages"}) // Prevent recursion but still return product details
     @ToString.Exclude // <--- 4. Ngăn lỗi log
     private Product product;
     // --------------------

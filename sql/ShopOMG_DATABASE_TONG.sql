@@ -253,7 +253,51 @@ CREATE INDEX idx_invlog_timestamp ON InventoryLogs (timestamp);
 CREATE INDEX idx_invlog_variant ON InventoryLogs (variant_id);
 GO
 
+-- =====================================================================================
+-- BẢNG NGHIỆP VỤ NHẬP KHO (Supplier & Inventory Receipt)
+-- =====================================================================================
 
+-- Bảng Nhà cung cấp
+CREATE TABLE Suppliers (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    address NVARCHAR(500),
+    tax_code VARCHAR(50),
+    is_active BIT DEFAULT 1,
+    created_at DATETIME2 DEFAULT GETDATE(),
+    updated_at DATETIME2 DEFAULT GETDATE()
+);
+GO
+
+-- Bảng Phiếu nhập kho
+CREATE TABLE InventoryReceipts (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    receipt_code VARCHAR(50) NOT NULL UNIQUE,
+    supplier_id INT,
+    account_id INT,
+    total_amount FLOAT,
+    status VARCHAR(50) DEFAULT 'PENDING',
+    note NVARCHAR(500),
+    created_at DATETIME2 DEFAULT GETDATE(),
+    updated_at DATETIME2 DEFAULT GETDATE(),
+    CONSTRAINT FK_InventoryReceipts_Suppliers FOREIGN KEY (supplier_id) REFERENCES Suppliers(id),
+    CONSTRAINT FK_InventoryReceipts_Accounts FOREIGN KEY (account_id) REFERENCES Accounts(id)
+);
+GO
+
+-- Bảng Chi tiết phiếu nhập kho
+CREATE TABLE InventoryReceiptDetails (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    receipt_id INT NOT NULL,
+    variant_id INT NOT NULL,
+    quantity INT NOT NULL,
+    import_price FLOAT,
+    CONSTRAINT FK_ReceiptDetails_Receipts FOREIGN KEY (receipt_id) REFERENCES InventoryReceipts(id) ON DELETE CASCADE,
+    CONSTRAINT FK_ReceiptDetails_Variants FOREIGN KEY (variant_id) REFERENCES ProductVariants(id)
+);
+GO
 
 -- 3. VIEWS & SP
 
@@ -2821,3 +2865,134 @@ IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Orders') A
 
 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Orders') AND name = 'reference_code')
     ALTER TABLE Orders ADD reference_code NVARCHAR(100) NULL;
+
+/*
+===========================================================================
+   MIGRATION: Thêm bảng Nhà Cung Cấp & Phiếu Nhập Kho
+   DATE: 17/03/2026
+   DESCRIPTION:
+   - Tạo bảng Suppliers (Nhà cung cấp)
+   - Tạo bảng InventoryReceipts (Phiếu nhập kho)
+   - Tạo bảng InventoryReceiptDetails (Chi tiết phiếu nhập)
+   
+   HƯỚNG DẪN: Chạy script này trên database ShopOMG đã tồn tại.
+   Nếu bạn đã chạy ShopOMG_DATABASE_TONG.sql mới nhất thì KHÔNG CẦN chạy file này.
+===========================================================================
+*/
+
+USE ShopOMG;
+GO
+
+-- =============================================
+-- 1. Bảng Nhà cung cấp (Suppliers)
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Suppliers')
+BEGIN
+    CREATE TABLE Suppliers (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        name NVARCHAR(255) NOT NULL,
+        phone VARCHAR(20),
+        email VARCHAR(100),
+        address NVARCHAR(500),
+        tax_code VARCHAR(50),
+        is_active BIT DEFAULT 1,
+        created_at DATETIME2 DEFAULT GETDATE(),
+        updated_at DATETIME2 DEFAULT GETDATE()
+    );
+    PRINT N'✅ Đã tạo bảng Suppliers thành công.';
+END
+ELSE
+    PRINT N'⚠️ Bảng Suppliers đã tồn tại, bỏ qua.';
+GO
+
+-- =============================================
+-- 2. Bảng Phiếu nhập kho (InventoryReceipts)
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'InventoryReceipts')
+BEGIN
+    CREATE TABLE InventoryReceipts (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        receipt_code VARCHAR(50) NOT NULL UNIQUE,
+        supplier_id INT,
+        account_id INT,
+        total_amount FLOAT,
+        status VARCHAR(50) DEFAULT 'PENDING',
+        note NVARCHAR(500),
+        created_at DATETIME2 DEFAULT GETDATE(),
+        updated_at DATETIME2 DEFAULT GETDATE(),
+        CONSTRAINT FK_InventoryReceipts_Suppliers FOREIGN KEY (supplier_id) REFERENCES Suppliers(id),
+        CONSTRAINT FK_InventoryReceipts_Accounts FOREIGN KEY (account_id) REFERENCES Accounts(id)
+    );
+    PRINT N'✅ Đã tạo bảng InventoryReceipts thành công.';
+END
+ELSE
+    PRINT N'⚠️ Bảng InventoryReceipts đã tồn tại, bỏ qua.';
+GO
+
+-- =============================================
+-- 3. Bảng Chi tiết phiếu nhập (InventoryReceiptDetails)
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'InventoryReceiptDetails')
+BEGIN
+    CREATE TABLE InventoryReceiptDetails (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        receipt_id INT NOT NULL,
+        variant_id INT NOT NULL,
+        quantity INT NOT NULL,
+        import_price FLOAT,
+        CONSTRAINT FK_ReceiptDetails_Receipts FOREIGN KEY (receipt_id) REFERENCES InventoryReceipts(id) ON DELETE CASCADE,
+        CONSTRAINT FK_ReceiptDetails_Variants FOREIGN KEY (variant_id) REFERENCES ProductVariants(id)
+    );
+    PRINT N'✅ Đã tạo bảng InventoryReceiptDetails thành công.';
+END
+ELSE
+    PRINT N'⚠️ Bảng InventoryReceiptDetails đã tồn tại, bỏ qua.';
+GO
+
+PRINT N'';
+PRINT N'🎉 Migration hoàn tất! Các bảng nghiệp vụ nhập kho đã sẵn sàng.';
+GO
+
+/*
+===========================================================================
+   MIGRATION: Thêm cột supplier_id vào bảng Products
+   DATE: 17/03/2026
+===========================================================================
+*/
+USE ShopOMG;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM sys.columns 
+    WHERE object_id = OBJECT_ID(N'[dbo].[Products]') 
+    AND name = 'supplier_id'
+)
+BEGIN
+    ALTER TABLE Products ADD supplier_id INT;
+    PRINT N'✅ Đã thêm cột supplier_id vào bảng Products.';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Cột supplier_id đã tồn tại trong bảng Products.';
+END
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM sys.foreign_keys 
+    WHERE object_id = OBJECT_ID(N'[dbo].[FK_Products_Suppliers]') 
+    AND parent_object_id = OBJECT_ID(N'[dbo].[Products]')
+)
+BEGIN
+    ALTER TABLE Products ADD CONSTRAINT FK_Products_Suppliers FOREIGN KEY (supplier_id) REFERENCES Suppliers(id);
+    PRINT N'✅ Đã thêm khóa ngoại FK_Products_Suppliers.';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Khóa ngoại FK_Products_Suppliers đã tồn tại.';
+END
+GO
+
+-- Cập nhật tất cả sản phẩm hiện tại thuộc về nhà cung cấp "CÔNG TY TNHH THỜI TRANG NAM M.LEO" (ID = 1, nếu đã có)
+UPDATE Products SET supplier_id = 1 WHERE supplier_id IS NULL;
+PRINT N'✅ Đã cập nhật nhà cung cấp mặc định (ID = 1) cho tất cả sản phẩm hiện có.';
+GO

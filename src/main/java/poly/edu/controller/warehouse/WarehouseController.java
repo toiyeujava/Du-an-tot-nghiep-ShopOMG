@@ -197,16 +197,21 @@ public class WarehouseController {
      */
     @GetMapping("/api/variants/search")
     @ResponseBody
-    public ResponseEntity<List<ProductVariant>> searchVariants(@RequestParam String q) {
+    public ResponseEntity<List<ProductVariant>> searchVariants(@RequestParam String q, @RequestParam(required = false) Integer supplierId) {
         String lower = q.toLowerCase();
         List<ProductVariant> results = productVariantRepository.findAll().stream()
-                .filter(v ->
-                    (v.getSku()   != null && v.getSku().toLowerCase().contains(lower)) ||
-                    (v.getColor() != null && v.getColor().toLowerCase().contains(lower)) ||
-                    (v.getSize()  != null && v.getSize().toLowerCase().contains(lower)) ||
-                    (v.getProduct() != null && v.getProduct().getName() != null &&
-                     v.getProduct().getName().toLowerCase().contains(lower))
-                )
+                .filter(v -> {
+                    // Filter by supplier if provided
+                    if (supplierId != null && v.getProduct() != null &&
+                        (v.getProduct().getSupplierId() == null || !v.getProduct().getSupplierId().equals(supplierId))) {
+                        return false;
+                    }
+                    return (v.getSku()   != null && v.getSku().toLowerCase().contains(lower)) ||
+                           (v.getColor() != null && v.getColor().toLowerCase().contains(lower)) ||
+                           (v.getSize()  != null && v.getSize().toLowerCase().contains(lower)) ||
+                           (v.getProduct() != null && v.getProduct().getName() != null &&
+                            v.getProduct().getName().toLowerCase().contains(lower));
+                })
                 .toList();
         return ResponseEntity.ok(results);
     }

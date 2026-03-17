@@ -2813,3 +2813,11 @@ ALTER TABLE Vouchers ADD
     is_flash_sale BIT DEFAULT 0, 
     flash_sale_start_hour INT, 
     flash_sale_end_hour INT;
+
+
+-- Thêm 2 cột lưu thông tin giao dịch SePay thực tế
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Orders') AND name = 'transfer_content')
+    ALTER TABLE Orders ADD transfer_content NVARCHAR(500) NULL;
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Orders') AND name = 'reference_code')
+    ALTER TABLE Orders ADD reference_code NVARCHAR(100) NULL;

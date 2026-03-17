@@ -83,12 +83,16 @@
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="city" class="form-label small fw-bold">Tỉnh/Thành phố <span
+                                    <label for="cityInput" class="form-label small fw-bold">Tỉnh/Thành phố <span
                                             class="text-danger">*</span></label>
-                                    <select class="form-select" id="city">
-                                        <option value="">Chọn Tỉnh/Thành phố</option>
-                                    </select>
-                                    <div class="invalid-feedback"></div>
+                                    <div class="province-autocomplete" id="cityAutocomplete">
+                                        <input type="text" class="form-control" id="cityInput"
+                                            placeholder="Gõ hoặc chọn tỉnh/thành phố..."
+                                            autocomplete="off">
+                                        <input type="hidden" id="city">
+                                        <ul class="province-dropdown" id="cityDropdown"></ul>
+                                    </div>
+                                    <div class="invalid-feedback" id="cityFeedback"></div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="district" class="form-label small fw-bold">Quận/Huyện <span
@@ -226,7 +230,7 @@
                 box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
             }
 
-            /* Dropdown height limit */
+            /* Dropdown height limit for district only */
             select.form-select[size] {
                 height: auto !important;
                 max-height: 250px;
@@ -235,6 +239,53 @@
                 z-index: 1050;
                 background: white;
                 box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            }
+
+            /* Province Autocomplete */
+            .province-autocomplete {
+                position: relative;
+            }
+
+            .province-dropdown {
+                display: none;
+                position: absolute;
+                top: calc(100% + 4px);
+                left: 0;
+                right: 0;
+                background: #fff;
+                border: 1.5px solid #ced4da;
+                border-radius: 8px;
+                box-shadow: 0 8px 24px rgba(0,0,0,.15);
+                max-height: 260px;
+                overflow-y: auto;
+                z-index: 1055;
+                padding: 4px 0;
+                margin: 0;
+                list-style: none;
+            }
+
+            .province-dropdown.open {
+                display: block;
+            }
+
+            .province-dropdown li {
+                padding: 8px 14px;
+                cursor: pointer;
+                font-size: .92rem;
+                color: #333;
+                transition: background .15s;
+            }
+
+            .province-dropdown li:hover,
+            .province-dropdown li.active {
+                background: rgba(13,110,253,.08);
+                color: #0d6efd;
+            }
+
+            .province-dropdown li.no-result {
+                color: #888;
+                pointer-events: none;
+                font-style: italic;
             }
         </style>
 
@@ -312,57 +363,112 @@
             document.addEventListener('DOMContentLoaded', function () {
                 initializeProvinceDropdown();
                 loadAddresses();
-                setupDropdownLimit(document.getElementById('city'));
                 setupDropdownLimit(document.getElementById('district'));
             });
 
-            // Initialize province dropdown
+            // Initialize province dropdown (now autocomplete)
             function initializeProvinceDropdown() {
-                const citySelect = document.getElementById('city');
-                const provinces = Object.keys(vietnamData).sort();
-
-                provinces.forEach(province => {
-                    const option = document.createElement('option');
-                    option.value = province;
-                    option.textContent = province;
-                    citySelect.appendChild(option);
-                });
-
-                citySelect.addEventListener('change', function () {
+                window._cityAC = createProvinceAutocomplete('cityInput', 'city', 'cityDropdown', province => {
                     const districtSelect = document.getElementById('district');
-                    const selectedProvince = this.value;
-
                     districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
-
-                    if (selectedProvince) {
-                        districtSelect.disabled = false;
-                        const districts = vietnamData[selectedProvince];
-                        if (districts) {
-                            districts.forEach(district => {
-                                const option = document.createElement('option');
-                                option.value = district;
-                                option.textContent = district;
-                                districtSelect.appendChild(option);
-                            });
-                        }
-                        this.classList.remove('is-invalid');
-                    } else {
-                        districtSelect.disabled = true;
+                    districtSelect.disabled = false;
+                    if (vietnamData[province]) {
+                        vietnamData[province].forEach(d => {
+                            const option = document.createElement('option');
+                            option.value = d;
+                            option.textContent = d;
+                            districtSelect.appendChild(option);
+                        });
                     }
                 });
 
                 document.getElementById('district').addEventListener('click', function () {
-                    if (!citySelect.value) {
-                        citySelect.classList.add('is-invalid');
-                        const feedback = citySelect.nextElementSibling;
-                        if (feedback && feedback.classList.contains('invalid-feedback')) {
-                            feedback.textContent = 'Vui lòng chọn Tỉnh/Thành phố trước';
-                        }
+                    if (!document.getElementById('city').value) {
+                        document.getElementById('cityInput').classList.add('is-invalid');
+                        const feedback = document.getElementById('cityFeedback');
+                        if (feedback) feedback.textContent = 'Vui lòng chọn Tỉnh/Thành phố trước';
                     }
                 });
             }
 
-            // Dropdown size limit
+            // Province Autocomplete Combobox
+            function createProvinceAutocomplete(inputId, hiddenId, dropdownId, onSelect) {
+                const input    = document.getElementById(inputId);
+                const hidden   = document.getElementById(hiddenId);
+                const dropdown = document.getElementById(dropdownId);
+                const provinces = Object.keys(vietnamData).sort();
+                let activeIdx = -1;
+
+                function buildList(filter) {
+                    const normalize = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                    const q = normalize(filter || '');
+                    const list = q
+                        ? provinces.filter(p => normalize(p).includes(q))
+                        : provinces;
+                    dropdown.innerHTML = '';
+                    activeIdx = -1;
+                    if (list.length === 0) {
+                        dropdown.innerHTML = '<li class="no-result">Không tìm thấy</li>';
+                    } else {
+                        list.forEach(p => {
+                            const li = document.createElement('li');
+                            li.textContent = p;
+                            li.dataset.value = p;
+                            li.addEventListener('mousedown', e => { e.preventDefault(); selectProvince(p); });
+                            dropdown.appendChild(li);
+                        });
+                    }
+                }
+
+                function openDropdown() { buildList(input.value); dropdown.classList.add('open'); }
+                function closeDropdown() { dropdown.classList.remove('open'); activeIdx = -1; }
+
+                function selectProvince(value) {
+                    input.value = value;
+                    hidden.value = value;
+                    closeDropdown();
+                    input.classList.remove('is-invalid');
+                    const feedback = document.getElementById('cityFeedback');
+                    if (feedback) feedback.textContent = '';
+                    if (onSelect) onSelect(value);
+                }
+
+                input.addEventListener('focus', openDropdown);
+                input.addEventListener('click', openDropdown);
+                input.addEventListener('input', () => {
+                    hidden.value = '';
+                    buildList(input.value);
+                    dropdown.classList.add('open');
+                });
+                input.addEventListener('keydown', e => {
+                    const items = dropdown.querySelectorAll('li:not(.no-result)');
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        activeIdx = Math.min(activeIdx + 1, items.length - 1);
+                        items.forEach((li, i) => li.classList.toggle('active', i === activeIdx));
+                        if (items[activeIdx]) items[activeIdx].scrollIntoView({ block: 'nearest' });
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        activeIdx = Math.max(activeIdx - 1, 0);
+                        items.forEach((li, i) => li.classList.toggle('active', i === activeIdx));
+                        if (items[activeIdx]) items[activeIdx].scrollIntoView({ block: 'nearest' });
+                    } else if (e.key === 'Enter' && activeIdx >= 0) {
+                        e.preventDefault();
+                        selectProvince(items[activeIdx].dataset.value);
+                    } else if (e.key === 'Escape') {
+                        closeDropdown();
+                    }
+                });
+                document.addEventListener('click', e => {
+                    if (!input.closest('.province-autocomplete').contains(e.target)) {
+                        closeDropdown();
+                        if (input.value && !vietnamData[input.value]) input.value = hidden.value || '';
+                    }
+                });
+                return { setValue: (v) => { input.value = v; hidden.value = v; } };
+            }
+
+            // Dropdown size limit (for district only)
             function setupDropdownLimit(select) {
                 let isExpanded = false;
                 select.addEventListener('mousedown', function (e) {
@@ -459,6 +565,8 @@
                 document.getElementById('addressModalLabel').innerHTML = '<i class="fas fa-map-marker-alt me-2"></i>Thêm địa chỉ mới';
                 document.getElementById('addressForm').reset();
                 document.getElementById('addressId').value = '';
+                window._cityAC.setValue(''); // Reset province autocomplete
+                document.getElementById('district').innerHTML = '<option value="">Chọn Quận/Huyện</option>'; // Reset district dropdown
                 document.getElementById('district').disabled = true;
                 clearValidation();
             }
@@ -475,9 +583,8 @@
                             document.getElementById('recipientName').value = addr.recipientName;
                             document.getElementById('phone').value = addr.phone;
 
-                            // Set city and load districts
-                            const citySelect = document.getElementById('city');
-                            citySelect.value = addr.city;
+                            // Set city via autocomplete
+                            if (window._cityAC) window._cityAC.setValue(addr.city);
 
                             const districtSelect = document.getElementById('district');
                             districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';

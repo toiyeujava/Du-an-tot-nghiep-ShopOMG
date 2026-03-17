@@ -144,6 +144,8 @@ public class SePayWebhookController {
         order.setStatus("PENDING");
         order.setPaymentConfirmedAt(LocalDateTime.now());
         order.setPaymentConfirmedBy("SePay-Webhook");
+        order.setTransferContent(payload.getContent());
+        order.setReferenceCode(payload.getReferenceCode());
         orderRepository.save(order);
         log.info("Order {} marked PAID via SePay webhook. Ref={}", orderId, payload.getReferenceCode());
 

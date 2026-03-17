@@ -50,14 +50,18 @@ public class TransactionDetailController {
         String confirmedAt = order.getPaymentConfirmedAt() != null
                 ? order.getPaymentConfirmedAt().format(DISPLAY_FMT)
                 : "—";
-                
-        String dummyContent = "Nguyen Dang Hoang Lam chuyen tien QR Ma giao dich Trace" + orderId + " Trace " + orderId;
-        String dummyRefCode = "FT2606943932" + String.format("%04d", orderId);
+
+        String realContent = order.getTransferContent() != null
+                ? order.getTransferContent()
+                : "OMG" + orderId;
+        String realRefCode = order.getReferenceCode() != null
+                ? order.getReferenceCode()
+                : "—";
 
         model.addAttribute("orderCode",       orderCode);
-        model.addAttribute("referenceCode",   dummyRefCode);
+        model.addAttribute("referenceCode",   realRefCode);
         model.addAttribute("amount",          order.getFinalAmount());
-        model.addAttribute("transferContent", dummyContent);
+        model.addAttribute("transferContent", realContent);
         model.addAttribute("paymentStatus",   order.getPaymentStatus());
         model.addAttribute("orderStatus",     order.getStatus());
         model.addAttribute("transactionDate", confirmedAt);

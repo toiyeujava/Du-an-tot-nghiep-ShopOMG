@@ -31,7 +31,7 @@
                 <div class="voucher-list d-flex flex-column gap-3">
                     
                     <!-- Voucher 1 -->
-                    <div class="voucher-ticket">
+                    <div class="voucher-ticket" th:if="${canShowOpening == null or canShowOpening}">
                         <div class="ticket-left">
                             <i class="fas fa-gift text-white fs-4"></i>
                         </div>
@@ -47,7 +47,7 @@
                     </div>
 
                     <!-- Voucher 2 -->
-                    <div class="voucher-ticket">
+                    <div class="voucher-ticket" th:if="${canShowFreeship == null or canShowFreeship}">
                         <div class="ticket-left" style="background: linear-gradient(135deg, #3498db, #2980b9);">
                             <i class="fas fa-shipping-fast text-white fs-4"></i>
                         </div>
@@ -56,9 +56,38 @@
                                 <h6 class="fw-bold text-dark mb-1">Mã: <span class="text-primary">FREESHIP</span></h6>
                                 <p class="text-muted mb-0" style="font-size: 0.85rem;">Miễn phí vận chuyển toàn quốc.</p>
                             </div>
-                            <button class="btn btn-outline-primary btn-sm fw-bold px-3 btn-select-voucher" data-code="FREESHIP">
+                            <button class="btn btn-sm fw-bold px-3 btn-select-voucher" 
+                                    th:classappend="${isCartTotalAboveFreeship != null and isCartTotalAboveFreeship} ? 'btn-secondary disabled' : 'btn-outline-primary'" 
+                                    th:disabled="${isCartTotalAboveFreeship != null and isCartTotalAboveFreeship}" 
+                                    th:text="${isCartTotalAboveFreeship != null and isCartTotalAboveFreeship} ? 'FreeShip tự động' : 'Chọn'"
+                                    data-code="FREESHIP">
                                 Chọn
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- Flash Sale Vouchers (claimed but not yet used today) -->
+                    <div th:if="${claimedFlashVouchers != null and !claimedFlashVouchers.isEmpty()}">
+                        <h6 class="fw-bold mb-3 mt-4 text-uppercase" style="font-size: 0.85rem; letter-spacing: 1px; color: #e74c3c;">
+                            <i class="fas fa-bolt me-1"></i> Flash Sale
+                        </h6>
+                        <div th:each="fsv : ${claimedFlashVouchers}" class="voucher-ticket mb-3">
+                            <div class="ticket-left" style="background: linear-gradient(135deg, #f39c12, #e74c3c);">
+                                <i class="fas fa-bolt text-white fs-4"></i>
+                            </div>
+                            <div class="ticket-right d-flex justify-content-between align-items-center">
+                                <div class="ticket-info">
+                                    <h6 class="fw-bold text-dark mb-1">Mã: <span class="text-danger" th:text="${fsv.code}"></span></h6>
+                                    <p class="text-muted mb-0" style="font-size: 0.85rem;">
+                                        <span th:if="${fsv.discountPercent != null}" th:text="'Giảm ' + ${fsv.discountPercent} + '%'"></span>
+                                        <span th:if="${fsv.minOrderAmount != null}" th:text="' · Đơn tối thiểu ' + ${#numbers.formatInteger(fsv.minOrderAmount, 3, 'POINT')} + 'đ'"></span>
+                                        <span th:if="${fsv.maxDiscountAmount != null}" th:text="' · Tối đa ' + ${#numbers.formatInteger(fsv.maxDiscountAmount, 3, 'POINT')} + 'đ'"></span>
+                                    </p>
+                                </div>
+                                <button class="btn btn-outline-danger btn-sm fw-bold px-3 btn-select-voucher" th:data-code="${fsv.code}">
+                                    Chọn
+                                </button>
+                            </div>
                         </div>
                     </div>
 

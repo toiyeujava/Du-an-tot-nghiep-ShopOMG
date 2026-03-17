@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
+import org.springframework.messaging.simp.user.SimpUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,11 +31,9 @@ public class ChatController {
     
     @Autowired
     private AccountRepository accountRepository;
-    
-    private static final List<String> STAFF_ACCOUNTS = List.of(
-            "admin@shopomg.com",
-            "sales@shopomg.com"
-        );
+
+    @Autowired
+    private SimpUserRegistry simpUserRegistry;
 
     // --- PHẦN WEBSOCKET (REAL-TIME) ---
 
@@ -56,11 +56,33 @@ public class ChatController {
 //            // Sửa "admin" thành "admin@shopomg.com" (hoặc email bạn dùng đăng nhập)
 //            messagingTemplate.convertAndSendToUser("admin@shopomg.com", "/queue/messages", chatMessage);
             
+         // --- DEBUG: Log all connected STOMP Users ---
+            System.out.println("=== NEW CHAT MESSAGE TO ADMIN ===");
+            System.out.println("Connected STOMP Users:");
+            for (SimpUser user : simpUserRegistry.getUsers()) {
+                System.out.println(" - " + user.getName());
+            }
+
          // Gửi riêng cho từng staff — convertAndSendToUser chỉ nhận 1 user mỗi lần
-            for (String staff : STAFF_ACCOUNTS) {
-                messagingTemplate.convertAndSendToUser(staff, "/queue/messages", (Object) chatMessage);
+            List<String> staffEmails = accountRepository.findStaffEmails();
+            if (staffEmails == null || staffEmails.isEmpty()) {
+                staffEmails = List.of("admin@shopomg.com", "sales@shopomg.com");
             }
             
+            System.out.println("Routing message to staff identifier(s): " + staffEmails);
+            for (String staff : staffEmails) {
+                messagingTemplate.convertAndSendToUser(staff, "/queue/messages", (Object) chatMessage);
+            }
+            // Cũng thử gửi theo username (cho Admin đăng nhập MXH)
+            List<String> staffUsernames = accountRepository.findStaffUsernames();
+            if (staffUsernames != null && !staffUsernames.isEmpty()) {
+                System.out.println("Also routing to staff username(s): " + staffUsernames);
+                for (String username : staffUsernames) {
+                    if (username != null && !username.trim().isEmpty()) {
+                        messagingTemplate.convertAndSendToUser(username, "/queue/messages", (Object) chatMessage);
+                    }
+                }
+            }
             
         } catch (Exception e) {
             System.err.println("Lỗi gửi tin cho Admin: " + e.getMessage());

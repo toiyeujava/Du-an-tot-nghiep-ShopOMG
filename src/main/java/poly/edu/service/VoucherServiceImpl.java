@@ -11,11 +11,18 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import poly.edu.repository.AccountRepository;
+import poly.edu.repository.OrderRepository;
+import poly.edu.entity.Account;
+
 @Service
 @RequiredArgsConstructor
 public class VoucherServiceImpl implements VoucherService {
 
     private final VoucherRepository voucherRepository;
+    private final AccountRepository accountRepository;
+    private final OrderRepository orderRepository;
+    private final AccountService accountService;
 
     @Override
     public VoucherResponseDTO applyVoucher(String code, BigDecimal cartTotalAmount) {
@@ -23,7 +30,7 @@ public class VoucherServiceImpl implements VoucherService {
         return null;
     }
 
-    public VoucherResponseDTO applyVoucher(poly.edu.dto.VoucherApplyRequestDTO request) {
+    public VoucherResponseDTO applyVoucher(poly.edu.dto.VoucherApplyRequestDTO request, String username) {
         String code = request.getVoucherCode();
         BigDecimal cartTotalAmount = request.getCartTotalAmount();
         // 1. Tìm Voucher theo mã
@@ -54,6 +61,35 @@ public class VoucherServiceImpl implements VoucherService {
         if (voucher.getMinOrderAmount() != null && cartTotalAmount.compareTo(voucher.getMinOrderAmount()) < 0) {
             return buildErrorResponse("Đơn hàng chưa đạt mức tối thiểu " + voucher.getMinOrderAmount() + "đ để áp dụng mã này");
         }
+
+        // --- NEW LOGIC FOR OPENING & FREESHIP ---
+        if (username != null) {
+            Account user = accountRepository.findByUsername(username).orElse(null);
+            if (user == null) {
+                user = accountService.findByEmail(username);
+            }
+            if (user != null) {
+                if ("OPENING".equalsIgnoreCase(code)) {
+                    long orderCount = orderRepository.findByAccountId(user.getId()).size();
+                    if (orderCount > 0) {
+                        return buildErrorResponse("Mã OPENING chỉ áp dụng cho đơn hàng đầu tiên.");
+                    }
+                }
+                if ("FREESHIP".equalsIgnoreCase(code)) {
+                    if (cartTotalAmount.compareTo(new BigDecimal("700000")) >= 0) {
+                        return buildErrorResponse("Đơn hàng trên 700k đã được FREESHIP tự động, không cần dùng mã này.");
+                    }
+                    if (orderRepository.hasUserUsedVoucher(user.getId(), voucher.getId())) {
+                        return buildErrorResponse("Bạn đã sử dụng mã FREESHIP này rồi.");
+                    }
+                }
+            }
+        } else {
+            if ("OPENING".equalsIgnoreCase(code) || "FREESHIP".equalsIgnoreCase(code)) {
+                return buildErrorResponse("Bạn cần đăng nhập để sử dụng mã này.");
+            }
+        }
+        // --- END NEW LOGIC ---
 
         // 6. Tính toán số tiền được giảm
         BigDecimal discountAmount = BigDecimal.ZERO;

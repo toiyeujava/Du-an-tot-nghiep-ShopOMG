@@ -5,7 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import poly.edu.dto.FlashSaleStatusDTO;
 import poly.edu.dto.FlashVoucherDTO;
+import poly.edu.entity.FlashSaleClaim;
 import poly.edu.entity.Voucher;
+import poly.edu.repository.FlashSaleClaimRepository;
+import poly.edu.repository.OrderRepository;
 import poly.edu.repository.VoucherRepository;
 
 import java.math.BigDecimal;
@@ -16,6 +19,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -26,6 +30,7 @@ import java.util.stream.Collectors;
  * 2. Determine current flash sale status (UPCOMING / ACTIVE / ENDED)
  * 3. Calculate remaining time for countdown timer
  * 4. Provide voucher information for frontend display
+ * 5. Handle per-user claim logic
  */
 @Service
 @RequiredArgsConstructor
@@ -33,6 +38,8 @@ import java.util.stream.Collectors;
 public class FlashSaleService {
 
     private final VoucherRepository voucherRepository;
+    private final FlashSaleClaimRepository flashSaleClaimRepository;
+    private final OrderRepository orderRepository;
 
     // ─── CONFIGURABLE CONSTANTS ─────────────────────────────────────────────
     private static final int FLASH_SALE_START_HOUR = 8;
@@ -107,12 +114,9 @@ public class FlashSaleService {
 
     /**
      * Get the current Flash Sale status for the frontend countdown timer.
-     * Returns one of three states:
-     * - UPCOMING: before startHour, countdown to start
-     * - ACTIVE: between startHour and endHour, countdown to end + voucher list
-     * - ENDED: after endHour, shows "see you tomorrow" message
+     * Optionally includes per-user claim state if accountId is provided.
      */
-    public FlashSaleStatusDTO getFlashSaleStatus() {
+    public FlashSaleStatusDTO getFlashSaleStatus(Integer accountId) {
         LocalDateTime now = LocalDateTime.now();
         LocalDate today = now.toLocalDate();
         LocalTime currentTime = now.toLocalTime();
@@ -124,17 +128,13 @@ public class FlashSaleService {
         long remainingSeconds;
 
         if (currentTime.isBefore(startTime)) {
-            // UPCOMING: before 11:00
             status = "UPCOMING";
             remainingSeconds = ChronoUnit.SECONDS.between(now, today.atTime(startTime));
         } else if (currentTime.isBefore(endTime)) {
-            // ACTIVE: between 11:00 and 13:00
             status = "ACTIVE";
             remainingSeconds = ChronoUnit.SECONDS.between(now, today.atTime(endTime));
         } else {
-            // ENDED: after 13:00
             status = "ENDED";
-            // Countdown to tomorrow's flash sale start
             LocalDateTime tomorrowStart = today.plusDays(1).atTime(startTime);
             remainingSeconds = ChronoUnit.SECONDS.between(now, tomorrowStart);
         }
@@ -143,14 +143,26 @@ public class FlashSaleService {
         List<FlashVoucherDTO> vouchers = List.of();
         if ("ACTIVE".equals(status)) {
             List<Voucher> todayVouchers = voucherRepository.findTodayFlashSaleVouchers(today.atStartOfDay());
+
+            // Build set of claimed voucher IDs for this user
+            Set<Integer> claimedVoucherIds = Set.of();
+            if (accountId != null) {
+                claimedVoucherIds = flashSaleClaimRepository.findByAccountId(accountId).stream()
+                        .map(FlashSaleClaim::getVoucherId)
+                        .collect(Collectors.toSet());
+            }
+
+            final Set<Integer> finalClaimedIds = claimedVoucherIds;
             vouchers = todayVouchers.stream()
                     .map(v -> FlashVoucherDTO.builder()
+                            .voucherId(v.getId())
                             .code(v.getCode())
                             .discountPercent(v.getDiscountPercent())
                             .discountAmount(v.getDiscountAmount())
                             .minOrderAmount(v.getMinOrderAmount())
                             .maxDiscountAmount(v.getMaxDiscountAmount())
                             .remainingQuantity(v.getQuantity())
+                            .claimed(finalClaimedIds.contains(v.getId()))
                             .build())
                     .collect(Collectors.toList());
         }
@@ -162,5 +174,66 @@ public class FlashSaleService {
                 .endHour(FLASH_SALE_END_HOUR)
                 .vouchers(vouchers)
                 .build();
+    }
+
+    /**
+     * Claim a flash sale voucher for a specific user.
+     * Returns the voucher code on success, throws RuntimeException on failure.
+     */
+    public String claimVoucher(Integer accountId, Integer voucherId) {
+        // 1. Find voucher
+        Voucher voucher = voucherRepository.findById(voucherId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy voucher."));
+
+        // 2. Verify it's flash sale + active + has quantity
+        if (!Boolean.TRUE.equals(voucher.getIsFlashSale()) || !Boolean.TRUE.equals(voucher.getIsActive())) {
+            throw new RuntimeException("Voucher Flash Sale này không khả dụng.");
+        }
+        if (voucher.getQuantity() <= 0) {
+            throw new RuntimeException("Voucher Flash Sale đã hết lượt nhận. Hẹn bạn ngày mai!");
+        }
+
+        // 3. Check if user already claimed
+        if (flashSaleClaimRepository.existsByAccountIdAndVoucherId(accountId, voucherId)) {
+            throw new RuntimeException("Bạn đã nhận mã Flash Sale này rồi. Mỗi người chỉ được nhận 1 lần!");
+        }
+
+        // 4. Check if user already used a flash sale voucher today (via order)
+        if (orderRepository.hasUserUsedVoucher(accountId, voucherId)) {
+            throw new RuntimeException("Bạn đã sử dụng mã Flash Sale này rồi.");
+        }
+
+        // 5. Decrement quantity and save claim
+        voucher.setQuantity(voucher.getQuantity() - 1);
+        voucherRepository.save(voucher);
+
+        FlashSaleClaim claim = FlashSaleClaim.builder()
+                .accountId(accountId)
+                .voucherId(voucherId)
+                .claimedAt(LocalDateTime.now())
+                .build();
+        flashSaleClaimRepository.save(claim);
+
+        log.info("User {} claimed Flash Sale voucher {} (code: {})", accountId, voucherId, voucher.getCode());
+        return voucher.getCode();
+    }
+
+    /**
+     * Get today's claimed (but not yet used) flash sale vouchers for a user.
+     * Used in checkout to show available flash sale vouchers.
+     */
+    public List<Voucher> getClaimedUnusedFlashVouchers(Integer accountId) {
+        List<FlashSaleClaim> claims = flashSaleClaimRepository.findByAccountId(accountId);
+        LocalDate today = LocalDate.now();
+
+        return claims.stream()
+                .map(claim -> voucherRepository.findById(claim.getVoucherId()).orElse(null))
+                .filter(v -> v != null
+                        && Boolean.TRUE.equals(v.getIsFlashSale())
+                        && Boolean.TRUE.equals(v.getIsActive())
+                        && v.getStartDate() != null
+                        && v.getStartDate().toLocalDate().isEqual(today)
+                        && !orderRepository.hasUserUsedVoucher(accountId, v.getId()))
+                .collect(Collectors.toList());
     }
 }

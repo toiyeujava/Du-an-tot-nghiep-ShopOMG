@@ -358,8 +358,8 @@ INSERT INTO Categories (name, slug, image, is_active) VALUES
 
 go
 
--- C. PRODUCTS & IMAGES (CHI TIẾT TỪNG SẢN PHẨM)
 
+-- C. PRODUCTS & IMAGES (CHI TIẾT TỪNG SẢN PHẨM)
 -- 1. ÁO THUN (Category 1) 
 INSERT INTO Products (name, slug, price, discount, gender, category_id, material, origin, description) VALUES
 
@@ -1411,6 +1411,10 @@ Màu sắc: Đen basic / Ghi xám / Xanh đen.
 Phù hợp: Di chuyển ngoài trời bằng xe máy, chống nắng hằng ngày, khoác nhẹ ban đêm.
 Lưu ý: Màu sắc sản phẩm thực tế sẽ có sự chênh lệch nhỏ so với ảnh do điều kiện ánh sáng khi chụp và màu sắc hiển thị qua màn hình máy tính/ điện thoại.');
 
+-- 0. Test (sepay)
+INSERT INTO Products (name, slug, price, discount, gender, category_id, material, origin, description) VALUES
+(N'Test', 'Test', 1000, 0, N'Nam', 1, N'Test', N'Test',
+N'Test')
 
 go
 
@@ -2996,3 +3000,7 @@ GO
 UPDATE Products SET supplier_id = 1 WHERE supplier_id IS NULL;
 PRINT N'✅ Đã cập nhật nhà cung cấp mặc định (ID = 1) cho tất cả sản phẩm hiện có.';
 GO
+
+-- vì một lý do nào đó mà khachhang và nguyenlam email = 0 nên cần dòng này
+UPDATE Accounts SET email_verified = 1
+go

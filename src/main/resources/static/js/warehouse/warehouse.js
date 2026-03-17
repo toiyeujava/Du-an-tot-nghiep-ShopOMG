@@ -472,6 +472,8 @@ const TAB_BTN_MAP = {
     'tab-alerts': 'alert-tab',
     'tab-log': 'log-tab',
     'tab-update': 'log-tab',         // Update opens from log tab (modal available there)
+    'tab-suppliers': 'suppliers-tab',
+    'tab-receipts': 'receipts-tab'
 };
 
 function whSwitchTab(tabId, title) {
@@ -533,6 +535,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 'tab-alerts': '/warehouse/inventory#tab-alerts',
                 'tab-log': '/warehouse/inventory#tab-log',
                 'tab-update': '/warehouse/inventory#tab-update',
+                'tab-suppliers': '/warehouse/inventory#tab-suppliers',
+                'tab-receipts': '/warehouse/inventory#tab-receipts'
             };
             if (urlMap[tabId]) {
                 history.pushState({ tab: tabId }, title, urlMap[tabId]);
@@ -560,5 +564,516 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // ── Bind Product Search for Receipt Modal ──────────────────────────────
+    const searchInput = document.getElementById('receiptProductSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+            const resultsContainer = document.getElementById('receiptSearchResults');
+            const supplierId = document.getElementById('receiptSupplier')?.value;
+            
+            if (!supplierId) {
+                resultsContainer.innerHTML = `<div class="p-3 text-danger text-center small">Vui lòng chọn Nhà cung cấp trước khi tìm kiếm sản phẩm.</div>`;
+                return;
+            }
+
+            if(query.length < 2) {
+                resultsContainer.innerHTML = '';
+                return;
+            }
+            
+            fetch(`/warehouse/api/variants/search?q=${encodeURIComponent(query)}&supplierId=${supplierId}`)
+                .then(r => r.json())
+                .then(variants => {
+                    resultsContainer.innerHTML = '';
+                    if(!variants || variants.length === 0) {
+                        resultsContainer.innerHTML = `<div class="p-3 text-muted text-center small">Không tìm thấy sản phẩm.</div>`;
+                        return;
+                    }
+                    variants.forEach(v => {
+                        const item = document.createElement('a');
+                        item.href = '#';
+                        item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2';
+                        item.innerHTML = `
+                            <div style="max-width: 80%;">
+                                <div class="fw-bold small text-truncate">${v.product.name}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">SKU: <span class="fw-semibold">${v.sku}</span> | Màu: ${v.color} | Size: ${v.size}</div>
+                            </div>
+                            <button class="btn btn-sm btn-outline-warning rounded-circle p-1" style="width:28px;height:28px;" title="Thêm">
+                                <i class="fas fa-plus fa-xs"></i>
+                            </button>
+                        `;
+                        item.onclick = (ev) => {
+                            ev.preventDefault();
+                            addVariantToReceipt(v);
+                            
+                            // Clear search
+                            document.getElementById('receiptProductSearch').value = '';
+                            resultsContainer.innerHTML = '';
+                            document.getElementById('receiptProductSearch').focus();
+                        };
+                        resultsContainer.appendChild(item);
+                    });
+                });
+        });
+    }
+
 });
 
+// ═══════════════════════════════════════════════════════════════════
+// SUPPLIER MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════
+
+function loadSuppliers() {
+    fetch('/warehouse/api/suppliers')
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.getElementById('suppliersBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">Chưa có nhà cung cấp nào.</td></tr>`;
+                return;
+            }
+
+            data.forEach(s => {
+                const statusBadge = s.isActive 
+                    ? `<span class="badge bg-success bg-opacity-10 text-success fw-bold p-2" style="font-size: 0.75rem;">Đang hoạt động</span>`
+                    : `<span class="badge bg-danger bg-opacity-10 text-danger fw-bold p-2" style="font-size: 0.75rem;">Ngừng hoạt động</span>`;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="text-muted fw-semibold">#${s.id}</td>
+                    <td class="fw-bold text-dark">${s.name}</td>
+                    <td>${s.phone || '-'}</td>
+                    <td>${s.email || '-'}</td>
+                    <td>${s.address || '-'}</td>
+                    <td>${s.taxCode || '-'}</td>
+                    <td class="text-center">${statusBadge}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary shadow-sm" onclick='editSupplier(${JSON.stringify(s).replace(/'/g, "&#39;")})' title="Chi tiết/Sửa">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(err => console.error("Error loading suppliers", err));
+}
+
+function openSupplierModal() {
+    document.getElementById('supplierForm').reset();
+    document.getElementById('supplierId').value = '';
+    document.getElementById('supplierModalTitle').textContent = 'Thêm Nhà Cung Cấp';
+    document.getElementById('supplierStatusContainer').style.display = 'none';
+    const modal = new bootstrap.Modal(document.getElementById('supplierModal'));
+    modal.show();
+}
+
+function editSupplier(s) {
+    document.getElementById('supplierId').value = s.id;
+    document.getElementById('supplierName').value = s.name;
+    document.getElementById('supplierPhone').value = s.phone || '';
+    document.getElementById('supplierTaxCode').value = s.taxCode || '';
+    document.getElementById('supplierEmail').value = s.email || '';
+    document.getElementById('supplierAddress').value = s.address || '';
+    
+    document.getElementById('supplierModalTitle').textContent = 'Cập Nhật Nhà Cung Cấp';
+    document.getElementById('supplierStatusContainer').style.display = 'block';
+    document.getElementById('supplierIsActive').checked = s.isActive;
+    
+    const modal = new bootstrap.Modal(document.getElementById('supplierModal'));
+    modal.show();
+}
+
+function saveSupplier() {
+    const id = document.getElementById('supplierId').value;
+    const isNew = !id;
+    
+    const data = {
+        name: document.getElementById('supplierName').value,
+        phone: document.getElementById('supplierPhone').value,
+        taxCode: document.getElementById('supplierTaxCode').value,
+        email: document.getElementById('supplierEmail').value,
+        address: document.getElementById('supplierAddress').value,
+        isActive: isNew ? true : document.getElementById('supplierIsActive').checked
+    };
+    
+    if(!data.name) {
+        alert("Vui lòng nhập tên nhà cung cấp");
+        return;
+    }
+    
+    const csrf = getCsrf();
+    const url = isNew ? '/warehouse/api/suppliers' : `/warehouse/api/suppliers/${id}`;
+    const method = isNew ? 'POST' : 'PUT';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            [csrf.header]: csrf.token
+        },
+        body: JSON.stringify(data)
+    })
+    .then(r => {
+        if(!r.ok) throw new Error("Server error");
+        return r.json();
+    })
+    .then(saved => {
+        bootstrap.Modal.getInstance(document.getElementById('supplierModal')).hide();
+        showToast(isNew ? "Thêm mới thành công!" : "Cập nhật thành công!");
+        loadSuppliers();
+    })
+    .catch(err => alert("Lỗi hệ thống khi lưu nhà cung cấp."));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INVENTORY RECEIPT MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════
+
+let receiptLineItems = [];
+
+function loadReceipts() {
+    fetch('/warehouse/api/receipts')
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.getElementById('receiptsBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Chưa có phiếu nhập nào.</td></tr>`;
+                return;
+            }
+
+            data.forEach(r => {
+                let statusBadge = '';
+                if(r.status === 'PENDING') statusBadge = `<span class="badge bg-warning bg-opacity-10 text-warning fw-bold p-2" style="font-size: 0.75rem;">Đang nháp</span>`;
+                else if(r.status === 'COMPLETED') statusBadge = `<span class="badge bg-success bg-opacity-10 text-success fw-bold p-2" style="font-size: 0.75rem;">Đã hoàn thành</span>`;
+                else statusBadge = `<span class="badge bg-danger bg-opacity-10 text-danger fw-bold p-2" style="font-size: 0.75rem;">Đã huỷ</span>`;
+                
+                let ts = '-';
+                if(r.createdAt) {
+                    const d = new Date(r.createdAt);
+                    ts = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                }
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="fw-bold text-dark">${r.receiptCode}</td>
+                    <td>${r.supplier ? r.supplier.name : '-'}</td>
+                    <td>${r.account ? r.account.fullName : '-'}</td>
+                    <td class="text-end text-danger fw-bold">${r.totalAmount ? r.totalAmount.toLocaleString('vi-VN') : '0'} đ</td>
+                    <td>${ts}</td>
+                    <td class="text-center">${statusBadge}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-info shadow-sm" onclick="viewReceipt(${r.id})" title="Xem chi tiết">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(err => console.error("Error loading receipts", err));
+}
+
+function openInventoryReceiptModal() {
+    receiptLineItems = [];
+    document.getElementById('receiptTotalAmount').textContent = '0';
+    document.getElementById('receiptNote').value = '';
+    document.getElementById('receiptNote').readOnly = false;
+    document.getElementById('receiptProductSearch').value = '';
+    document.getElementById('receiptSearchResults').innerHTML = '';
+    document.getElementById('receiptModalTitle').textContent = 'Lập Phiếu Nhập Kho';
+    document.getElementById('receiptStatusBadge').innerHTML = '<span class="badge bg-warning text-dark fw-bold">LẬP MỚI</span>';
+    
+    document.getElementById('productSearchPanel').style.display = 'block';
+    
+    const supplierContainer = document.getElementById('supplierSelectContainer');
+    if (supplierContainer) {
+        supplierContainer.style.display = 'block';
+    }
+    
+    document.getElementById('receiptSupplierReadonlyContainer').style.display = 'none';
+    document.getElementById('receiptActionButtons').style.display = 'block';
+    
+    // load supplier options
+    fetch('/warehouse/api/suppliers')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('receiptSupplier');
+            select.innerHTML = '<option value="">-- Chọn Nhà cung cấp --</option>';
+            data.filter(s => s.isActive).forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                select.appendChild(opt);
+            });
+        });
+        
+    renderReceiptItems();
+    
+    const modal = new bootstrap.Modal(document.getElementById('inventoryReceiptModal'));
+    modal.show();
+}
+
+function renderReceiptItems() {
+    const tbody = document.getElementById('receiptLineItems');
+    const emptyState = document.getElementById('receiptEmptyItems');
+    
+    if (receiptLineItems.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('d-none');
+        document.getElementById('receiptTotalAmount').textContent = '0';
+        return;
+    }
+    
+    emptyState.classList.add('d-none');
+    tbody.innerHTML = '';
+    
+    let total = 0;
+    
+    receiptLineItems.forEach((item, index) => {
+        const itemTotal = item.quantity * item.importPrice;
+        total += itemTotal;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><span class="badge bg-secondary">${item.sku}</span></td>
+            <td>
+                <div class="fw-bold text-dark text-truncate" style="max-width:200px;" title="${item.productName}">${item.productName}</div>
+                <div class="small text-muted">Màu: ${item.color} | Size: ${item.size}</div>
+            </td>
+            <td class="text-center">
+                <input type="number" class="form-control form-control-sm text-center" min="1" value="${item.quantity}" onchange="updateReceiptItemQty(${index}, this.value)">
+            </td>
+            <td class="text-end">
+                <div class="input-group input-group-sm">
+                    <input type="number" class="form-control text-end" min="0" value="${item.importPrice}" onchange="updateReceiptItemPrice(${index}, this.value)">
+                    <span class="input-group-text">đ</span>
+                </div>
+            </td>
+            <td class="text-end fw-bold text-danger">${itemTotal.toLocaleString('vi-VN')} đ</td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline-danger border-0" onclick="removeReceiptItem(${index})" title="Xoá">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    document.getElementById('receiptTotalAmount').textContent = total.toLocaleString('vi-VN');
+}
+
+function updateReceiptItemQty(index, val) {
+    let q = parseInt(val);
+    if(isNaN(q) || q < 1) q = 1;
+    receiptLineItems[index].quantity = q;
+    renderReceiptItems();
+}
+
+function updateReceiptItemPrice(index, val) {
+    let p = parseFloat(val);
+    if(isNaN(p) || p < 0) p = 0;
+    receiptLineItems[index].importPrice = p;
+    renderReceiptItems();
+}
+
+function removeReceiptItem(index) {
+    receiptLineItems.splice(index, 1);
+    renderReceiptItems();
+}
+
+
+
+function addVariantToReceipt(v) {
+    // Check if exists
+    const existing = receiptLineItems.find(item => item.variantId === v.id);
+    if(existing) {
+        existing.quantity += 1;
+    } else {
+        receiptLineItems.push({
+            variantId: v.id,
+            sku: v.sku,
+            productName: v.product.name,
+            color: v.color,
+            size: v.size,
+            quantity: 1,
+            importPrice: v.price || 0 // Default price roughly, user should edit
+        });
+    }
+    renderReceiptItems();
+}
+
+function buildReceiptRequestBody() {
+    const supplierId = document.getElementById('receiptSupplier').value;
+    if(!supplierId) {
+        alert("Vui lòng chọn nhà cung cấp!");
+        return null;
+    }
+    if(receiptLineItems.length === 0) {
+        alert("Phiếu nhập chưa có sản phẩm nào!");
+        return null;
+    }
+    
+    return {
+        supplierId: parseInt(supplierId),
+        note: document.getElementById('receiptNote').value,
+        details: receiptLineItems.map(item => ({
+            variantId: item.variantId,
+            quantity: item.quantity,
+            importPrice: item.importPrice
+        }))
+    };
+}
+
+function saveReceiptDraft() {
+    alert("Chức năng lưu nháp đang phát triển. API đã tích hợp trạng thái PENDING.");
+}
+
+function completeReceipt() {
+    const reqBody = buildReceiptRequestBody();
+    if(!reqBody) return;
+    
+    Swal.fire({
+        title: 'Xác nhận Hoàn Thành?',
+        text: 'Số lượng kho của sản phẩm sẽ được tự động cộng và không thể sửa đổi sau khi hoàn thành.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Có, Hoàn thành!',
+        cancelButtonText: 'Huỷ'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const csrf = getCsrf();
+            
+            // First, Create Receipt (Pending)
+            fetch('/warehouse/api/receipts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrf.header]: csrf.token
+                },
+                body: JSON.stringify(reqBody)
+            })
+            .then(r => r.json())
+            .then(receipt => {
+                // Then Complete Receipt
+                return fetch(`/warehouse/api/receipts/${receipt.id}/complete`, {
+                    method: 'PUT',
+                    headers: { [csrf.header]: csrf.token }
+                });
+            })
+            .then(r => {
+                if (!r.ok) {
+                    throw new Error('Server error');
+                }
+                return r.json();
+            })
+            .then(completedReceipt => {
+                bootstrap.Modal.getInstance(document.getElementById('inventoryReceiptModal')).hide();
+                Swal.fire(
+                    'Thành công!',
+                    'Đã lập phiếu nhập thành công! Tồn kho đã được tự động cộng.',
+                    'success'
+                );
+                loadReceipts();
+            })
+            .catch(err => {
+                console.error("Lỗi khi lập phiếu", err);
+                Swal.fire(
+                    'Lỗi!',
+                    'Hệ thống gặp sự cố khi lập phiếu nhập.',
+                    'error'
+                );
+            });
+        }
+    });
+}
+
+function viewReceipt(id) {
+    fetch(`/warehouse/api/receipts/${id}`)
+        .then(r => r.json())
+        .then(data => {
+            // View Mode configuration
+            document.getElementById('receiptModalTitle').textContent = `Chi tiết Phiếu Nhập: ${data.receiptCode}`;
+            
+            let statusBadge = '';
+            if(data.status === 'PENDING') statusBadge = `<span class="badge bg-warning text-dark fw-bold">ĐANG NHÁP</span>`;
+            else if(data.status === 'COMPLETED') statusBadge = `<span class="badge bg-success fw-bold">HOÀN THÀNH</span>`;
+            else statusBadge = `<span class="badge bg-danger fw-bold">ĐÃ HUỶ</span>`;
+            document.getElementById('receiptStatusBadge').innerHTML = statusBadge;
+            
+            // Hide search panel and action buttons
+            document.getElementById('productSearchPanel').style.display = 'none';
+            document.getElementById('receiptActionButtons').style.display = 'none';
+            
+            // Supplier readonly
+            const supplierSelectContainer = document.getElementById('supplierSelectContainer');
+            if(supplierSelectContainer) supplierSelectContainer.style.display = 'none';
+            
+            document.getElementById('receiptSupplierReadonlyContainer').style.display = 'block';
+            document.getElementById('receiptSupplierReadonly').textContent = data.supplier ? data.supplier.name : '-';
+            
+            // Note readonly
+            const noteEl = document.getElementById('receiptNote');
+            noteEl.value = data.note || '';
+            noteEl.readOnly = true;
+            
+            // Render line items as readonly
+            receiptLineItems = (data.receiptDetails || []).map(d => ({
+                variantId: d.productVariant ? d.productVariant.id : null,
+                sku: d.productVariant ? d.productVariant.sku : '-',
+                productName: d.productVariant && d.productVariant.product ? d.productVariant.product.name : 'Unknown',
+                color: d.productVariant ? d.productVariant.color : '-',
+                size: d.productVariant ? d.productVariant.size : '-',
+                quantity: d.quantity,
+                importPrice: d.importPrice
+            }));
+            
+            const tbody = document.getElementById('receiptLineItems');
+            document.getElementById('receiptEmptyItems').classList.add('d-none');
+            tbody.innerHTML = '';
+            
+            let total = 0;
+            
+            receiptLineItems.forEach((item, index) => {
+                const itemTotal = item.quantity * item.importPrice;
+                total += itemTotal;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge bg-secondary">${item.sku}</span></td>
+                    <td>
+                        <div class="fw-bold text-dark text-truncate" style="max-width:200px;" title="${item.productName}">${item.productName}</div>
+                        <div class="small text-muted">Màu: ${item.color} | Size: ${item.size}</div>
+                    </td>
+                    <td class="text-center fw-bold">${item.quantity}</td>
+                    <td class="text-end">${item.importPrice.toLocaleString('vi-VN')} đ</td>
+                    <td class="text-end fw-bold text-danger">${itemTotal.toLocaleString('vi-VN')} đ</td>
+                    <td class="text-center"></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('receiptTotalAmount').textContent = total.toLocaleString('vi-VN');
+            
+            const modal = new bootstrap.Modal(document.getElementById('inventoryReceiptModal'));
+            modal.show();
+        });
+}
+
+// ── Hook up tab loading logic ──────────────────────────────
+document.getElementById('suppliers-tab')?.addEventListener('show.bs.tab', loadSuppliers);
+document.getElementById('receipts-tab')?.addEventListener('show.bs.tab', loadReceipts);
+
+// Load initially if those are active 
+if(document.getElementById('tab-suppliers')?.classList.contains('active')) loadSuppliers();
+if(document.getElementById('tab-receipts')?.classList.contains('active')) loadReceipts();

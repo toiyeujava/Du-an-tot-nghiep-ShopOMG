@@ -43,6 +43,18 @@
                     <i class="fas fa-clipboard-list me-1"></i> Log nhập / xuất
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="suppliers-tab" data-bs-toggle="tab" data-bs-target="#tab-suppliers" type="button"
+                    role="tab">
+                    <i class="fas fa-truck me-1"></i> Nhà cung cấp
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="receipts-tab" data-bs-toggle="tab" data-bs-target="#tab-receipts" type="button"
+                    role="tab">
+                    <i class="fas fa-file-invoice-dollar me-1"></i> Phiếu nhập
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="warehouseTabContent">
@@ -647,6 +659,75 @@
                 </div>
             </div>
 
+            <!-- =================================================
+             TAB: NHÀ CUNG CẤP
+        ================================================= -->
+            <div class="tab-pane fade" id="tab-suppliers" role="tabpanel">
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-0 pt-4 pb-2 px-4 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold fs-5 text-dark"><i class="fas fa-truck text-secondary me-2"></i>Danh sách Nhà cung cấp</h6>
+                        <button class="btn btn-warning fw-semibold btn-sm shadow-sm" onclick="openSupplierModal()">
+                            <i class="fas fa-plus me-1"></i> Thêm NCC
+                        </button>
+                    </div>
+                    <div class="card-body px-4 pb-4">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tên Nhà cung cấp</th>
+                                        <th>SĐT</th>
+                                        <th>Email</th>
+                                        <th>Địa chỉ</th>
+                                        <th>MST</th>
+                                        <th class="text-center">Trạng thái</th>
+                                        <th class="text-end">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="suppliersBody">
+                                    <tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-warning" role="status"></div> Đang tải...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =================================================
+             TAB: PHIẾU NHẬP KHO
+        ================================================= -->
+            <div class="tab-pane fade" id="tab-receipts" role="tabpanel">
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-0 pt-4 pb-2 px-4 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold fs-5 text-dark"><i class="fas fa-file-invoice-dollar text-secondary me-2"></i>Danh sách Phiếu nhập kho</h6>
+                        <button class="btn btn-warning fw-semibold btn-sm shadow-sm" onclick="openInventoryReceiptModal()">
+                            <i class="fas fa-plus me-1"></i> Lập phiếu nhập
+                        </button>
+                    </div>
+                    <div class="card-body px-4 pb-4">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Mã phiếu</th>
+                                        <th>Nhà cung cấp</th>
+                                        <th>Người lập</th>
+                                        <th class="text-end">Tổng tiền</th>
+                                        <th>Thời gian</th>
+                                        <th class="text-center">Trạng thái</th>
+                                        <th class="text-end">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="receiptsBody">
+                                    <tr><td colspan="7" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-warning" role="status"></div> Đang tải...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div> <!-- END tab-content -->
 
 
@@ -838,6 +919,158 @@
             </div>
         </div>
 
+        <!-- =================================================
+             MODAL: NHÀ CUNG CẤP
+        ================================================= -->
+        <div class="modal fade" id="supplierModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="supplierModalTitle">Thêm Nhà Cung Cấp</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="supplierForm">
+                            <input type="hidden" id="supplierId" />
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Tên nhà cung cấp <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="supplierName" required />
+                            </div>
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label fw-semibold small">Số điện thoại</label>
+                                    <input type="text" class="form-control" id="supplierPhone" />
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label fw-semibold small">Mã số thuế</label>
+                                    <input type="text" class="form-control" id="supplierTaxCode" />
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Email</label>
+                                <input type="email" class="form-control" id="supplierEmail" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Địa chỉ</label>
+                                <input type="text" class="form-control" id="supplierAddress" />
+                            </div>
+                            <div class="mb-3" id="supplierStatusContainer" style="display:none;">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="supplierIsActive" checked>
+                                    <label class="form-check-label" for="supplierIsActive">Đang hoạt động</label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Huỷ</button>
+                        <button type="button" class="btn btn-warning fw-semibold" onclick="saveSupplier()">
+                            <i class="fas fa-save me-1"></i>Lưu
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================================================
+             MODAL: LẬP PHIẾU NHẬP KHO
+        ================================================= -->
+        <div class="modal fade" id="inventoryReceiptModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning-subtle">
+                        <h5 class="modal-title fw-bold text-dark">
+                            <i class="fas fa-file-invoice-dollar me-2 text-warning"></i>
+                            <span id="receiptModalTitle">Lập Phiếu Nhập Kho</span>
+                        </h5>
+                        <div class="ms-auto d-flex align-items-center gap-2">
+                            <span id="receiptStatusBadge"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                    </div>
+                    <div class="modal-body bg-light">
+                        <div class="row g-3">
+                            <!-- Left: General info & Search -->
+                            <div class="col-lg-4">
+                                <div class="card border-0 shadow-sm rounded-3 mb-3">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold mb-3 border-bottom pb-2">Thông tin phiếu</h6>
+                                        <div class="mb-3" id="supplierSelectContainer">
+                                            <label class="form-label small fw-semibold">Nhà cung cấp <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="receiptSupplier" required>
+                                                <!-- Options filled by JS -->
+                                            </select>
+                                        </div>
+                                        <div class="mb-3" id="receiptSupplierReadonlyContainer" style="display:none;">
+                                            <label class="form-label small fw-semibold">Nhà cung cấp</label>
+                                            <div class="fw-bold text-dark" id="receiptSupplierReadonly"></div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-semibold">Ghi chú</label>
+                                            <textarea class="form-control" rows="2" id="receiptNote" placeholder="Ghi chú..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card border-0 shadow-sm rounded-3" id="productSearchPanel">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold mb-3 border-bottom pb-2">Thêm sản phẩm (<span id="totalVariantsCount">0</span> biến thể)</h6>
+                                        <div class="input-group mb-3">
+                                            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                                            <input type="text" class="form-control border-start-0 ps-0" id="receiptProductSearch" placeholder="Tìm theo tên sản phẩm hoặc SKU..." autocomplete="off">
+                                        </div>
+                                        <div id="receiptSearchResults" class="list-group list-group-flush" style="max-height: 250px; overflow-y: auto;">
+                                            <!-- Search results -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Right: Line items -->
+                            <div class="col-lg-8">
+                                <div class="card border-0 shadow-sm rounded-3 h-100">
+                                    <div class="card-body p-0 d-flex flex-column">
+                                        <div class="p-3 border-bottom bg-white d-flex justify-content-between align-items-center rounded-top-3">
+                                            <h6 class="fw-bold mb-0">Chi tiết nhập</h6>
+                                            <div class="fw-bold text-danger fs-5">
+                                                Tổng: <span id="receiptTotalAmount">0</span> đ
+                                            </div>
+                                        </div>
+                                        <div class="table-responsive flex-grow-1" style="height: 480px;">
+                                            <table class="table table-hover align-middle mb-0">
+                                                <thead class="table-light sticky-top">
+                                                    <tr>
+                                                        <th>SKU</th>
+                                                        <th>Sản phẩm</th>
+                                                        <th class="text-center" style="width: 100px;">S.Lượng</th>
+                                                        <th class="text-end" style="width: 130px;">Đơn giá nhập</th>
+                                                        <th class="text-end" style="width: 150px;">Thành tiền</th>
+                                                        <th class="text-center" style="width: 50px;"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="receiptLineItems">
+                                                    <!-- Line items -->
+                                                </tbody>
+                                            </table>
+                                            <div id="receiptEmptyItems" class="text-center py-5 text-muted">
+                                                <i class="fas fa-box-open fs-2 mb-2 opacity-50"></i>
+                                                <p>Chưa có sản phẩm nào. Hãy tìm và chọn sản phẩm bên trái.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-white border-top">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                        <div id="receiptActionButtons">
+                            <button type="button" class="btn btn-secondary" onclick="saveReceiptDraft()" id="btnSaveDraft">Lưu nháp</button>
+                            <button type="button" class="btn btn-warning fw-bold" onclick="completeReceipt()" id="btnCompleteReceipt"><i class="fas fa-check-circle me-1"></i> Hoàn thành Phiếu</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </article>
 </body>
 

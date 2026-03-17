@@ -38,6 +38,9 @@ public class Product implements Serializable {
     @Column(name = "category_id")
     private Integer categoryId;
 
+    @Column(name = "supplier_id")
+    private Integer supplierId;
+
     @Column(name = "image")
     private String image;
 
@@ -65,10 +68,12 @@ public class Product implements Serializable {
     @OneToMany(mappedBy = "product", fetch = FetchType.EAGER)
     // 2. Thêm @ToString.Exclude để tránh lỗi tràn bộ nhớ khi in log
     @ToString.Exclude 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<ProductVariant> variants;
     
     
     @OneToMany(mappedBy = "product", fetch = FetchType.EAGER)
     @ToString.Exclude 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<ProductImage> productImages; // Phải có dòng này
 }

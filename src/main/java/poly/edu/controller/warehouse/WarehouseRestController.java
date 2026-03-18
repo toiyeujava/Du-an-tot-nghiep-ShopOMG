@@ -13,6 +13,8 @@ import poly.edu.entity.Supplier;
 import poly.edu.service.InventoryReceiptService;
 import poly.edu.service.SupplierService;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -116,12 +118,40 @@ public class WarehouseRestController {
         }
     }
 
+    @PutMapping("/receipts/{id}")
+    public ResponseEntity<?> updateReceipt(@PathVariable Integer id, @RequestBody Map<String, Object> payload) {
+        try {
+            Integer supplierId = Integer.valueOf(payload.get("supplierId").toString());
+            String note = payload.get("note") != null ? payload.get("note").toString() : "";
+            
+            List<Map<String, Object>> detailsList = (List<Map<String, Object>>) payload.get("details");
+            List<InventoryReceiptDetail> details = new ArrayList<>();
+            
+            for (Map<String, Object> d : detailsList) {
+                InventoryReceiptDetail detail = new InventoryReceiptDetail();
+                ProductVariant pv = new ProductVariant();
+                pv.setId(Integer.valueOf(d.get("variantId").toString()));
+                detail.setProductVariant(pv);
+                detail.setQuantity(Integer.valueOf(d.get("quantity").toString()));
+                detail.setImportPrice(Double.valueOf(d.get("importPrice").toString()));
+                details.add(detail);
+            }
+
+            InventoryReceipt receipt = receiptService.updateReceipt(id, supplierId, details, note);
+            return ResponseEntity.ok(receipt);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @PutMapping("/receipts/{id}/complete")
     public ResponseEntity<?> completeReceipt(@PathVariable Integer id) {
         try {
             InventoryReceipt receipt = receiptService.completeReceipt(id);
             return ResponseEntity.ok(receipt);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
@@ -132,7 +162,23 @@ public class WarehouseRestController {
             receiptService.cancelReceipt(id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/receipts/{id}/export")
+    public ResponseEntity<byte[]> exportReceipt(@PathVariable Integer id) {
+        try {
+            byte[] excelData = receiptService.exportReceiptToExcel(id);
+            String filename = "Phieu_Nhap_Kho_" + id + ".xlsx";
+            return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excelData);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
         }
     }
 }

@@ -6,6 +6,7 @@
    - Tạo bảng Suppliers (Nhà cung cấp)
    - Tạo bảng InventoryReceipts (Phiếu nhập kho)
    - Tạo bảng InventoryReceiptDetails (Chi tiết phiếu nhập)
+   - Chèn dữ liệu mẫu cho nhà cung cấp (CÔNG TY TNHH MEO LEO)
    
    HƯỚNG DẪN: Chạy script này trên database ShopOMG đã tồn tại.
    Nếu bạn đã chạy ShopOMG_DATABASE_TONG.sql mới nhất thì KHÔNG CẦN chạy file này.
@@ -38,7 +39,27 @@ ELSE
 GO
 
 -- =============================================
--- 2. Bảng Phiếu nhập kho (InventoryReceipts)
+-- 2. Thêm dữ liệu nhà cung cấp từ hình ảnh
+-- =============================================
+IF NOT EXISTS (SELECT 1 FROM Suppliers WHERE tax_code = '10309979486')
+BEGIN
+    INSERT INTO Suppliers (name, phone, email, address, tax_code, is_active)
+    VALUES (
+        N'CÔNG TY TNHH MEO LEO', 
+        '0309979486', 
+        'mleo123@gmail.com', 
+        N'436 Võ Văn Tần, Quận 3, TP.HCM', 
+        '10309979486', 
+        1
+    );
+    PRINT N'✅ Đã chèn dữ liệu nhà cung cấp MEO LEO.';
+END
+ELSE
+    PRINT N'⚠️ Dữ liệu nhà cung cấp này đã tồn tại, không chèn thêm.';
+GO
+
+-- =============================================
+-- 3. Bảng Phiếu nhập kho (InventoryReceipts)
 -- =============================================
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'InventoryReceipts')
 BEGIN
@@ -62,7 +83,7 @@ ELSE
 GO
 
 -- =============================================
--- 3. Bảng Chi tiết phiếu nhập (InventoryReceiptDetails)
+-- 4. Bảng Chi tiết phiếu nhập (InventoryReceiptDetails)
 -- =============================================
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'InventoryReceiptDetails')
 BEGIN
@@ -82,5 +103,5 @@ ELSE
 GO
 
 PRINT N'';
-PRINT N'🎉 Migration hoàn tất! Các bảng nghiệp vụ nhập kho đã sẵn sàng.';
+PRINT N'🎉 Migration hoàn tất! Các bảng nghiệp vụ và dữ liệu mẫu đã sẵn sàng.';
 GO

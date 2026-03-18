@@ -212,6 +212,7 @@ public class WarehouseController {
                            (v.getProduct() != null && v.getProduct().getName() != null &&
                             v.getProduct().getName().toLowerCase().contains(lower));
                 })
+                .limit(5)
                 .toList();
         return ResponseEntity.ok(results);
     }

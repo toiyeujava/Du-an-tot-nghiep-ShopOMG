@@ -91,6 +91,8 @@
                             <div class="fw-semibold"
                                  th:text="${order.receiverName ?: order.account?.fullName ?: 'Khách vãng lai'}">-</div>
                             <small class="text-muted"
+                                   th:text="${order.account?.fullName ?: ''}"></small>
+                            <small class="text-muted d-block"
                                    th:text="${order.account?.email ?: ''}"></small>
                         </td>
                         <td th:text="${order.receiverPhone ?: '-'}">-</td>

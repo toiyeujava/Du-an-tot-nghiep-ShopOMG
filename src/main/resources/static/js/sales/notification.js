@@ -57,6 +57,13 @@
                 console.error('[Notification] Lỗi parse message:', e);
             }
         });
+
+        // Subscribe chat — chỉ đếm badge khi không ở trang chat
+        if (window.location.pathname !== '/sales/chat') {
+            stompClient.subscribe('/user/queue/messages', function (message) {
+                incrementChatBadge();
+            });
+        }
     }
 
     function onError(error) {
@@ -294,6 +301,15 @@
             style: 'currency',
             currency: 'VND'
         }).format(amount);
+    }
+
+    // ─── CHAT BADGE ──────────────────────────────────────────────────────────
+    function incrementChatBadge() {
+        const badge = document.getElementById('chat-sidebar-badge');
+        if (!badge) return;
+        const current = parseInt(badge.textContent, 10) || 0;
+        badge.textContent = (current + 1) > 9 ? '9+' : (current + 1);
+        badge.classList.remove('d-none');
     }
 
     // ─── BOOT ────────────────────────────────────────────────────────────────

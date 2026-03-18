@@ -45,8 +45,10 @@
             
             <small class="text-uppercase text-muted fw-bold ms-3 mb-2 mt-4 d-block"
                 style="font-size: 0.7rem; letter-spacing: 1px;">Hỗ trợ khách hàng</small>
-            <a href="/sales/chat" th:classappend="${pageTitle == 'Hỗ trợ khách hàng'} ? 'active'">
+            <a href="/sales/chat" th:classappend="${pageTitle == 'Hỗ trợ khách hàng'} ? 'active'"
+               onclick="clearChatBadge()">
                 <i class="fas fa-comments"></i> CSKH
+                <span id="chat-sidebar-badge" class="badge bg-danger ms-auto d-none">0</span>
             </a>
 
             <form th:action="@{/logout}" method="post" class="mt-4 ms-3 mb-2 d-block">
@@ -90,6 +92,12 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script th:src="@{/js/sales/notification.js}"></script>
+    <script>
+        function clearChatBadge() {
+            var badge = document.getElementById('chat-sidebar-badge');
+            if (badge) { badge.textContent = '0'; badge.classList.add('d-none'); }
+        }
+    </script>
 </body>
 
 </html>

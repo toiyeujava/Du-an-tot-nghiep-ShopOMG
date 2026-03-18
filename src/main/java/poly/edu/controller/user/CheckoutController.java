@@ -23,6 +23,7 @@ import poly.edu.service.AddressService;
 import poly.edu.dto.AddressDTO;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import poly.edu.service.NotificationService;
+import poly.edu.service.FlashSaleService;
 
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -62,6 +63,7 @@ public class CheckoutController {
     private final VoucherRepository voucherRepository;
     private final NotificationService notificationService;
     private final AddressService addressService;
+    private final FlashSaleService flashSaleService;
 
     /**
      * Display checkout page with cart summary.
@@ -103,6 +105,22 @@ public class CheckoutController {
         // Fetch addresses from DB
         List<AddressDTO> addresses = addressService.getAllAddresses(account.getId());
         model.addAttribute("addresses", addresses);
+
+        // Voucher logic
+        boolean hasUsedOpening = orderRepository.findByAccountId(account.getId()).size() > 0;
+        boolean hasUsedFreeship = false;
+        Voucher freeshipVoucher = voucherRepository.findByCode("FREESHIP").orElse(null);
+        if (freeshipVoucher != null) {
+            hasUsedFreeship = orderRepository.hasUserUsedVoucher(account.getId(), freeshipVoucher.getId());
+        }
+
+        model.addAttribute("canShowOpening", !hasUsedOpening);
+        model.addAttribute("canShowFreeship", !hasUsedFreeship);
+        model.addAttribute("isCartTotalAboveFreeship", cartTotal >= 700000);
+
+        // Flash sale vouchers the user has claimed but not yet used today
+        List<Voucher> claimedFlashVouchers = flashSaleService.getClaimedUnusedFlashVouchers(account.getId());
+        model.addAttribute("claimedFlashVouchers", claimedFlashVouchers);
 
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("cartTotal", cartTotal);
@@ -237,8 +255,8 @@ public class CheckoutController {
                 order.setPaymentStatus("NOT_REQUIRED");
             }
 
-            long safeFee = (shippingFee != null && shippingFee > 0) ? shippingFee : 30000L;
-            long safeDiscount = (discountAmount != null && discountAmount > 0) ? discountAmount : 0L;
+            long safeFee = (shippingFee != null && shippingFee >= 0) ? shippingFee : 30000L;
+            long safeDiscount = (discountAmount != null && discountAmount >= 0) ? discountAmount : 0L;
 
             if (couponCode != null && !couponCode.trim().isEmpty()) {
                 Voucher voucher = voucherRepository.findByCode(couponCode).orElse(null);

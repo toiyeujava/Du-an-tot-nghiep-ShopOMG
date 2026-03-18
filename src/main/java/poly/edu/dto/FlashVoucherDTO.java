@@ -12,10 +12,12 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class FlashVoucherDTO {
+    private Integer voucherId;
     private String code;
     private Integer discountPercent;
     private BigDecimal discountAmount;
     private BigDecimal minOrderAmount;
     private BigDecimal maxDiscountAmount;
     private Integer remainingQuantity;
+    private boolean claimed; // true if current user already claimed this voucher
 }

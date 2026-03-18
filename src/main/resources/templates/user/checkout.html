@@ -1279,8 +1279,14 @@
                 if (feeInput) feeInput.value = fee;
             }
 
-            // Init with default 30,000đ if no address selected yet
-            window._shippingFee = 30000;
+            // Init with default 30,000đ if no address selected yet, check freeship first
+            var initSubEl = document.getElementById('subtotalDisplay');
+            var initSub = parseInt((initSubEl ? initSubEl.textContent : '0').replace(/[^0-9]/g, ''), 10) || 0;
+            window._shippingFee = initSub >= FREE_SHIP_THRESHOLD ? 0 : 30000;
+            var feeInputInit = document.getElementById('shippingFeeInput');
+            if (feeInputInit) feeInputInit.value = window._shippingFee;
+            var shipDispInit = document.getElementById('shippingDisplay');
+            if (shipDispInit) shipDispInit.textContent = window._shippingFee === 0 ? 'Miễn phí' : new Intl.NumberFormat('vi-VN').format(window._shippingFee) + 'đ';
 
             // Open address modal
             function openAddressModal() {
@@ -1631,7 +1637,7 @@
                     `;
 
                     // Update totals
-                    const shippingFee = 30000;
+                    const shippingFee = subtotal >= (typeof FREE_SHIP_THRESHOLD !== 'undefined' ? FREE_SHIP_THRESHOLD : 700000) ? 0 : 30000;
                     const total = subtotal + shippingFee;
 
                     document.getElementById('subtotalDisplay').textContent = subtotal.toLocaleString('vi-VN') + 'đ';
@@ -1640,6 +1646,9 @@
                     // Populate hidden inputs for form submission
                     document.getElementById('buyNowVariantId').value = item.variantId || '';
                     document.getElementById('buyNowQuantity').value = item.quantity || '';
+                    document.getElementById('shippingFeeInput').value = shippingFee;
+                    const shipDisp = document.getElementById('shippingDisplay');
+                    if (shipDisp) shipDisp.textContent = shippingFee === 0 ? 'Miễn phí' : shippingFee.toLocaleString('vi-VN') + 'đ';
 
                     // Update Back link to go to product page instead of cart
                     const backLink = document.getElementById('backLink');

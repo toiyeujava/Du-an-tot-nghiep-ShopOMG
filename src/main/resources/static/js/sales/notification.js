@@ -25,8 +25,15 @@
         // Tắt log debug của STOMP (bỏ comment dòng dưới nếu muốn debug)
         stompClient.debug = null;
 
+        const csrfToken = document.querySelector("meta[name='_csrf']")?.getAttribute("content");
+        const csrfHeader = document.querySelector("meta[name='_csrf_header']")?.getAttribute("content");
+        const headers = {};
+        if (csrfHeader && csrfToken) {
+            headers[csrfHeader] = csrfToken;
+        }
+
         stompClient.connect(
-            {},
+            headers,
             onConnected,
             onError
         );

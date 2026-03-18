@@ -148,11 +148,65 @@
     <script>
         function previewImage(input) {
             if (input.files && input.files[0]) {
+                const file = input.files[0];
                 var reader = new FileReader();
+
                 reader.onload = function(e) {
-                    document.getElementById('avatarPreview').src = e.target.result;
+                    var dataUrl = e.target.result;
+                    document.getElementById('avatarPreview').src = dataUrl;
+                    document.getElementById('avatarPreview').removeAttribute('onerror');
+                    
+                    // Update all other avatar images on the screen (sidebar, header)
+                    var userAvatars = document.querySelectorAll('.user-avatar, .rounded-circle.me-2');
+                    userAvatars.forEach(function(img) {
+                        if (img.tagName.toLowerCase() === 'img') {
+                           img.src = dataUrl;
+                           img.removeAttribute('onerror');
+                        }
+                    });
                 }
-                reader.readAsDataURL(input.files[0]);
+                reader.readAsDataURL(file);
+
+                // Auto-upload the avatar via AJAX
+                const formData = new FormData();
+                formData.append('avatarFile', file);
+                
+                // Add CSRF token for Spring Security
+                const csrfTokenMeta = document.querySelector('meta[name="_csrf"]');
+                const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
+                
+                const headers = {};
+                if (csrfTokenMeta && csrfHeaderMeta) {
+                    headers[csrfHeaderMeta.content] = csrfTokenMeta.content;
+                }
+
+                fetch('/account/avatar/update', {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: "top-end",
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                        Toast.fire({
+                            icon: "success",
+                            title: "Ảnh đại diện đã được cập nhật"
+                        });
+                    } else {
+                        Swal.fire('Lỗi', data.message || 'Không thể cập nhật ảnh đại diện', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error uploading avatar:', error);
+                    Swal.fire('Lỗi', 'Đã xảy ra lỗi khi tải ảnh lên', 'error');
+                });
             }
         }
 

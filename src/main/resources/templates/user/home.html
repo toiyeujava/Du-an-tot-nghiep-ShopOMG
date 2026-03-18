@@ -334,20 +334,33 @@
 
             /* --- FILTER SLIDE ANIMATION --- */
             #sidebarFilter {
-                transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+                transition: all 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
                 overflow: hidden;
+            }
+            @media (min-width: 992px) {
+                #sidebarFilter {
+                    flex: 0 0 25%;
+                    width: 25%;
+                }
+            }
+            @media (max-width: 991.98px) {
+                #sidebarFilter {
+                    flex: 0 0 100%;
+                    width: 100%;
+                }
             }
             #sidebarFilter.slide-hide {
                 flex: 0 0 0% !important;
-                width: 0 !important;
+                width: 0% !important;
                 padding-left: 0 !important;
                 padding-right: 0 !important;
                 opacity: 0;
                 margin: 0 !important;
+                border: none !important;
             }
             #sidebarFilter .filter-section {
                 min-width: 250px;
-                transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+                transition: transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
             }
             #sidebarFilter.slide-hide .filter-section {
                 transform: translateX(-100%);
@@ -721,6 +734,18 @@
                             ? 'Tối đa giảm ' + Number(v.maxDiscountAmount).toLocaleString('vi-VN') + 'đ'
                             : '';
 
+                        const isClaimed = v.claimed;
+                        const noQty = v.remainingQuantity <= 0;
+
+                        let btnHtml;
+                        if (isClaimed) {
+                            btnHtml = '<button class="btn-copy-voucher copied" disabled>✅ Đã nhận</button>';
+                        } else if (noQty) {
+                            btnHtml = '<button class="btn-copy-voucher" disabled>Hết lượt</button>';
+                        } else {
+                            btnHtml = '<button class="btn-copy-voucher btn-claim-fs" data-voucher-id="' + v.voucherId + '" data-code="' + v.code + '">🎁 Nhận ngay</button>';
+                        }
+
                         html += '<div class="flash-voucher-card mb-2">'
                             + '  <div>'
                             + '    <div class="flash-voucher-code">' + v.code + '</div>'
@@ -731,11 +756,18 @@
                             + '  </div>'
                             + '  <div class="d-flex align-items-center gap-2">'
                             + '    <span class="flash-voucher-qty">Còn ' + v.remainingQuantity + ' lượt</span>'
-                            + '    <button class="btn-copy-voucher" onclick="copyFlashCode(this, \'' + v.code + '\')">📋 Copy mã</button>'
+                            + '    ' + btnHtml
                             + '  </div>'
                             + '</div>';
                     });
                     voucherList.innerHTML = html;
+
+                    // Attach click handlers to all claim buttons
+                    voucherList.querySelectorAll('.btn-claim-fs').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            claimFlashVoucher(this);
+                        });
+                    });
                 }
 
                 function startCountdown() {
@@ -763,31 +795,114 @@
                     cdS.textContent = String(s).padStart(2, '0');
                 }
 
-                // Copy voucher code to clipboard
-                window.copyFlashCode = function(btn, code) {
-                    navigator.clipboard.writeText(code).then(function() {
-                        btn.textContent = '✅ Đã copy!';
-                        btn.classList.add('copied');
-                        setTimeout(function() {
-                            btn.textContent = '📋 Copy mã';
-                            btn.classList.remove('copied');
-                        }, 2000);
-                    }).catch(function() {
-                        // Fallback for older browsers
-                        var ta = document.createElement('textarea');
-                        ta.value = code;
-                        document.body.appendChild(ta);
-                        ta.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(ta);
-                        btn.textContent = '✅ Đã copy!';
-                        btn.classList.add('copied');
-                        setTimeout(function() {
-                            btn.textContent = '📋 Copy mã';
-                            btn.classList.remove('copied');
-                        }, 2000);
+                // Claim flash sale voucher
+                function claimFlashVoucher(btn) {
+                    const voucherId = btn.getAttribute('data-voucher-id');
+                    const code = btn.getAttribute('data-code');
+
+                    btn.disabled = true;
+                    btn.textContent = '⏳ Đang nhận...';
+
+                    // Get CSRF token
+                    const csrfMeta = document.querySelector('meta[name="_csrf"]');
+                    const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
+                    fetch('/api/flash-sale/claim', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({ voucherId: parseInt(voucherId) })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            btn.textContent = '✅ Đã nhận';
+                            btn.classList.add('copied');
+                            showClaimSuccessModal(code);
+                        } else {
+                            btn.textContent = '🎁 Nhận ngay';
+                            btn.disabled = false;
+                            showClaimErrorModal(data.message);
+                        }
+                    })
+                    .catch(err => {
+                        btn.textContent = '🎁 Nhận ngay';
+                        btn.disabled = false;
+                        showClaimErrorModal('Có lỗi xảy ra. Vui lòng thử lại!');
                     });
-                };
+                }
+
+                function showClaimSuccessModal(code) {
+                    // Remove existing modal if any
+                    let old = document.getElementById('flashClaimModal');
+                    if (old) old.remove();
+
+                    const html = `
+                    <div class="modal fade" id="flashClaimModal" tabindex="-1" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+                          <div class="modal-body text-center p-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+                            <h4 class="fw-bold text-white mb-2">Nhận mã thành công!</h4>
+                            <p class="text-white-50 mb-1">Mã Flash Sale của bạn:</p>
+                            <div class="bg-white rounded-3 py-3 px-4 mx-auto mb-3" style="max-width: 250px;">
+                              <span class="fw-bold text-danger fs-5">${code}</span>
+                            </div>
+                            <p class="text-white-50 small mb-4">Hãy sử dụng mã này khi thanh toán để nhận ưu đãi đặc biệt!</p>
+                            <div class="d-flex gap-3 justify-content-center">
+                              <a href="/products" class="btn btn-warning fw-bold px-4 py-2 rounded-pill">
+                                <i class="fas fa-shopping-bag me-2"></i>Mua sắm ngay
+                              </a>
+                              <button type="button" class="btn btn-outline-light fw-bold px-4 py-2 rounded-pill" data-bs-dismiss="modal">
+                                Đóng
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>`;
+
+                    document.body.insertAdjacentHTML('beforeend', html);
+                    const modal = new bootstrap.Modal(document.getElementById('flashClaimModal'));
+                    modal.show();
+
+                    // Cleanup on hide
+                    document.getElementById('flashClaimModal').addEventListener('hidden.bs.modal', function() {
+                        this.remove();
+                    });
+                }
+
+                function showClaimErrorModal(message) {
+                    let old = document.getElementById('flashClaimModal');
+                    if (old) old.remove();
+
+                    const html = `
+                    <div class="modal fade" id="flashClaimModal" tabindex="-1" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+                          <div class="modal-body text-center p-5 bg-white">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+                            <h5 class="fw-bold text-dark mb-3">${message}</h5>
+                            <button type="button" class="btn btn-dark fw-bold px-4 py-2 rounded-pill" data-bs-dismiss="modal">
+                              Đóng
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>`;
+
+                    document.body.insertAdjacentHTML('beforeend', html);
+                    const modal = new bootstrap.Modal(document.getElementById('flashClaimModal'));
+                    modal.show();
+
+                    document.getElementById('flashClaimModal').addEventListener('hidden.bs.modal', function() {
+                        this.remove();
+                    });
+                }
+
+
 
                 // Init: fetch on load, poll every 60 seconds
                 document.addEventListener('DOMContentLoaded', function() {

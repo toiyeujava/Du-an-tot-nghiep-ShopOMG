@@ -43,9 +43,12 @@
                 <div id="ordersContainer">
 
                     <div th:each="order : ${orders}" class="card-box p-0 overflow-hidden mb-4 order-card"
+                        th:with="firstDetail=${not #lists.isEmpty(order.orderDetails) ? order.orderDetails[0] : null},
+                                 productId=${firstDetail != null and firstDetail.productVariant != null and firstDetail.productVariant.product != null ? firstDetail.productVariant.product.id : 0},
+                                 productName=${firstDetail != null ? firstDetail.productName : ''}"
                         th:attr="data-status=${order.status},
                                  data-order-id=${order.id},
-                                 data-has-unreviewed=${order.status == 'COMPLETED' and !reviewedOrderProductKeys.contains(order.id + '_' + order.orderDetails[0].productVariant.product.id)}">
+                                 data-has-unreviewed=${order.status == 'COMPLETED' and productId != 0 and !reviewedOrderProductKeys.contains(order.id + '_' + productId)}">
 
                         <!-- Order Status Header -->
                         <div class="bg-light px-4 py-2 border-bottom d-flex justify-content-between align-items-center">
@@ -107,22 +110,22 @@
                                     <span th:if="${order.status == 'COMPLETED'}">
                                         <!-- Chưa đánh giá (theo đơn này) → Viết đánh giá -->
                                         <button
-                                            th:if="${!reviewedOrderProductKeys.contains(order.id + '_' + order.orderDetails[0].productVariant.product.id)}"
+                                            th:if="${productId != 0 and !reviewedOrderProductKeys.contains(order.id + '_' + productId)}"
                                             type="button" class="btn btn-warning btn-sm px-4 fw-bold review-btn"
                                             th:attr="data-order-id=${order.id}">
                                             <i class="fas fa-star me-1"></i>Viết đánh giá
                                         </button>
                                         <!-- Đã đánh giá đơn này → Xem đánh giá -->
-                                        <a th:if="${reviewedOrderProductKeys.contains(order.id + '_' + order.orderDetails[0].productVariant.product.id)}"
+                                        <a th:if="${productId != 0 and reviewedOrderProductKeys.contains(order.id + '_' + productId)}"
                                             href="/account/reviews" class="btn btn-outline-success btn-sm px-4 fw-bold">
                                             <i class="fas fa-check-circle me-1"></i>Xem đánh giá
                                         </a>
                                     </span>
                                     <!-- Lookbook Post Button — only for COMPLETED orders not yet posted -->
                                     <button
-                                        th:if="${order.status == 'COMPLETED' and !lookbookPostedOrderIds.contains(order.id)}"
+                                        th:if="${order.status == 'COMPLETED' and !lookbookPostedOrderIds.contains(order.id) and productId != 0}"
                                         type="button" class="btn btn-outline-primary btn-sm px-3 fw-bold lookbook-btn"
-                                        th:attr="data-order-id=${order.id}, data-product-id=${order.orderDetails[0].productVariant.product.id}, data-product-name=${order.orderDetails[0].productName}"
+                                        th:attr="data-order-id=${order.id}, data-product-id=${productId}, data-product-name=${productName}"
                                         data-bs-toggle="modal" data-bs-target="#lookbookModal">
                                         <i class="fas fa-camera me-1"></i>Đăng Lookbook
                                     </button>
@@ -130,7 +133,8 @@
                                         class="badge bg-info text-white px-3 py-2 align-self-center">
                                         <i class="fas fa-check me-1"></i>Đã đăng Lookbook
                                     </span>
-                                    <a th:href="@{/product/{slug}(slug=${order.orderDetails[0].productVariant.product.slug})}"
+                                    <a th:if="${firstDetail != null and firstDetail.productVariant != null and firstDetail.productVariant.product != null}"
+                                        th:href="@{/product/{slug}(slug=${firstDetail.productVariant.product.slug})}"
                                         class="btn btn-dark btn-sm px-4">Mua lại</a>
                                 </div>
                             </div>

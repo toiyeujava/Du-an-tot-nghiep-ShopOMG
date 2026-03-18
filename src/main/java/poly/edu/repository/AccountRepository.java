@@ -20,6 +20,12 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
     @Query("SELECT a.email FROM Account a WHERE a.role.id = 2")
     List<String> findAllUsernames();
     
+    @Query("SELECT a.email FROM Account a WHERE a.role.name IN ('ADMIN', 'SALES') AND a.isActive = true")
+    List<String> findStaffEmails();
+    
+    @Query("SELECT a.username FROM Account a WHERE a.role.name IN ('ADMIN', 'SALES') AND a.isActive = true")
+    List<String> findStaffUsernames();
+    
     // Tìm kiếm khách hàng theo tên, email, SĐT
     @Query("SELECT a FROM Account a WHERE a.role.name = 'USER' AND " +
            "(:keyword IS NULL OR " +

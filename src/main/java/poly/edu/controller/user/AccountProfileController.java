@@ -131,6 +131,33 @@ public class AccountProfileController {
     }
 
     /**
+     * Update user avatar via AJAX.
+     */
+    @PostMapping("/avatar/update")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateAvatarAjax(
+            @RequestParam("avatarFile") MultipartFile avatarFile,
+            Principal principal) {
+        
+        Account acc = getAuthenticatedAccount(principal);
+        if (acc == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Chưa đăng nhập"));
+        }
+
+        try {
+            if (avatarFile != null && !avatarFile.isEmpty()) {
+                String avatarPath = fileService.save(avatarFile);
+                acc.setAvatar(avatarPath);
+                accountService.save(acc);
+                return ResponseEntity.ok(Map.of("success", true, "avatarUrl", avatarPath));
+            }
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "File không hợp lệ"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", "Đã xảy ra lỗi: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Cancel user's own order.
      */
     @PostMapping("/orders/cancel")

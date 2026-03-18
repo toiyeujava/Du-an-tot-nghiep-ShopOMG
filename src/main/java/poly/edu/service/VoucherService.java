@@ -5,5 +5,5 @@ import java.math.BigDecimal;
 
 public interface VoucherService {
     VoucherResponseDTO applyVoucher(String code, BigDecimal cartTotalAmount);
-    VoucherResponseDTO applyVoucher(poly.edu.dto.VoucherApplyRequestDTO request);
+    VoucherResponseDTO applyVoucher(poly.edu.dto.VoucherApplyRequestDTO request, String username);
 }

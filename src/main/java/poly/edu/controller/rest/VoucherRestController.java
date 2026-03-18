@@ -8,6 +8,8 @@ import poly.edu.dto.VoucherApplyRequestDTO;
 import poly.edu.dto.VoucherResponseDTO;
 import poly.edu.service.VoucherService;
 
+import java.security.Principal;
+
 @RestController
 @RequestMapping("/api/vouchers")
 @RequiredArgsConstructor
@@ -17,8 +19,9 @@ public class VoucherRestController {
     private final VoucherService voucherService;
 
     @PostMapping("/apply")
-    public ResponseEntity<VoucherResponseDTO> applyVoucher(@Valid @RequestBody VoucherApplyRequestDTO request) {
-        VoucherResponseDTO response = voucherService.applyVoucher(request);
+    public ResponseEntity<VoucherResponseDTO> applyVoucher(@Valid @RequestBody VoucherApplyRequestDTO request, Principal principal) {
+        String username = principal != null ? principal.getName() : null;
+        VoucherResponseDTO response = voucherService.applyVoucher(request, username);
         return ResponseEntity.ok(response);
     }
 }

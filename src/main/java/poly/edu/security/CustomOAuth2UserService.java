@@ -56,7 +56,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if (accountOptional.isPresent()) {
             acc = accountOptional.get();
             acc.setFullName(name);
-            acc.setAvatar(picture);
+            
+            // Chỉ cập nhật avatar từ Google/FB nếu user chưa có avatar, 
+            // hoặc avatar hiện tại KHÔNG PHẢI là ảnh tự upload (bắt đầu bằng /uploads)
+            if (acc.getAvatar() == null || !acc.getAvatar().startsWith("/uploads")) {
+                acc.setAvatar(picture);
+            }
         } else {
             acc = new Account();
             // Nếu FB không trả về email, dùng ID tạo email ảo

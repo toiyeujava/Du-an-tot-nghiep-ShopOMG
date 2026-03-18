@@ -32,9 +32,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Exclude SePay webhook from CSRF — it is called by SePay servers (not the browser)
+                // Exclude SePay webhook and Chat WebSocket from CSRF
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/webhook/**"))
+                        .ignoringRequestMatchers("/api/webhook/**", "/ws-chat/**"))
                 .userDetailsService(userDetailsService)
                 // FORCE EAGER CSRF TOKEN LOADING TO FIX THYMELEAF SESSION COMMIT EXCEPTIONS
                 .addFilterAfter(new OncePerRequestFilter() {

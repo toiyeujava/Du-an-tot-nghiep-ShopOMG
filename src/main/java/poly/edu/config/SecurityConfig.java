@@ -152,36 +152,4 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
-
-    @Bean
-    public org.springframework.boot.web.servlet.FilterRegistrationBean<jakarta.servlet.Filter> httpsEnforcerFilter() {
-        org.springframework.boot.web.servlet.FilterRegistrationBean<jakarta.servlet.Filter> registrationBean = new org.springframework.boot.web.servlet.FilterRegistrationBean<>();
-        registrationBean.setFilter((request, response, chain) -> {
-            jakarta.servlet.http.HttpServletRequest req = (jakarta.servlet.http.HttpServletRequest) request;
-            jakarta.servlet.http.HttpServletRequestWrapper wrapper = new jakarta.servlet.http.HttpServletRequestWrapper(req) {
-                @Override
-                public String getScheme() {
-                    return "https";
-                }
-                @Override
-                public boolean isSecure() {
-                    return true;
-                }
-                @Override
-                public int getServerPort() {
-                    return 443;
-                }
-                @Override
-                public StringBuffer getRequestURL() {
-                    StringBuffer url = new StringBuffer();
-                    url.append("https://").append(getServerName()).append(super.getRequestURI());
-                    return url;
-                }
-            };
-            chain.doFilter(wrapper, response);
-        });
-        registrationBean.setOrder(org.springframework.core.Ordered.HIGHEST_PRECEDENCE);
-        registrationBean.addUrlPatterns("/*");
-        return registrationBean;
-    }
 }

@@ -2978,6 +2978,7 @@ PRINT N'';
 PRINT N'🎉 Migration hoàn tất! Các bảng nghiệp vụ và dữ liệu mẫu đã sẵn sàng.';
 GO
 
+/*
 ===========================================================================
    MIGRATION: Thêm cột supplier_id vào bảng Products
    DATE: 17/03/2026

@@ -84,3 +84,5 @@ application-prod.yml
 .mcp.json
 
 .claude
+
+docs/bug-home-redirect-to-login.md

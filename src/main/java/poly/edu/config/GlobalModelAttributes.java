@@ -1,6 +1,7 @@
 package poly.edu.config;
 
 import java.security.Principal;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,13 +31,8 @@ public class GlobalModelAttributes {
         this.cartService = cartService;
     }
 
-    @ModelAttribute("currentUser")
-    public Account currentUser(Principal principal) {
-        if (principal == null) {
-            return null;
-        }
-        return accountService.findByEmail(principal.getName());
-    }
+    // "currentUser" is provided by CurrentUserAdvice (handles OAuth2 properly)
+    // Removed duplicate @ModelAttribute("currentUser") to avoid conflict
     
     @ModelAttribute("cartItemCount")
     public Long cartItemCount(Principal principal) {
@@ -65,10 +61,16 @@ public class GlobalModelAttributes {
             model.addAttribute("cartCount", cartCount);
         }
     }
- // Dữ liệu này sẽ tự động được inject vào mọi trang (mọi URL)
-    @ModelAttribute("categories") 
+    // Dữ liệu này sẽ tự động được inject vào mọi trang (mọi URL)
+    @ModelAttribute("categories")
     public List<Category> getGlobalCategories() {
-        return categoryService.findAll(); // Sửa lại thành hàm lấy danh mục tương ứng của bạn
+        try {
+            return categoryService.findAll();
+        } catch (Exception e) {
+            // Prevent DB exceptions from propagating to Spring Security's
+            // ExceptionTranslationFilter, which would redirect to /login
+            return Collections.emptyList();
+        }
     }
     
 }

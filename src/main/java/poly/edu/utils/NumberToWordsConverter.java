@@ -1,9 +1,9 @@
-package poly.edu.util;
+package poly.edu.utils;
 
 public class NumberToWordsConverter {
 
     private static final String[] units = {
-        "", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"
+            "", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"
     };
 
     public static String convert(long number) {
@@ -90,7 +90,7 @@ public class NumberToWordsConverter {
                 soText += "lẻ ";
             }
         }
-        
+
         if (chuc > 0) {
             if (chuc == 1) {
                 soText += "mười ";

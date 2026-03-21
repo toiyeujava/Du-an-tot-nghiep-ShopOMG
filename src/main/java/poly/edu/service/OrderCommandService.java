@@ -3,6 +3,7 @@ package poly.edu.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Scheduled;
 import poly.edu.entity.Account;
 import poly.edu.entity.Cart;
 import poly.edu.entity.Order;
@@ -52,6 +53,7 @@ public class OrderCommandService {
     private final OrderRepository orderRepository;
     private final OrderDetailRepository orderDetailRepository;
     private final ProductVariantRepository productVariantRepository;
+    private final NotificationService notificationService;
 
     /**
      * Approve order: PENDING → CONFIRMED.
@@ -87,9 +89,9 @@ public class OrderCommandService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-        if (!"PENDING".equals(order.getStatus()) && !"CONFIRMED".equals(order.getStatus())) {
+        if (!"PENDING".equals(order.getStatus()) && !"CONFIRMED".equals(order.getStatus()) && !"AWAITING_PAYMENT".equals(order.getStatus())) {
             throw new IllegalStateException(
-                    "Can only cancel orders with PENDING or CONFIRMED status. Current status: " + order.getStatus());
+                    "Can only cancel orders with PENDING, CONFIRMED, or AWAITING_PAYMENT status. Current status: " + order.getStatus());
         }
 
         // Restore inventory for each order item
@@ -121,7 +123,12 @@ public class OrderCommandService {
         }
 
         order.setStatus("SHIPPING");
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        
+        // Notify user that order is shipping
+        notificationService.sendOrderShippedNotification(savedOrder);
+        
+        return savedOrder;
     }
 
     /**
@@ -229,9 +236,15 @@ public class OrderCommandService {
         }
 
         order.setPaymentStatus("QR_CONFIRMED");
+        order.setStatus("PENDING"); // Advance order status because it was AWAITING_PAYMENT
         order.setPaymentConfirmedAt(LocalDateTime.now());
         order.setPaymentConfirmedBy(confirmedByUsername);
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        
+        // Send order placed notification now that it is successfully paid and PENDING
+        notificationService.sendOrderPlacedNotification(savedOrder);
+        
+        return savedOrder;
     }
 
     /**
@@ -270,6 +283,27 @@ public class OrderCommandService {
 
         // Cancel the order and restore inventory
         return cancelOrder(orderId);
+    }
+
+    /**
+     * Periodically scan and cancel AWAITING_PAYMENT orders older than 15 minutes.
+     * Runs every 1 minute.
+     */
+    @Transactional
+    @Scheduled(fixedRate = 60000)
+    public void autoCancelExpiredAwaitingPaymentOrders() {
+        LocalDateTime threshold = LocalDateTime.now().minusMinutes(15);
+        List<Order> expiredOrders = orderRepository.findByStatusAndOrderDateBefore("AWAITING_PAYMENT", threshold);
+        
+        for (Order order : expiredOrders) {
+            try {
+                // The order inventory is restored inside cancelOrder
+                cancelOrder(order.getId());
+                System.out.println("Auto-cancelled expired AWAITING_PAYMENT order ID: " + order.getId());
+            } catch (Exception e) {
+                System.err.println("Failed to auto-cancel order " + order.getId() + ": " + e.getMessage());
+            }
+        }
     }
 
     // ===== PRIVATE HELPER METHODS =====

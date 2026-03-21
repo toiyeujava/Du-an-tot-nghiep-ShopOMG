@@ -18,10 +18,14 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
         Page<Order> findByStatus(String status, Pageable pageable);
 
+        Page<Order> findByStatusNot(String status, Pageable pageable);
+
         // Find orders by account
         List<Order> findByAccountId(Integer accountId);
 
         Page<Order> findByAccountIdOrderByOrderDateDesc(Integer accountId, Pageable pageable);
+
+        Page<Order> findByAccountIdAndStatusNotOrderByOrderDateDesc(Integer accountId, String status, Pageable pageable);
 
         // Revenue aggregation for Dashboard Chart
         @Query("SELECT YEAR(o.orderDate) as yy, MONTH(o.orderDate) as mm, SUM(o.totalAmount) as total " +
@@ -77,6 +81,12 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
         // Get recent orders
         List<Order> findTop10ByOrderByOrderDateDesc();
+
+        @Query("SELECT o FROM Order o WHERE o.status != :status ORDER BY o.orderDate DESC LIMIT 10")
+        List<Order> findTop10ByStatusNotOrderByOrderDateDesc(String status);
+    
+        // Find orders by status and timestamp before a certain time (for auto-cancel)
+        List<Order> findByStatusAndOrderDateBefore(String status, LocalDateTime date);
 
         // Search + filter for Sales
         @Query("SELECT o FROM Order o WHERE " +

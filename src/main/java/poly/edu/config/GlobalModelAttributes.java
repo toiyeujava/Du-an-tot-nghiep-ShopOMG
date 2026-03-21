@@ -15,20 +15,23 @@ import poly.edu.entity.Category;
 import poly.edu.service.AccountService;
 import poly.edu.service.CartService;
 import poly.edu.service.CategoryService;
+import poly.edu.service.NotificationService;
 
 @ControllerAdvice
 public class GlobalModelAttributes {
 
     private final AccountService accountService;
     private final CartService cartService;
+    private final NotificationService notificationService;
 
     
     @Autowired
     private CategoryService categoryService;
     
-    public GlobalModelAttributes(AccountService accountService, CartService cartService) {
+    public GlobalModelAttributes(AccountService accountService, CartService cartService, NotificationService notificationService) {
         this.accountService = accountService;
         this.cartService = cartService;
+        this.notificationService = notificationService;
     }
 
     // "currentUser" is provided by CurrentUserAdvice (handles OAuth2 properly)
@@ -59,6 +62,15 @@ public class GlobalModelAttributes {
             
             model.addAttribute("cartItems", cartItems);
             model.addAttribute("cartCount", cartCount);
+
+            Account account = accountService.findByEmail(username);
+            if (account != null) {
+                Long unreadCount = notificationService.getUnreadCount(account.getId());
+                model.addAttribute("unreadNotificationCount", unreadCount != null ? unreadCount : 0L);
+                model.addAttribute("recentNotifications", notificationService.getRecentNotifications(account.getId(), 5));
+            }
+        } else {
+            model.addAttribute("unreadNotificationCount", 0L);
         }
     }
     // Dữ liệu này sẽ tự động được inject vào mọi trang (mọi URL)

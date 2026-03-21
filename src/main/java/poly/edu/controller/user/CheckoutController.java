@@ -250,6 +250,7 @@ public class CheckoutController {
             if ("QR".equalsIgnoreCase(paymentMethod)) {
                 order.setPaymentMethod("QR");
                 order.setPaymentStatus("QR_PENDING");
+                order.setStatus("AWAITING_PAYMENT");
             } else {
                 order.setPaymentMethod("COD");
                 order.setPaymentStatus("NOT_REQUIRED");
@@ -290,6 +291,8 @@ public class CheckoutController {
 
             if ("QR".equalsIgnoreCase(paymentMethod)) {
                 return "redirect:/checkout/qr/" + order.getId();
+            } else {
+                notificationService.sendOrderPlacedNotification(order);
             }
 
             String maskedPhone = maskPhoneNumber(phone);

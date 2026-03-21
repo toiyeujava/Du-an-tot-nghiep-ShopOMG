@@ -34,7 +34,7 @@ public class SecurityConfig {
         http
                 // Exclude SePay webhook and Chat WebSocket from CSRF
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/webhook/**", "/ws-chat/**"))
+                        .ignoringRequestMatchers("/api/webhook/**", "/ws-chat/**", "/api/notifications/**"))
                 .userDetailsService(userDetailsService)
                 // FORCE EAGER CSRF TOKEN LOADING TO FIX THYMELEAF SESSION COMMIT EXCEPTIONS
                 .addFilterAfter(new OncePerRequestFilter() {

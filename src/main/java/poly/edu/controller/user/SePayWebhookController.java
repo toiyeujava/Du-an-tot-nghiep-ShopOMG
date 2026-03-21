@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.entity.Order;
 import poly.edu.repository.OrderRepository;
+import poly.edu.service.NotificationService;
 import poly.edu.service.SseEmitterRegistry;
 
 import java.time.LocalDateTime;
@@ -47,6 +48,7 @@ public class SePayWebhookController {
 
     private final OrderRepository orderRepository;
     private final SseEmitterRegistry sseEmitterRegistry;
+    private final NotificationService notificationService;
 
     // ─── SePay Webhook Payload DTO ──────────────────────────────────────────────
     @Data
@@ -147,6 +149,9 @@ public class SePayWebhookController {
         order.setTransferContent(payload.getContent());
         order.setReferenceCode(payload.getReferenceCode());
         orderRepository.save(order);
+        
+        notificationService.sendOrderPlacedNotification(order);
+        
         log.info("Order {} marked PAID via SePay webhook. Ref={}", orderId, payload.getReferenceCode());
 
         // ── 7. Push success SSE event ────────────────────────────────────────────

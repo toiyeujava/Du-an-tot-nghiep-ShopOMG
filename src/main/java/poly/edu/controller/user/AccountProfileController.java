@@ -195,8 +195,8 @@ public class AccountProfileController {
         if (acc == null)
             return "redirect:/login?error=true";
 
-        List<Order> orders = orderRepository.findByAccountIdOrderByOrderDateDesc(
-                acc.getId(), org.springframework.data.domain.Pageable.unpaged()).getContent();
+        List<Order> orders = orderRepository.findByAccountIdAndStatusNotOrderByOrderDateDesc(
+                acc.getId(), "AWAITING_PAYMENT", org.springframework.data.domain.Pageable.unpaged()).getContent();
 
         // Build set of "orderId_productId" keys the user has already reviewed.
         // This enables per-order (not per-product) review button state.
@@ -233,7 +233,7 @@ public class AccountProfileController {
         }
 
         List<Order> orders = orderRepository
-                .findByAccountIdOrderByOrderDateDesc(acc.getId(),
+                .findByAccountIdAndStatusNotOrderByOrderDateDesc(acc.getId(), "AWAITING_PAYMENT",
                         org.springframework.data.domain.Pageable.unpaged())
                 .getContent();
 

@@ -50,7 +50,7 @@ public class OrderQueryService {
      * Algorithm: Delegates to Spring Data paginated query.
      */
     public Page<Order> getAllOrders(Pageable pageable) {
-        return orderRepository.findAll(pageable);
+        return orderRepository.findByStatusNot("AWAITING_PAYMENT", pageable);
     }
 
     /**
@@ -73,7 +73,7 @@ public class OrderQueryService {
      * Get orders for a specific user account.
      */
     public Page<Order> getOrdersByAccountId(Integer accountId, Pageable pageable) {
-        return orderRepository.findByAccountIdOrderByOrderDateDesc(accountId, pageable);
+        return orderRepository.findByAccountIdAndStatusNotOrderByOrderDateDesc(accountId, "AWAITING_PAYMENT", pageable);
     }
 
     /**
@@ -94,7 +94,7 @@ public class OrderQueryService {
      * Get most recent 10 orders (for dashboard).
      */
     public List<Order> getRecentOrders() {
-        return orderRepository.findTop10ByOrderByOrderDateDesc();
+        return orderRepository.findTop10ByStatusNotOrderByOrderDateDesc("AWAITING_PAYMENT");
     }
 
     /**

@@ -1442,6 +1442,7 @@
                 <div class="message bot">Xin chào! ShopOMG có thể giúp gì cho bạn hôm nay?</div>
             </div>
             <div class="chat-footer">
+                <!-- Đã đăng nhập: hiện input chat -->
                 <div th:if="${#authorization.expression('isAuthenticated()')}">
                     <!-- Preview media trước khi gửi -->
                     <div class="chat-media-preview" id="chatMediaPreview">
@@ -1464,6 +1465,16 @@
                             <i class="fas fa-paper-plane small"></i>
                         </button>
                     </div>
+                </div>
+                <!-- Chưa đăng nhập: hiện nút đăng nhập -->
+                <div th:unless="${#authorization.expression('isAuthenticated()')}" class="w-100 text-center py-2">
+                    <p class="small text-muted mb-2">
+                        <i class="fas fa-lock me-1"></i>Vui lòng đăng nhập để chat
+                    </p>
+                    <a href="/login" class="btn btn-sm btn-dark w-100 rounded-pill">
+                        <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập ngay
+                    </a>
+                </div>
             </div>
         </div>
         <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;">

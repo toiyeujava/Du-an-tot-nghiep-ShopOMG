@@ -202,9 +202,7 @@
 
             /* Chat Box & Others */
             .chat-btn-toggle {
-                position: fixed;
-                bottom: 30px;
-                right: 30px;
+                position: relative;
                 width: 60px;
                 height: 60px;
                 background-color: #000;
@@ -218,11 +216,23 @@
                 z-index: 1050;
                 transition: transform 0.3s;
             }
-
+ 
             .chat-btn-toggle:hover {
                 transform: scale(1.1);
             }
-
+            .chat-btn-wrapper {
+                position: fixed; bottom: 30px; right: 30px; z-index: 1070;
+                display: inline-block;
+                isolation: isolate;
+            }
+            .chat-toggle-badge {
+                display: none; position: absolute; top: -6px; right: -6px;
+                background: #dc3545; color: #fff; border-radius: 50%;
+                width: 24px; height: 24px; font-size: 13px; font-weight: bold;
+                align-items: center; justify-content: center;
+                border: 2px solid #fff; pointer-events: none; z-index: 1080;
+            }
+ 
             .chat-box-container {
                 position: fixed;
                 bottom: 100px;
@@ -238,7 +248,7 @@
                 overflow: hidden;
                 border: 1px solid #f0f0f0;
             }
-
+ 
             .chat-header {
                 background-color: #000;
                 color: white;
@@ -248,7 +258,7 @@
                 align-items: center;
                 font-weight: 600;
             }
-
+ 
             .chat-body {
                 flex: 1;
                 padding: 15px;
@@ -258,13 +268,30 @@
                 flex-direction: column;
                 gap: 10px;
             }
-
+ 
             .chat-footer {
                 padding: 10px;
                 border-top: 1px solid #eee;
                 background: #fff;
             }
-
+            .chat-upload-btn {
+                background: none; border: 1px solid #ddd; border-radius: 50%;
+                width: 30px; height: 30px; display: flex; align-items: center;
+                justify-content: center; cursor: pointer; color: #666;
+                flex-shrink: 0; font-size: 13px; transition: 0.2s;
+            }
+            .chat-upload-btn:hover { background: #f0f0f0; }
+            .chat-media-preview {
+                display: none; align-items: center; gap: 8px;
+                padding: 6px 10px; background: #f0f7ff;
+                border-top: 1px solid #d0e8ff; font-size: 12px;
+            }
+            .chat-media-preview .cancel-media {
+                cursor: pointer; color: #dc3545; font-weight: bold; font-size: 16px;
+            }
+            .message img { max-width: 180px; max-height: 140px; border-radius: 8px; display: block; }
+            .message video { max-width: 200px; border-radius: 8px; display: block; }
+ 
             .message {
                 max-width: 80%;
                 padding: 8px 12px;
@@ -272,20 +299,20 @@
                 font-size: 14px;
                 line-height: 1.4;
             }
-
+ 
             .message.bot {
                 background-color: #e9ecef;
                 align-self: flex-start;
                 border-bottom-left-radius: 2px;
             }
-
+ 
             .message.user {
                 background-color: #000;
                 color: white;
                 align-self: flex-end;
                 border-bottom-right-radius: 2px;
             }
-
+ 
             input[type=number]::-webkit-inner-spin-button,
             input[type=number]::-webkit-outer-spin-button {
                 -webkit-appearance: none;
@@ -1401,8 +1428,13 @@
                 </div><!-- end #homeAjaxContent -->
             </main>
         </div>
-
-        <div class="chat-btn-toggle" onclick="toggleChatBox()"><i class="fas fa-comment-dots"></i></div>
+		
+		<div class="chat-btn-wrapper">
+            <div class="chat-btn-toggle" onclick="toggleChatBox()">
+                <i class="fas fa-comment-dots"></i>
+            </div>
+            <span id="chatToggleBadge" class="chat-toggle-badge">0</span>
+        </div>
         <div class="chat-box-container" id="chatBox">
             <div class="chat-header"><span><i class="fas fa-headset me-2"></i>CSKH - ShopOMG</span><button type="button"
                     class="btn-close btn-close-white" onclick="toggleChatBox()"></button></div>
@@ -1410,16 +1442,28 @@
                 <div class="message bot">Xin chào! ShopOMG có thể giúp gì cho bạn hôm nay?</div>
             </div>
             <div class="chat-footer">
-                <div th:if="${#authorization.expression('isAuthenticated()')}" class="w-100 d-flex gap-2"><input
-                        type="text" id="chatInput" class="form-control form-control-sm rounded-pill"
-                        placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)"><button
-                        class="btn btn-dark btn-sm rounded-circle"
-                        style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"
-                        onclick="sendMessage()"><i class="fas fa-paper-plane small"></i></button></div>
-                <div th:unless="${#authorization.expression('isAuthenticated()')}" class="w-100 text-center">
-                    <p class="small text-muted mb-2">Vui lòng đăng nhập để chat</p><a href="/login"
-                        class="btn btn-sm btn-dark w-100 rounded-pill">Đăng nhập ngay</a>
-                </div>
+                <div th:if="${#authorization.expression('isAuthenticated()')}">
+                    <!-- Preview media trước khi gửi -->
+                    <div class="chat-media-preview" id="chatMediaPreview">
+                        <div class="preview-thumb"></div>
+                        <span class="cancel-media" onclick="cancelMediaPreview()">×</span>
+                    </div>
+                    <!-- Input row -->
+                    <div class="w-100 d-flex gap-2 align-items-center">
+                        <input type="file" id="chatFileInput" accept="image/*,video/*"
+                               style="display:none" onchange="handleChatFileSelect(event)">
+                        <button class="chat-upload-btn" title="Gửi ảnh/video"
+                                onclick="document.getElementById('chatFileInput').click()">
+                            <i class="fas fa-image"></i>
+                        </button>
+                        <input type="text" id="chatInput" class="form-control form-control-sm rounded-pill"
+                               placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)">
+                        <button class="btn btn-dark btn-sm rounded-circle"
+                                style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;"
+                                onclick="sendMessage()">
+                            <i class="fas fa-paper-plane small"></i>
+                        </button>
+                    </div>
             </div>
         </div>
         <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;">

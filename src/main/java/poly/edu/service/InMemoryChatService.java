@@ -1,30 +1,47 @@
 package poly.edu.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import poly.edu.entity.ChatMessage; // Sử dụng Entity của bạn
+import poly.edu.entity.ChatMessage;
+import poly.edu.repository.AccountRepository;
+import poly.edu.repository.ChatMessageRepository;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+/**
+ * ChatMessageService - Thay thế InMemoryChatService
+ * Lưu tin nhắn vào DB thay vì RAM → không mất khi restart server
+ */
 @Service
+@RequiredArgsConstructor
 public class InMemoryChatService {
 
-    // Key: Tên User (khách hàng), Value: List tin nhắn của user đó với Admin
-    private final Map<String, List<ChatMessage>> chatStore = new ConcurrentHashMap<>();
+    private final ChatMessageRepository chatMessageRepository;
+    private final AccountRepository accountRepository;
 
-    // 1. Lưu tin nhắn
+    // 1. Lưu tin nhắn vào DB
     public void saveMessage(String userKey, ChatMessage message) {
-        // Nếu chưa có user này trong danh sách thì tạo mới list
-        chatStore.computeIfAbsent(userKey, k -> new ArrayList<>()).add(message);
+        chatMessageRepository.save(message);
     }
 
-    // 2. Lấy lịch sử chat của 1 user cụ thể (Cho cả User f5 và Admin click vào)
+    // 2. Lấy lịch sử chat của 1 user
     public List<ChatMessage> getHistory(String userKey) {
-        return chatStore.getOrDefault(userKey, new ArrayList<>());
+        return chatMessageRepository.findHistory(userKey);
     }
 
-    // 3. Lấy danh sách những user đã nhắn tin (Cho Admin hiển thị list bên trái)
+    // 3. Lấy danh sách user đã nhắn tin + tất cả user trong DB
     public Set<String> getActiveUsers() {
-        return chatStore.keySet();
+        Set<String> result = new HashSet<>();
+
+        // User đã từng chat
+        result.addAll(chatMessageRepository.findActiveUsers());
+
+        // Tất cả user trong DB (email)
+        List<String> allUsers = accountRepository.findAllUsernames();
+        if (allUsers != null) result.addAll(allUsers);
+
+        return result;
     }
 }

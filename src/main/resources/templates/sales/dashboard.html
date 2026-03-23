@@ -117,7 +117,7 @@
                                            class="fw-semibold text-primary text-decoration-none"
                                            th:text="${'#' + order.id}">#0</a>
                                     </td>
-                                    <td th:text="${order.account?.fullName ?: 'Khách vãng lai'}">-</td>
+                                    <td th:text="${order.receiverName ?: order.account?.fullName ?: 'Khách vãng lai'}">-</td>
                                     <td class="text-end fw-bold"
                                         th:text="${#numbers.formatInteger(order.totalAmount, 3, 'POINT') + ' ₫'}">0 ₫</td>
                                     <td class="text-center">

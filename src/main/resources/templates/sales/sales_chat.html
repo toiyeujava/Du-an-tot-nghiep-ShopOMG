@@ -426,6 +426,37 @@
     // Chạy khi trang load xong
     connectAdmin();
     loadActiveUsers();
+    
+ // Đọc unread từ sessionStorage và hiện badge theo từng khách
+    function restoreUnreadBadges() {
+        const stored = JSON.parse(sessionStorage.getItem('chat_unread') || '{}');
+        Object.keys(stored).forEach(function(sender) {
+            if (stored[sender] > 0) {
+                // Đảm bảo user đã được render trong danh sách
+                renderUserInList(sender);
+                updateBadge(sender, stored[sender]);
+                moveUserToTop(sender);
+            }
+        });
+    }
+ 
+    // Xóa unread khi click vào user
+    var _origSelectUser = selectUser;
+    selectUser = function(username) {
+        _origSelectUser(username);
+        // Xóa khỏi sessionStorage
+        const stored = JSON.parse(sessionStorage.getItem('chat_unread') || '{}');
+        delete stored[username];
+        sessionStorage.setItem('chat_unread', JSON.stringify(stored));
+        // Nếu hết unread thì xóa badge sidebar luôn
+        const total = Object.values(stored).reduce((a, b) => a + b, 0);
+        if (total === 0) {
+            const badge = document.getElementById('chat-sidebar-badge');
+            if (badge) { badge.textContent = '0'; badge.classList.add('d-none'); }
+        }
+    };
+ 
+    setTimeout(restoreUnreadBadges, 300); // Chờ loadActiveUsers xong
 </script>
     </div>
 </body>

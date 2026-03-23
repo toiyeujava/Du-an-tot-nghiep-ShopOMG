@@ -61,7 +61,12 @@
         // Subscribe chat — chỉ đếm badge khi không ở trang chat
         if (window.location.pathname !== '/sales/chat') {
             stompClient.subscribe('/user/queue/messages', function (message) {
-                incrementChatBadge();
+                try {
+                    const data = JSON.parse(message.body);
+                    incrementChatBadge(data.sender || null);
+                } catch(e) {
+                    incrementChatBadge(null);
+                }
             });
         }
     }
@@ -304,12 +309,20 @@
     }
 
     // ─── CHAT BADGE ──────────────────────────────────────────────────────────
-    function incrementChatBadge() {
+    function incrementChatBadge(sender) {
+        // 1. Tăng badge tổng trên sidebar
         const badge = document.getElementById('chat-sidebar-badge');
-        if (!badge) return;
-        const current = parseInt(badge.textContent, 10) || 0;
-        badge.textContent = (current + 1) > 9 ? '9+' : (current + 1);
-        badge.classList.remove('d-none');
+        if (badge) {
+            const current = parseInt(badge.textContent, 10) || 0;
+            badge.textContent = (current + 1) > 9 ? '9+' : (current + 1);
+            badge.classList.remove('d-none');
+        }
+        // 2. Lưu unread theo từng sender vào sessionStorage
+        if (sender) {
+            const stored = JSON.parse(sessionStorage.getItem('chat_unread') || '{}');
+            stored[sender] = (stored[sender] || 0) + 1;
+            sessionStorage.setItem('chat_unread', JSON.stringify(stored));
+        }
     }
 
     // ─── BOOT ────────────────────────────────────────────────────────────────
